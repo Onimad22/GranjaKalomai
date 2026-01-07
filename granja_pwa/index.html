@@ -521,9 +521,9 @@
     <div style="padding:0 14px">
       <div class="topbar">
         <div class="tabs" role="tablist" aria-label="Secciones">
-          <button class="tabbtn active" id="tabDaily" role="tab" aria-selected="true">Diario</button>
+          <button class="tabbtn active" id="tabNew" role="tab" aria-selected="true">Nuevo</button>
+          <button class="tabbtn" id="tabDaily" role="tab" aria-selected="false">Diario</button>
           <button class="tabbtn" id="tabMonthly" role="tab" aria-selected="false">Mensual</button>
-          <button class="tabbtn" id="tabTariff" role="tab" aria-selected="false">Tarifas</button>
         </div>
       </div>
     </div>
@@ -532,8 +532,8 @@
 
 <div class="wrap safePad">
 
-  <!-- PANEL: DAILY -->
-  <section class="panel active" id="panelDaily" role="tabpanel" aria-labelledby="tabDaily">
+  <!-- PANEL: NUEVO -->
+  <section class="panel active" id="panelNew" role="tabpanel" aria-labelledby="tabNew">
     <div class="card">
       <div class="hd">
         <div></div>
@@ -557,8 +557,6 @@
                 <span class="dot" style="background: var(--accent)"></span>
                 <span>Total: <strong id="activeTripTotal">Bs 0</strong></span>
               </span>
-
-              <button class="ghost" id="openSummaryBtn" title="Ver detalle consolidado del recorrido">Ver resumen</button>
               <button class="ghost" id="closeActiveTripBtn" title="Cerrar el recorrido en edición (no borra nada)">Cerrar edición</button>
             </div>
           </div>
@@ -618,20 +616,90 @@
           </div>
         </div>
 
-        <!-- Fecha a listar: selector pequeño + Hoy + Resumen -->
-        <div style="margin-top:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="ticket" style="margin-top:12px;">
+          <div class="ticketHd">
+            <div class="title">Resumen del recorrido</div>
+            <button class="ok" id="exportTripPdfBtn">Exportar recorrido</button>
+          </div>
+          <div class="ticketBd">
+            <div class="printLike" id="summaryPrintLike">
+              <div class="pHd">
+                <h1>Resumen de recorrido</h1>
+              </div>
+
+              <div class="pMeta">
+                <div><strong>Fecha:</strong> <span id="summaryDate">—</span></div>
+                <div><strong>Turno:</strong> <span id="summaryShift">—</span></div>
+                <div><strong>Hora:</strong> <span id="summaryHour">—</span></div>
+                <div><strong>Visitantes:</strong> <span id="summaryVisitors">0</span></div>
+                <div><strong>Total:</strong> <span id="summaryTotalTop">Bs 0</span></div>
+              </div>
+
+              <div class="pTableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Ítem</th>
+                      <th class="right" style="width:110px;">Cantidad</th>
+                      <th class="right" style="width:150px;">Subtotal (Bs)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="summaryTbody"></tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="2" class="right"><strong>Total</strong></td>
+                      <td class="right"><strong id="summaryTotalFoot">Bs 0</strong></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div class="pObs">
+                <div class="pObsTitle">Observaciones</div>
+                <div class="pObsBody" id="summaryNotes">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANEL: DAILY -->
+  <section class="panel" id="panelDaily" role="tabpanel" aria-labelledby="tabDaily">
+    <div class="card">
+      <div class="hd">
+        <div></div>
+      </div>
+
+      <div class="bd">
+        <!-- Fecha a listar: selector pequeño + Hoy -->
+        <div style="margin-top:0;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
           <div style="min-width:160px;max-width:190px;flex:0 0 auto;">
             <label>Fecha a listar</label>
             <input id="listDate" type="date" style="padding:10px 10px;min-height:40px;" />
           </div>
           <div style="flex:0 0 auto; display:flex; gap:10px; flex-wrap:wrap;">
             <button class="ghost" id="listTodayBtn" style="min-height:40px;padding:10px 12px;border-radius:12px;">Hoy</button>
-            <button class="ghost" id="openDaySummaryBtn" style="min-height:40px;padding:10px 12px;border-radius:12px;">Resumen</button>
           </div>
         </div>
 
         <div class="tripCards" id="tripCards"></div>
         <div class="note" id="storageHint"></div>
+
+        <div class="ticket" style="margin-top:12px;">
+          <div class="ticketHd">
+            <div class="title">Resumen del día</div>
+            <button class="ok" id="exportDayPdfBtn">Exportar</button>
+          </div>
+          <div class="ticketBd">
+            <div class="note" style="margin-top:0">
+              Fecha: <strong id="daySummaryDateInline">—</strong>
+            </div>
+            <div class="dayGrid" id="daySummaryInlineGrid" style="margin-top:12px;"></div>
+            <div class="note" id="daySummaryInlineEmpty" style="display:none;">No hay recorridos para esta fecha.</div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -645,6 +713,7 @@
           <button class="ok" id="reportBtn">Reporte (PDF/Imprimir)</button>
           <button class="ok" id="exportBtn">Exportar (JSON)</button>
           <button id="importBtn">Importar (JSON)</button>
+          <button id="openTariffBtn">Tarifa</button>
         </div>
       </div>
 
@@ -707,7 +776,7 @@
   </section>
 
   <!-- PANEL: TARIFARIO -->
-  <section class="panel" id="panelTariff" role="tabpanel" aria-labelledby="tabTariff">
+  <section class="panel" id="panelTariff" role="tabpanel" aria-labelledby="openTariffBtn">
     <div class="card">
       <div class="hd">
         <h2>Tarifario (Catálogo de ítems)</h2>
@@ -825,85 +894,6 @@
     <div class="modalFt">
       <button class="ghost" id="cancelModalBtn">Cancelar</button>
       <button class="ok" id="acceptNewTripBtn">Aceptar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: resumen de recorrido (misma info que exportación) -->
-<div class="modal" id="summaryModal" aria-hidden="true" style="z-index:240">
-  <div class="modalCard">
-    <div class="modalHd">
-      <div class="t">Resumen del recorrido</div>
-      <button class="ghost" id="closeSummaryBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
-    </div>
-
-    <div class="modalBd">
-      <div class="printLike" id="summaryPrintLike">
-        <div class="pHd">
-          <h1>Resumen de recorrido</h1>
-        </div>
-
-        <div class="pMeta">
-          <div><strong>Fecha:</strong> <span id="summaryDate">—</span></div>
-          <div><strong>Turno:</strong> <span id="summaryShift">—</span></div>
-          <div><strong>Hora:</strong> <span id="summaryHour">—</span></div>
-          <div><strong>Visitantes:</strong> <span id="summaryVisitors">0</span></div>
-          <div><strong>Total:</strong> <span id="summaryTotalTop">Bs 0</span></div>
-        </div>
-
-        <div class="pTableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Ítem</th>
-                <th class="right" style="width:110px;">Cantidad</th>
-                <th class="right" style="width:150px;">Subtotal (Bs)</th>
-              </tr>
-            </thead>
-            <tbody id="summaryTbody"></tbody>
-            <tfoot>
-              <tr>
-                <td colspan="2" class="right"><strong>Total</strong></td>
-                <td class="right"><strong id="summaryTotalFoot">Bs 0</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        <div class="pObs">
-          <div class="pObsTitle">Observaciones</div>
-          <div class="pObsBody" id="summaryNotes">—</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modalFt">
-      <button class="ok" id="exportTripPdfBtn">Exportar recorrido</button>
-      <button class="ghost" id="closeSummaryBtn2">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: resumen del día (una tarjeta por recorrido) -->
-<div class="modal" id="daySummaryModal" aria-hidden="true" style="z-index:245">
-  <div class="modalCard">
-    <div class="modalHd">
-      <div class="t">Resumen del día</div>
-      <button class="ghost" id="closeDaySummaryBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
-    </div>
-
-    <div class="modalBd">
-      <div class="note" style="margin-top:0">
-        Fecha: <strong id="daySummaryDateLabel">—</strong>
-      </div>
-
-      <div class="dayGrid" id="daySummaryGrid" style="margin-top:12px;"></div>
-
-      <div class="note" id="daySummaryEmpty" style="display:none;">No hay recorridos para esta fecha.</div>
-    </div>
-
-    <div class="modalFt">
-      <button class="ghost" id="closeDaySummaryBtn2">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1178,37 +1168,49 @@
   }
 
   // ===== Tabs =====
+  function toggleTab(btn, active){
+    if(!btn) return;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-selected", active ? "true" : "false");
+  }
+
+  function togglePanel(panel, active){
+    if(!panel) return;
+    panel.classList.toggle("active", active);
+  }
+
   function setActiveTab(tab){
+    const newBtn = $("tabNew");
     const dailyBtn = $("tabDaily");
     const monthBtn = $("tabMonthly");
     const tariffBtn = $("tabTariff");
+    const newPanel = $("panelNew");
     const dailyPanel = $("panelDaily");
     const monthPanel = $("panelMonthly");
     const tariffPanel = $("panelTariff");
 
+    const newActive = tab === "new";
     const dailyActive = tab === "daily";
     const monthActive = tab === "monthly";
     const tariffActive = tab === "tariff";
 
-    dailyBtn.classList.toggle("active", dailyActive);
-    monthBtn.classList.toggle("active", monthActive);
-    tariffBtn.classList.toggle("active", tariffActive);
+    toggleTab(newBtn, newActive);
+    toggleTab(dailyBtn, dailyActive);
+    toggleTab(monthBtn, monthActive);
+    toggleTab(tariffBtn, tariffActive);
 
-    dailyBtn.setAttribute("aria-selected", dailyActive ? "true" : "false");
-    monthBtn.setAttribute("aria-selected", monthActive ? "true" : "false");
-    tariffBtn.setAttribute("aria-selected", tariffActive ? "true" : "false");
+    togglePanel(newPanel, newActive);
+    togglePanel(dailyPanel, dailyActive);
+    togglePanel(monthPanel, monthActive);
+    togglePanel(tariffPanel, tariffActive);
 
-    dailyPanel.classList.toggle("active", dailyActive);
-    monthPanel.classList.toggle("active", monthActive);
-    tariffPanel.classList.toggle("active", tariffActive);
-
-    if(dailyActive) renderDaily();
+    if(newActive || dailyActive) renderDaily();
     if(monthActive) renderMonthly();
     if(tariffActive) renderTariff();
   }
+  $("tabNew").addEventListener("click", ()=> setActiveTab("new"));
   $("tabDaily").addEventListener("click", ()=> setActiveTab("daily"));
   $("tabMonthly").addEventListener("click", ()=> setActiveTab("monthly"));
-  $("tabTariff").addEventListener("click", ()=> setActiveTab("tariff"));
 
   // ===== Daily state =====
   let activeTripDate = null;
@@ -1295,17 +1297,11 @@
   // ===== Modales =====
   const overlay = $("modalOverlay");
   const newTripModal = $("newTripModal");
-  const summaryModal = $("summaryModal");
-  const daySummaryModal = $("daySummaryModal");
 
   function openNewTripModal(){
     overlay.classList.add("open");
     newTripModal.classList.add("open");
     newTripModal.setAttribute("aria-hidden","false");
-    summaryModal.classList.remove("open");
-    daySummaryModal.classList.remove("open");
-    summaryModal.setAttribute("aria-hidden","true");
-    daySummaryModal.setAttribute("aria-hidden","true");
 
     const today = toISODate(new Date());
     $("newTripDate").value = $("listDate").value || today;
@@ -1317,21 +1313,13 @@
   function closeAllModals(){
     overlay.classList.remove("open");
     newTripModal.classList.remove("open");
-    summaryModal.classList.remove("open");
-    daySummaryModal.classList.remove("open");
     newTripModal.setAttribute("aria-hidden","true");
-    summaryModal.setAttribute("aria-hidden","true");
-    daySummaryModal.setAttribute("aria-hidden","true");
   }
 
   $("openNewTripModalBtn").addEventListener("click", openNewTripModal);
   $("openNewTripModalBtn2").addEventListener("click", openNewTripModal);
   $("closeModalBtn").addEventListener("click", closeAllModals);
   $("cancelModalBtn").addEventListener("click", closeAllModals);
-  $("closeSummaryBtn").addEventListener("click", closeAllModals);
-  $("closeSummaryBtn2").addEventListener("click", closeAllModals);
-  $("closeDaySummaryBtn").addEventListener("click", closeAllModals);
-  $("closeDaySummaryBtn2").addEventListener("click", closeAllModals);
   overlay.addEventListener("click", closeAllModals);
 
   $("acceptNewTripBtn").addEventListener("click", ()=>{
@@ -1386,6 +1374,7 @@
       current.updatedAt = new Date().toISOString();
       upsertTrip(store, activeTripDate, current);
       saveStore(store);
+      renderTripSummaryInline(current);
     }, 300);
   }
   $("tripNotes").addEventListener("input", saveActiveNotesDebounced);
@@ -1600,7 +1589,7 @@
 
   <script>
     window.addEventListener("load", () => { try { window.focus(); } catch(e) {} window.print(); });
-  <\/script>
+  </scr` + `ipt>
 </body>
 </html>`;
   }
@@ -1612,10 +1601,17 @@
     w.document.open(); w.document.write(html); w.document.close();
   }
 
-  function openSummary(){
-    const trip = getActiveTrip();
+  function renderTripSummaryInline(trip){
     if(!trip){
-      toast("No hay un recorrido activo.");
+      $("summaryDate").textContent = "—";
+      $("summaryShift").textContent = "—";
+      $("summaryHour").textContent = "—";
+      $("summaryVisitors").textContent = "0";
+      $("summaryTotalTop").textContent = "Bs 0";
+      $("summaryTotalFoot").textContent = "Bs 0";
+      $("summaryNotes").textContent = "—";
+      $("summaryTbody").innerHTML = `<tr><td colspan="3" style="color:#444;">No hay recorrido activo.</td></tr>`;
+      $("exportTripPdfBtn").disabled = true;
       return;
     }
 
@@ -1643,17 +1639,8 @@
           </tr>
         `).join("")
       : `<tr><td colspan="3" style="color:#444;">No hay ítems en este recorrido.</td></tr>`;
-
-    overlay.classList.add("open");
-    summaryModal.classList.add("open");
-    summaryModal.setAttribute("aria-hidden","false");
-    newTripModal.classList.remove("open");
-    daySummaryModal.classList.remove("open");
-    newTripModal.setAttribute("aria-hidden","true");
-    daySummaryModal.setAttribute("aria-hidden","true");
+    $("exportTripPdfBtn").disabled = false;
   }
-
-  $("openSummaryBtn").addEventListener("click", openSummary);
 
   $("exportTripPdfBtn").addEventListener("click", ()=>{
     const trip = getActiveTrip();
@@ -1661,124 +1648,215 @@
     printTrip(activeTripDate, trip);
   });
 
-  // ===== Resumen del día (una tarjeta por recorrido) =====
-  function openDaySummary(){
+  // ===== Resumen del día (inline, diferenciado por turno) =====
+  function buildSummaryFromTrips(trips){
+    const byType = new Map();
+    let total = 0;
+    let qtyVisitors = 0;
+
+    for(const t of (trips || [])){
+      const items = Array.isArray(t.items) ? t.items : [];
+      for(const it of items){
+        const qty = safeInt(it.qty);
+        const sub = safeMoney(it.unitPrice) * qty;
+        const typeId = String(it.typeId || "");
+        const label = String(it.label || CAT_BY_ID[typeId]?.label || "Ítem");
+        const category = (String(it.category || "extra") === "visitor") ? "visitor" : "extra";
+
+        total += sub;
+        if(category === "visitor") qtyVisitors += qty;
+
+        const prev = byType.get(typeId);
+        if(!prev){
+          byType.set(typeId, { typeId, label, category, qty, subtotal: sub });
+        } else {
+          prev.qty += qty;
+          prev.subtotal += sub;
+        }
+      }
+    }
+
+    const rows = Array.from(byType.values())
+      .sort((a,b)=>a.category.localeCompare(b.category) || a.label.localeCompare(b.label));
+
+    return { rows, total, qtyVisitors };
+  }
+
+  function buildDayShiftBlock(shiftLabel, trips){
+    const summary = buildSummaryFromTrips(trips);
+    const rows = summary.rows.length
+      ? summary.rows.map(r => `
+          <tr>
+            <td>
+              <strong>${esc(r.label)}</strong>
+              <div class="muted2">${esc(catLabel(r.category))}</div>
+            </td>
+            <td class="right"><strong>${r.qty}</strong></td>
+            <td class="right"><strong>${fmtMoney(r.subtotal)}</strong></td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="3" style="color:#444;">Sin ítems registrados.</td></tr>`;
+
+    return `
+      <div class="printLike">
+        <div class="pHd">
+          <h1>Turno: ${esc(shiftLabel)}</h1>
+        </div>
+
+        <div class="pMeta">
+          <div><strong>Recorridos:</strong> ${trips.length}</div>
+          <div><strong>Visitantes:</strong> ${summary.qtyVisitors}</div>
+          <div><strong>Total:</strong> ${fmtMoney(summary.total)}</div>
+        </div>
+
+        <div class="pTableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ítem</th>
+                <th class="right" style="width:110px;">Cantidad</th>
+                <th class="right" style="width:150px;">Subtotal (Bs)</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" class="right"><strong>Total</strong></td>
+                <td class="right"><strong>${fmtMoney(summary.total)}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDaySummaryInline(){
     const iso = String($("listDate").value || "").trim();
-    if(!iso){ toast("Selecciona una fecha."); return; }
+    const grid = $("daySummaryInlineGrid");
+    const empty = $("daySummaryInlineEmpty");
+
+    $("daySummaryDateInline").textContent = iso ? formatDateDDMMYY(iso) : "—";
+    grid.innerHTML = "";
+
+    if(!iso){
+      empty.textContent = "Selecciona una fecha para ver el resumen.";
+      empty.style.display = "block";
+      $("exportDayPdfBtn").disabled = true;
+      return;
+    }
 
     const store = loadStore();
     const tripsRaw = store.days?.[iso]?.trips || [];
     const trips = Array.isArray(tripsRaw) ? tripsRaw.slice() : [];
 
-    $("daySummaryDateLabel").textContent = formatDateDDMMYY(iso);
-
-    const grid = $("daySummaryGrid");
-    const empty = $("daySummaryEmpty");
-    grid.innerHTML = "";
-
     if(trips.length === 0){
+      empty.textContent = "No hay recorridos para esta fecha.";
       empty.style.display = "block";
-    } else {
-      empty.style.display = "none";
-
-      trips.sort((a,b)=>{
-        const sa = a.shift === "manana" ? 0 : 1;
-        const sb = b.shift === "manana" ? 0 : 1;
-        if(sa !== sb) return sa - sb;
-        const ha = (a.tripHour || "99:99");
-        const hb = (b.tripHour || "99:99");
-        if(ha !== hb) return ha.localeCompare(hb);
-        return (a.createdAt || "").localeCompare(b.createdAt || "");
-      });
-
-      grid.innerHTML = trips.map(t=>{
-        const shiftText = (t.shift === "manana" ? "Mañana" : "Tarde");
-        const c = calcTrip(t);
-        const summary = buildTripSummary(t);
-
-        const rows = summary.rows.length
-          ? summary.rows.map(r => `
-              <tr>
-                <td>
-                  <strong>${esc(r.label)}</strong>
-                  <div class="muted2">${esc(catLabel(r.category))}</div>
-                </td>
-                <td class="right"><strong>${r.qty}</strong></td>
-                <td class="right"><strong>${fmtMoney(r.subtotal)}</strong></td>
-              </tr>
-            `).join("")
-          : `<tr><td colspan="3" style="color:#444;">No hay ítems.</td></tr>`;
-
-        const notes = String(t.notes || "").trim() || "—";
-
-        return `
-          <div class="dayCard">
-            <div class="printLike">
-              <div class="pHd">
-                <h1>Resumen de recorrido</h1>
-              </div>
-
-              <div class="pMeta">
-                <div><strong>Fecha:</strong> ${esc(formatDateDDMMYY(iso))}</div>
-                <div><strong>Turno:</strong> ${esc(shiftText)}</div>
-                <div><strong>Hora:</strong> ${esc(t.tripHour || "—")}</div>
-                <div><strong>Visitantes:</strong> ${c.qtyVisitors}</div>
-                <div><strong>Total:</strong> ${fmtMoney(summary.total)}</div>
-              </div>
-
-              <div class="pTableWrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Ítem</th>
-                      <th class="right" style="width:110px;">Cantidad</th>
-                      <th class="right" style="width:150px;">Subtotal (Bs)</th>
-                    </tr>
-                  </thead>
-                  <tbody>${rows}</tbody>
-                  <tfoot>
-                    <tr>
-                      <td colspan="2" class="right"><strong>Total</strong></td>
-                      <td class="right"><strong>${fmtMoney(summary.total)}</strong></td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-
-              <div class="pObs">
-                <div class="pObsTitle">Observaciones</div>
-                <div class="pObsBody">${esc(notes)}</div>
-              </div>
-            </div>
-
-            <div class="btnRow">
-              <button class="ok" data-act="dayExport" data-id="${esc(t.id)}">Exportar</button>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      grid.querySelectorAll("button[data-act='dayExport']").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const tripId = btn.getAttribute("data-id");
-          const store2 = loadStore();
-          const trip = findTrip(store2, iso, tripId);
-          if(!trip){ toast("No se encontró el recorrido."); return; }
-          printTrip(iso, trip);
-        });
-      });
+      $("exportDayPdfBtn").disabled = true;
+      return;
     }
 
-    overlay.classList.add("open");
-    daySummaryModal.classList.add("open");
-    daySummaryModal.setAttribute("aria-hidden","false");
-    newTripModal.classList.remove("open");
-    summaryModal.classList.remove("open");
-    newTripModal.setAttribute("aria-hidden","true");
-    summaryModal.setAttribute("aria-hidden","true");
+    empty.style.display = "none";
+
+    const morningTrips = trips.filter(t => t.shift === "manana");
+    const afternoonTrips = trips.filter(t => t.shift === "tarde");
+
+    grid.innerHTML = [
+      buildDayShiftBlock("Mañana", morningTrips),
+      buildDayShiftBlock("Tarde", afternoonTrips)
+    ].join("");
+
+    $("exportDayPdfBtn").disabled = false;
   }
 
-  $("openDaySummaryBtn").addEventListener("click", openDaySummary);
+  function buildDayPrintHTML(dateIso, trips){
+    const morningTrips = trips.filter(t => t.shift === "manana");
+    const afternoonTrips = trips.filter(t => t.shift === "tarde");
+    const dateLabel = esc(formatDateDDMMYY(dateIso));
+
+    const buildShiftSection = (shiftLabel, shiftTrips) => {
+      const summary = buildSummaryFromTrips(shiftTrips);
+      const rows = summary.rows.length
+        ? summary.rows.map(r => `
+            <tr>
+              <td style="padding:8px;border:1px solid #ddd;">
+                <strong>${esc(r.label)}</strong>
+                <div style="font-size:11px;color:#444;margin-top:2px;">${esc(catLabel(r.category))}</div>
+              </td>
+              <td style="padding:8px;border:1px solid #ddd;text-align:right;"><strong>${r.qty}</strong></td>
+              <td style="padding:8px;border:1px solid #ddd;text-align:right;"><strong>${fmtMoney(r.subtotal)}</strong></td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="3" style="padding:8px;border:1px solid #ddd;color:#444;">Sin ítems registrados.</td></tr>`;
+
+      return `
+        <div class="block">
+          <h2>Turno: ${esc(shiftLabel)}</h2>
+          <div class="meta">
+            <div><strong>Recorridos:</strong> ${shiftTrips.length}</div>
+            <div><strong>Visitantes:</strong> ${summary.qtyVisitors}</div>
+            <div><strong>Total:</strong> ${fmtMoney(summary.total)}</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Ítem</th>
+                <th style="text-align:right;width:120px;">Cantidad</th>
+                <th style="text-align:right;width:160px;">Subtotal (Bs)</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" style="text-align:right;"><strong>Total</strong></td>
+                <td style="text-align:right;"><strong>${fmtMoney(summary.total)}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      `;
+    };
+
+    return `
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Resumen del día ${dateLabel}</title>
+<style>
+  body{font-family: Arial, Helvetica, sans-serif; margin:24px; color:#111;}
+  h1{margin:0 0 6px; font-size:18px;}
+  h2{margin:0 0 6px; font-size:14px;}
+  .meta{font-size:12px; color:#444; margin-bottom:10px; line-height:1.45;}
+  .block{margin-top:16px;}
+  table{width:100%; border-collapse:collapse; font-size:12px;}
+  th, td{border:1px solid #ddd; padding:8px; vertical-align:top;}
+  th{background:#f4f6f8; text-align:left;}
+  @media print{ body{margin:14mm;} }
+</style>
+</head>
+<body>
+  <h1>Resumen del día — ${dateLabel}</h1>
+  <div class="meta">Totales diferenciados por turno.</div>
+  ${buildShiftSection("Mañana", morningTrips)}
+  ${buildShiftSection("Tarde", afternoonTrips)}
+
+  <script>
+    window.addEventListener("load", () => { try { window.focus(); } catch(e) {} window.print(); });
+  </scr` + `ipt>
+</body>
+</html>`;
+  }
+
+  function printDaySummary(dateIso, trips){
+    const html = buildDayPrintHTML(dateIso, trips);
+    const w = window.open("", "_blank");
+    if(!w){ toast("No se pudo abrir la impresión (bloqueo de popups)."); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+  }
 
   // ===== Listado diario (mini tarjetas) =====
   $("listTodayBtn").addEventListener("click", ()=>{
@@ -1787,6 +1865,20 @@
     toast("Fecha actual seleccionada.");
   });
   $("listDate").addEventListener("change", renderDailyList);
+
+  $("exportDayPdfBtn").addEventListener("click", ()=>{
+    const iso = String($("listDate").value || "").trim();
+    if(!iso){ toast("Selecciona una fecha."); return; }
+
+    const store = loadStore();
+    const tripsRaw = store.days?.[iso]?.trips || [];
+    const trips = Array.isArray(tripsRaw) ? tripsRaw.slice() : [];
+    if(trips.length === 0){
+      toast("No hay recorridos para exportar.");
+      return;
+    }
+    printDaySummary(iso, trips);
+  });
 
   function renderDailyList(){
     const iso = String($("listDate").value || "").trim();
@@ -1798,6 +1890,7 @@
     if(!iso){
       host.innerHTML = `<div class="note">Selecciona una fecha.</div>`;
       $("storageHint").textContent = `Registros guardados: ${Object.keys(store.days).length}.`;
+      renderDaySummaryInline();
       return;
     }
 
@@ -1817,6 +1910,7 @@
     if(trips.length === 0){
       host.innerHTML = `<div class="note">No hay recorridos para este día.</div>`;
       $("storageHint").textContent = `Registros guardados (días): ${Object.keys(store.days).length}.`;
+      renderDaySummaryInline();
       return;
     }
 
@@ -1847,6 +1941,7 @@
         const id = btn.getAttribute("data-id");
         setActiveTrip(iso, id);
         toast("Recorrido cargado para edición.");
+        setActiveTab("new");
         renderDaily();
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
@@ -1871,6 +1966,7 @@
     });
 
     $("storageHint").textContent = `Día ${iso}: ${trips.length} recorridos. Registros guardados (días): ${Object.keys(store.days).length}.`;
+    renderDaySummaryInline();
   }
 
   // ===== Daily render principal =====
@@ -1887,11 +1983,13 @@
       $("activeTripTotal").textContent = fmtMoney(c.incomeTotal);
       $("tripNotes").value = String(trip.notes || "");
       renderActiveTripItems(trip);
+      renderTripSummaryInline(trip);
     } else {
       $("activeTripVisitors").textContent = "0";
       $("activeTripTotal").textContent = "Bs 0";
       $("tripNotes").value = "";
       $("activeTripItems").innerHTML = "";
+      renderTripSummaryInline(null);
     }
 
     renderDailyList();
@@ -2356,6 +2454,10 @@
     const w = window.open("", "_blank");
     if(!w){ toast("No se pudo abrir el reporte (bloqueo de popups)."); return; }
     w.document.open(); w.document.write(html); w.document.close();
+  });
+
+  $("openTariffBtn").addEventListener("click", ()=>{
+    setActiveTab("tariff");
   });
 
   $("month").addEventListener("change", renderMonthly);
