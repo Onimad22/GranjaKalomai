@@ -907,14 +907,47 @@
 (() => {
   "use strict";
 
-  // ===== PWA bootstrap (sin UI) =====
+  // ===== PWA bootstrap (actualizaciones) =====
   (function pwaInit(){
     const isSecure = location.protocol === "https:" || location.hostname === "localhost";
     const isFile = location.protocol === "file:";
     if (isFile || !isSecure) return;
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js").catch(()=>{});
-    }
+    if (!("serviceWorker" in navigator)) return;
+
+    const swUrl = "./sw.js";
+    let hadController = !!navigator.serviceWorker.controller;
+
+    navigator.serviceWorker.register(swUrl).then((registration) => {
+      const askForUpdate = () => {
+        const waiting = registration.waiting;
+        if (!waiting) return;
+        const ok = window.confirm("Hay una nueva versión disponible. ¿Deseas actualizar ahora?");
+        if (!ok) return;
+        waiting.postMessage({ type: "SKIP_WAITING" });
+      };
+
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        askForUpdate();
+      }
+
+      registration.addEventListener("updatefound", () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            askForUpdate();
+          }
+        });
+      });
+
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!hadController) {
+          hadController = true;
+          return;
+        }
+        window.location.reload();
+      });
+    }).catch(()=>{});
   })();
 
   // ===== Keys =====
