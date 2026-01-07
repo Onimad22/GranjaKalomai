@@ -1,7 +1,7 @@
 /* sw.js - Kalomai PWA */
 "use strict";
 
-const CACHE_NAME = "kalomai-pwa-v1";
+const CACHE_NAME = "kalomai-pwa-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -26,6 +26,12 @@ self.addEventListener("activate", (event) => {
     );
     await self.clients.claim();
   })());
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
