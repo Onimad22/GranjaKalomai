@@ -1,0 +1,2365 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Registro — Granja (PWA)</title>
+
+  <!-- Manifest PWA -->
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#101a2b;
+      --card2:#0f1a2d;
+      --muted:#9aa6bd;
+      --text:#eaf0ff;
+      --text2:#d7e0ff;
+      --border:rgba(255,255,255,.10);
+      --border2:rgba(255,255,255,.14);
+      --accent:#6ee7ff;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius2:14px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: radial-gradient(900px 500px at 30% -10%, rgba(110,231,255,.12), transparent 60%),
+                  radial-gradient(700px 400px at 90% 0%, rgba(167,139,250,.10), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    a{ color:inherit; }
+    button, input, select, textarea{ font: inherit; color:inherit; }
+    input, select, textarea{
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(110,231,255,.45);
+      box-shadow: 0 0 0 3px rgba(110,231,255,.12);
+    }
+    textarea{ width:100%; min-height:84px; resize:vertical; }
+
+    .wrap{
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 18px 14px 90px;
+    }
+
+    .safePad{
+      padding-bottom: max(90px, env(safe-area-inset-bottom));
+    }
+
+    header{
+      position: sticky;
+      top:0;
+      z-index: 20;
+      background: rgba(11,18,32,.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+
+    .hdInner{
+      max-width: 1040px;
+      margin:0 auto;
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 180px;
+    }
+    .logo{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(110,231,255,.95), rgba(167,139,250,.85));
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      color:#0b1220;
+    }
+    .brand h1{
+      margin:0;
+      font-size: 14px;
+      line-height: 1.1;
+      letter-spacing: .2px;
+      color: var(--text2);
+    }
+    .brand .sub{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      padding: 6px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.15);
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tabbtn{
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 9px 12px;
+      border-radius: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select:none;
+      transition: .15s ease;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight: 650;
+      letter-spacing: .2px;
+    }
+    .tabbtn:hover{
+      background: rgba(255,255,255,.05);
+      color: var(--text2);
+    }
+    .tabbtn.active{
+      background: rgba(110,231,255,.10);
+      color: var(--text);
+      border-color: rgba(110,231,255,.20);
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+    }
+
+    .panel{
+      display:none;
+      margin-top: 16px;
+    }
+    .panel.active{ display:block; }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .card .hd h2{
+      margin:0;
+      font-size: 15px;
+      letter-spacing: .2px;
+      color: var(--text2);
+    }
+    .card .bd{ padding: 14px 16px; }
+
+    .badge{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color: var(--muted);
+      font-size: 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 7px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .dot{
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(110,231,255,.12);
+    }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 12px;
+    }
+    button{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor:pointer;
+      transition: .15s ease;
+      user-select:none;
+      font-weight: 700;
+      letter-spacing: .15px;
+    }
+    button:hover{ background: rgba(255,255,255,.09); }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .primary{
+      background: rgba(110,231,255,.16);
+      border-color: rgba(110,231,255,.22);
+    }
+    .primary:hover{ background: rgba(110,231,255,.22); }
+    .ok{
+      background: rgba(52,211,153,.16);
+      border-color: rgba(52,211,153,.25);
+    }
+    .ok:hover{ background: rgba(52,211,153,.22); }
+    .danger{
+      background: rgba(251,113,133,.14);
+      border-color: rgba(251,113,133,.24);
+    }
+    .danger:hover{ background: rgba(251,113,133,.20); }
+    .ghost{
+      background: transparent;
+      border-color: rgba(255,255,255,.10);
+      color: var(--text2);
+    }
+    .ghost:hover{ background: rgba(255,255,255,.06); }
+
+    .full{ width: 100%; }
+
+    label{
+      display:block;
+      color: var(--muted);
+      font-size: 12px;
+      margin: 0 0 6px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1.2fr .7fr .7fr auto;
+      gap: 10px;
+      align-items:end;
+    }
+
+    @media (max-width: 740px){
+      .grid2{ grid-template-columns: 1fr; }
+      .grid3{ grid-template-columns: 1fr 1fr; }
+      .grid3 > div:nth-child(4){ grid-column: 1 / -1; }
+      .brand{ min-width: auto; }
+      .tabs{ justify-content: flex-start; }
+    }
+
+    .note{
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px dashed rgba(255,255,255,.18);
+      border-radius: 14px;
+      color: var(--text2);
+      background: rgba(255,255,255,.03);
+      line-height: 1.35;
+    }
+    .muted2{ color: var(--muted); font-size: 12px; }
+
+    .ticket{
+      margin-top: 12px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 16px;
+      overflow:hidden;
+      background: rgba(255,255,255,.03);
+    }
+    .ticketHd{
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.03);
+    }
+    .ticketHd .title{
+      font-weight: 800;
+      letter-spacing: .2px;
+      color: var(--text2);
+    }
+    .ticketBd{
+      padding: 12px;
+    }
+
+    .itemsWrap{
+      margin-top: 6px;
+      display:flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .itemRow{
+      display:grid;
+      grid-template-columns: 1fr 90px 120px 90px;
+      gap: 10px;
+      align-items:center;
+      padding: 10px 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      background: rgba(0,0,0,.10);
+    }
+    .itemRow .right{ text-align:right; }
+    .itemsHeader{
+      display:grid;
+      grid-template-columns: 1fr 90px 120px 90px;
+      gap: 10px;
+      padding: 0 4px 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tripCards{
+      margin-top: 12px;
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tripCard{
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
+    }
+    .tripTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 12px;
+    }
+    .tripTitle{
+      font-weight: 900;
+      letter-spacing: .2px;
+      color: var(--text2);
+    }
+    .tripSub{
+      margin-top: 6px;
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items:center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .pill{
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.12);
+      color: var(--text2);
+    }
+    .mutedPill{
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+    .tripBtns{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .tripNotes{
+      padding: 10px 12px 12px;
+      border-top: 1px solid rgba(255,255,255,.07);
+      color: var(--text2);
+      opacity: .95;
+      line-height: 1.35;
+    }
+
+    /* Monthly */
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 820px){
+      .kpis{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    .kpi{
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
+      padding: 12px;
+    }
+    .kpi .val{
+      font-size: 20px;
+      font-weight: 900;
+      margin-top: 4px;
+      color: var(--text2);
+    }
+
+    .tableWrap{
+      margin-top: 12px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      overflow:auto;
+      background: rgba(0,0,0,.08);
+      max-height: 420px;
+    }
+
+    table{
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+    th, td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      vertical-align: top;
+      font-size: 13px;
+    }
+    th{
+      position: sticky;
+      top:0;
+      z-index: 1;
+      text-align:left;
+      background: rgba(15,26,45,.95);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .2px;
+    }
+    td.right, th.right{ text-align:right; }
+
+    /* Modal */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      z-index: 80;
+    }
+    .overlay.open{ display:block; }
+
+    .modal{
+      position: fixed;
+      inset: 0;
+      display:none;
+      z-index: 90;
+      overflow:auto;
+      padding: 18px 14px;
+    }
+    .modal.open{ display:block; }
+
+    .modalCard{
+      max-width: 720px;
+      margin: 0 auto;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(16,26,43,.95), rgba(16,26,43,.86));
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modalHd{
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .modalHd h3{
+      margin:0;
+      font-size: 14px;
+      letter-spacing: .2px;
+      color: var(--text2);
+    }
+    .modalBd{ padding: 14px; }
+    .modalFt{
+      padding: 12px 14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap: wrap;
+    }
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(15,26,45,.95);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 10px 12px;
+      border-radius: 999px;
+      color: var(--text2);
+      font-weight: 700;
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
+      z-index: 120;
+      display:none;
+    }
+    .toast.show{ display:block; }
+
+    /* Print-like summary block */
+    .printLike{
+      background: #ffffff;
+      color: #111827;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      overflow:hidden;
+    }
+    .printLike .pHd{
+      padding: 12px 14px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+    .printLike h1{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+    .printLike .pMeta{
+      padding: 12px 14px;
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 8px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 13px;
+    }
+    .printLike .pMeta strong{ color:#111827; }
+    .printLike .pTableWrap{
+      padding: 12px 14px;
+    }
+    .printLike table{
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 0;
+      color:#111827;
+    }
+    .printLike th, .printLike td{
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px;
+      font-size: 13px;
+      vertical-align: top;
+    }
+    .printLike th{
+      background: #f9fafb;
+      color: #374151;
+      font-size: 12px;
+      position: static;
+    }
+    .printLike td.right, .printLike th.right{ text-align:right; }
+    .printLike tfoot td{ border-bottom:none; padding-top: 12px; }
+    .printLike .pObs{
+      padding: 12px 14px;
+      border-top: 1px solid #e5e7eb;
+      background: #fafafa;
+      font-size: 13px;
+    }
+    .printLike .pObsTitle{
+      font-weight: 800;
+      color:#374151;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .printLike .pObsBody{
+      color:#111827;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="hdInner">
+    <div class="brand">
+      <div class="logo">K</div>
+      <div>
+        <h1>Control de recorrido</h1>
+        <div class="sub">Granja Kalomai · PWA</div>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Secciones">
+      <button class="tabbtn" id="tabNew" role="tab" aria-selected="false">Nuevo</button>
+      <button class="tabbtn active" id="tabDaily" role="tab" aria-selected="true">Diario</button>
+      <button class="tabbtn" id="tabMonthly" role="tab" aria-selected="false">Mensual</button>
+      <button class="tabbtn" id="tabTariff" role="tab" aria-selected="false">Tarifas</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap safePad">
+
+  <!-- PANEL: NEW -->
+  <section class="panel" id="panelNew" role="tabpanel" aria-labelledby="tabNew">
+    <div class="card">
+      <div class="hd">
+        <h2>Nuevo recorrido</h2>
+        <div class="badge" title="Crea un nuevo recorrido o edita el recorrido activo">
+          <span class="dot" style="background: var(--accent2)"></span>
+          <span>Edición</span>
+        </div>
+      </div>
+
+      <div class="bd">
+        <div class="btns" id="newTripTopArea" style="margin-top:0">
+          <button class="primary full" id="openNewTripModalBtn">Crear nuevo recorrido</button>
+        </div>
+
+        <div id="activeTripHeader" style="display:none; margin-top:12px;">
+          <div class="note" style="margin-top:0">
+            <span id="activeTripInfo"></span>
+            <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <span class="badge" title="Suma de cantidades de ítems con categoría 'Visitante'">
+                <span class="dot" style="background: var(--ok)"></span>
+                <span>Visitantes: <strong id="activeTripVisitors">0</strong></span>
+              </span>
+
+              <span class="badge" title="Total del recorrido (visitantes + extras)">
+                <span class="dot" style="background: var(--accent)"></span>
+                <span>Total: <strong id="activeTripTotal">Bs 0</strong></span>
+              </span>
+
+              <button class="ghost" id="scrollTripSummaryBtn" title="Ir al resumen consolidado del recorrido">Resumen</button>
+              <button class="ghost" id="closeActiveTripBtn" title="Cerrar el recorrido en edición (no borra nada)">Cerrar edición</button>
+            </div>
+          </div>
+
+          <div class="ticket" style="margin-top:12px;">
+            <div class="ticketBd">
+              <label>Observaciones</label>
+              <textarea id="tripNotes" placeholder="Ej: Grupo escolar, lluvia, se retrasó el turno, etc."></textarea>
+            </div>
+          </div>
+
+          <div class="ticket" style="margin-top:12px;">
+            <div class="ticketHd">
+              <div class="title">Agregar ítem</div>
+            </div>
+
+            <div class="ticketBd">
+              <div class="grid3">
+                <div>
+                  <label>Ítem</label>
+                  <select id="itemType"></select>
+                </div>
+                <div>
+                  <label>Cantidad</label>
+                  <input id="itemQty" type="number" min="0" step="1" value="0" />
+                </div>
+                <div>
+                  <label>Precio unitario (Bs)</label>
+                  <input id="itemPrice" type="number" min="0" step="0.01" value="0" />
+                </div>
+                <div>
+                  <button class="ok" id="addItemBtn">Agregar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ticket">
+            <div class="ticketHd">
+              <div class="title">Ítems del recorrido</div>
+            </div>
+            <div class="ticketBd">
+              <div class="itemsWrap">
+                <div class="itemsHeader">
+                  <div>Ítem</div>
+                  <div class="right">Cantidad</div>
+                  <div class="right">Total (Bs)</div>
+                  <div class="right">Acción</div>
+                </div>
+                <div id="activeTripItems"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen del recorrido (inline) -->
+          <div class="ticket" id="tripSummarySection" style="margin-top:12px;">
+            <div class="ticketHd">
+              <div class="title">Resumen del recorrido</div>
+              <button class="ok" id="exportTripInlineBtn" title="Imprimir / Guardar como PDF">Exportar</button>
+            </div>
+
+            <div class="ticketBd">
+              <div class="printLike" id="summaryPrintLike">
+                <div class="pHd">
+                  <h1>Resumen de recorrido</h1>
+                </div>
+
+                <div class="pMeta">
+                  <div><strong>Fecha:</strong> <span id="summaryDate">—</span></div>
+                  <div><strong>Turno:</strong> <span id="summaryShift">—</span></div>
+                  <div><strong>Hora:</strong> <span id="summaryHour">—</span></div>
+                  <div><strong>Visitantes:</strong> <span id="summaryVisitors">0</span></div>
+                  <div><strong>Total:</strong> <span id="summaryTotalTop">Bs 0</span></div>
+                </div>
+
+                <div class="pTableWrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Ítem</th>
+                        <th class="right" style="width:110px;">Cantidad</th>
+                        <th class="right" style="width:150px;">Subtotal (Bs)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="summaryTbody"></tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="2" class="right"><strong>Total</strong></td>
+                        <td class="right"><strong id="summaryTotalFoot">Bs 0</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                <div class="pObs">
+                  <div class="pObsTitle">Observaciones</div>
+                  <div class="pObsBody" id="summaryNotes">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="note" style="margin-top:12px">
+          Tip: Desde <strong>Diario</strong> puedes seleccionar un recorrido para editarlo aquí.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANEL: DAILY -->
+  <section class="panel active" id="panelDaily" role="tabpanel" aria-labelledby="tabDaily">
+    <div class="card">
+      <div class="hd">
+        <h2>Diario</h2>
+        <div class="badge" title="Listado de recorridos y resumen del día">
+          <span class="dot" style="background: var(--accent)"></span>
+          <span>Operación</span>
+        </div>
+      </div>
+
+      <div class="bd">
+        <!-- Fecha a listar -->
+        <div style="margin-top:0;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+          <div style="min-width:160px;max-width:190px;flex:0 0 auto;">
+            <label>Fecha a listar</label>
+            <input id="listDate" type="date" style="padding:10px 10px;min-height:40px;" />
+          </div>
+          <div style="flex:0 0 auto; display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="ghost" id="listTodayBtn" style="min-height:40px;padding:10px 12px;border-radius:12px;">Hoy</button>
+          </div>
+        </div>
+
+        <div class="tripCards" id="tripCards"></div>
+
+        <!-- Resumen del día (inline) -->
+        <div class="ticket" id="daySummarySection" style="margin-top:12px;">
+          <div class="ticketHd">
+            <div class="title">Resumen del día</div>
+            <button class="ok" id="exportDayBtn" title="Imprimir / Guardar como PDF">Exportar</button>
+          </div>
+
+          <div class="ticketBd">
+            <div class="note" style="margin-top:0">
+              Fecha: <strong id="dayInlineDateLabel">—</strong>
+            </div>
+
+            <div class="kpis" id="dayInlineKpis"></div>
+
+            <div class="tableWrap" style="max-height:420px; min-width:0;">
+              <table style="min-width:640px;">
+                <thead>
+                  <tr>
+                    <th>Extra</th>
+                    <th class="right" style="width:130px;">Cantidad</th>
+                    <th class="right" style="width:160px;">Ingresos (Bs)</th>
+                  </tr>
+                </thead>
+                <tbody id="dayExtrasTbody"></tbody>
+              </table>
+            </div>
+
+            <div class="note" id="daySummaryEmpty" style="display:none;">No hay recorridos para esta fecha.</div>
+          </div>
+        </div>
+
+        <div class="note" id="storageHint"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANEL: MONTHLY -->
+  <section class="panel" id="panelMonthly" role="tabpanel" aria-labelledby="tabMonthly">
+    <div class="card">
+      <div class="hd">
+        <h2>Resumen mensual</h2>
+        <div class="badge" title="Resumen del mes por turnos y totales">
+          <span class="dot" style="background: var(--accent2)"></span>
+          <span id="monthBadge">—</span>
+        </div>
+      </div>
+      <div class="bd">
+        <div class="grid2">
+          <div>
+            <label>Mes</label>
+            <input id="month" type="month" />
+          </div>
+          <div>
+            <label>Métrica del gráfico</label>
+            <select id="chartMetric"></select>
+          </div>
+        </div>
+
+        <div class="kpis" id="kpis"></div>
+
+        <div class="ticket" style="margin-top:12px;">
+          <div class="ticketHd">
+            <div class="title">Gráfico</div>
+            <div class="muted2">Diario · Serie seleccionada</div>
+          </div>
+          <div class="ticketBd">
+            <canvas id="chart" height="120"></canvas>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:120px;">Fecha</th>
+                <th class="right" style="width:110px;">Rec. Mañana</th>
+                <th class="right" style="width:110px;">Rec. Tarde</th>
+                <th class="right" style="width:120px;">Rec. Total</th>
+                <th class="right" style="width:120px;">Vis. Mañana</th>
+                <th class="right" style="width:120px;">Vis. Tarde</th>
+                <th class="right" style="width:120px;">Vis. Total</th>
+                <th class="right" style="width:140px;">Ingresos (Bs)</th>
+                <th class="right" style="width:140px;">Extras (Bs)</th>
+                <th style="width:140px;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="monthTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="btns" style="margin-top:12px;">
+          <button class="ghost" id="exportJsonBtn">Exportar datos (JSON)</button>
+          <button class="ghost" id="importJsonBtn">Importar datos (JSON)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANEL: TARIFARIO -->
+  <section class="panel" id="panelTariff" role="tabpanel" aria-labelledby="tabTariff">
+    <div class="card">
+      <div class="hd">
+        <h2>Tarifario</h2>
+        <div class="badge" title="Gestiona tipos de ítems y precios por defecto">
+          <span class="dot" style="background: var(--warn)"></span>
+          <span>Catálogo</span>
+        </div>
+      </div>
+      <div class="bd">
+        <div class="grid2">
+          <div>
+            <label>Nombre del ítem</label>
+            <input id="catLabel" placeholder="Ej: Adulto, Niño, Alimento, Paseo pony…" />
+          </div>
+          <div>
+            <label>Categoría</label>
+            <select id="catCategory">
+              <option value="visitor">Visitante</option>
+              <option value="extra">Extra</option>
+            </select>
+          </div>
+          <div>
+            <label>Precio por defecto (Bs)</label>
+            <input id="catPrice" type="number" min="0" step="0.01" value="0" />
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-end;">
+            <button class="ok full" id="addCatalogBtn">Agregar / Actualizar</button>
+          </div>
+        </div>
+
+        <div class="note" style="margin-top:12px">
+          Importante: Este catálogo se guarda en el dispositivo. Si deshabilitas un ítem, no se elimina el histórico: solo deja de aparecer al agregar nuevos ítems.
+        </div>
+
+        <div class="tableWrap" style="margin-top:12px;">
+          <table style="min-width:720px;">
+            <thead>
+              <tr>
+                <th>Ítem</th>
+                <th style="width:120px;">Categoría</th>
+                <th class="right" style="width:140px;">Precio (Bs)</th>
+                <th class="right" style="width:110px;">Estado</th>
+                <th style="width:220px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="catalogTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="btns" style="margin-top:12px;">
+          <button class="ghost" id="resetCatalogBtn">Restaurar tarifario base</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Modales -->
+<div class="overlay" id="modalOverlay"></div>
+
+<!-- Modal: crear nuevo recorrido -->
+<div class="modal" id="newTripModal" aria-hidden="true">
+  <div class="modalCard">
+    <div class="modalHd">
+      <h3>Nuevo recorrido</h3>
+      <button class="ghost" id="closeModalBtn" title="Cerrar">Cerrar</button>
+    </div>
+    <div class="modalBd">
+      <div class="grid2">
+        <div>
+          <label>Fecha</label>
+          <input id="newTripDate" type="date" />
+        </div>
+        <div>
+          <label>Turno</label>
+          <select id="newTripShift">
+            <option value="manana">Mañana</option>
+            <option value="tarde">Tarde</option>
+          </select>
+        </div>
+        <div>
+          <label>Hora (opcional)</label>
+          <input id="newTripHour" placeholder="Ej: 10:30" />
+        </div>
+      </div>
+      <div class="note" style="margin-top:12px">
+        Luego podrás agregar ítems (visitantes y extras), observaciones, y exportar el resumen.
+      </div>
+    </div>
+    <div class="modalFt">
+      <button class="ghost" id="cancelModalBtn">Cancelar</button>
+      <button class="ok" id="acceptNewTripBtn">Crear</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  // ===== Helpers =====
+  const $ = (id) => document.getElementById(id);
+
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"']/g, (m)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  function toast(msg){
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(()=>t.classList.remove("show"), 2400);
+  }
+
+  function debounce(fn, ms){
+    let tm = null;
+    return (...args)=>{
+      clearTimeout(tm);
+      tm = setTimeout(()=>fn(...args), ms);
+    };
+  }
+
+  function uuid(){
+    return (crypto?.randomUUID?.() || ("id-"+Math.random().toString(16).slice(2)+Date.now().toString(16)));
+  }
+
+  function toISODate(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function formatDateDDMMYY(iso){
+    const [y,m,d] = String(iso).split("-");
+    if(!y||!m||!d) return iso;
+    return `${d}/${m}/${y}`;
+  }
+
+  function fmtMoney(n){
+    const x = Number(n || 0);
+    const s = x.toFixed(2);
+    return `Bs ${s}`;
+  }
+
+  function fmtBytes(n){
+    const x = Number(n||0);
+    if(x < 1024) return `${x} B`;
+    if(x < 1024*1024) return `${(x/1024).toFixed(1)} KB`;
+    return `${(x/1024/1024).toFixed(2)} MB`;
+  }
+
+  function catLabel(cat){
+    return cat === "visitor" ? "Visitante" : "Extra";
+  }
+
+  // ===== Storage =====
+  const STORAGE_KEY = "kalomai_trips_v1";
+  const CATALOG_KEY = "kalomai_catalog_v1";
+
+  function loadStore(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return { days: {} };
+      const obj = JSON.parse(raw);
+      if(!obj.days) obj.days = {};
+      return obj;
+    }catch{
+      return { days: {} };
+    }
+  }
+
+  function saveStore(store){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  }
+
+  function ensureDay(store, iso){
+    if(!store.days) store.days = {};
+    if(!store.days[iso]) store.days[iso] = { trips: [] };
+    if(!Array.isArray(store.days[iso].trips)) store.days[iso].trips = [];
+  }
+
+  function findTrip(store, iso, id){
+    const day = store.days?.[iso];
+    if(!day?.trips) return null;
+    return day.trips.find(t=>t.id===id) || null;
+  }
+
+  // ===== Catalog =====
+  const DEFAULT_CATALOG = [
+    { id:"adulto", label:"Adulto", category:"visitor", defaultPrice:10, enabled:true },
+    { id:"nino", label:"Niño", category:"visitor", defaultPrice:5, enabled:true },
+    { id:"adulto_mayor", label:"Adulto mayor", category:"visitor", defaultPrice:2, enabled:true },
+    { id:"alimento", label:"Alimento para animales", category:"extra", defaultPrice:10, enabled:true },
+    { id:"paseo_pony", label:"Paseo pony", category:"extra", defaultPrice:10, enabled:true }
+  ];
+
+  function loadCatalog(){
+    try{
+      const raw = localStorage.getItem(CATALOG_KEY);
+      if(!raw) return DEFAULT_CATALOG.slice();
+      const list = JSON.parse(raw);
+      if(!Array.isArray(list)) return DEFAULT_CATALOG.slice();
+      return list;
+    }catch{
+      return DEFAULT_CATALOG.slice();
+    }
+  }
+
+  function saveCatalog(list){
+    localStorage.setItem(CATALOG_KEY, JSON.stringify(list));
+  }
+
+  function enabledCatalog(){
+    return loadCatalog().filter(x=>x.enabled !== false);
+  }
+
+  function refreshCatalogCache(){
+    // No-op placeholder for future enhancements
+  }
+
+  // ===== Calc =====
+  function calcTrip(tr){
+    const items = tr.items || [];
+    let qtyVisitors = 0;
+    let incomeTotal = 0;
+
+    for(const it of items){
+      const qty = Number(it.qty || 0);
+      const price = Number(it.unitPrice || 0);
+      const sub = qty * price;
+
+      incomeTotal += sub;
+      if(it.category === "visitor"){
+        qtyVisitors += qty;
+      }
+    }
+
+    return { qtyVisitors, incomeTotal };
+  }
+
+  // ===== Tabs =====
+  function setActiveTab(tab){
+    const newBtn = $("tabNew");
+    const dailyBtn = $("tabDaily");
+    const monthBtn = $("tabMonthly");
+    const tariffBtn = $("tabTariff");
+
+    const newPanel = $("panelNew");
+    const dailyPanel = $("panelDaily");
+    const monthPanel = $("panelMonthly");
+    const tariffPanel = $("panelTariff");
+
+    const newActive = tab === "new";
+    const dailyActive = tab === "daily";
+    const monthActive = tab === "monthly";
+    const tariffActive = tab === "tariff";
+
+    newBtn.classList.toggle("active", newActive);
+    dailyBtn.classList.toggle("active", dailyActive);
+    monthBtn.classList.toggle("active", monthActive);
+    tariffBtn.classList.toggle("active", tariffActive);
+
+    newBtn.setAttribute("aria-selected", newActive ? "true" : "false");
+    dailyBtn.setAttribute("aria-selected", dailyActive ? "true" : "false");
+    monthBtn.setAttribute("aria-selected", monthActive ? "true" : "false");
+    tariffBtn.setAttribute("aria-selected", tariffActive ? "true" : "false");
+
+    newPanel.classList.toggle("active", newActive);
+    dailyPanel.classList.toggle("active", dailyActive);
+    monthPanel.classList.toggle("active", monthActive);
+    tariffPanel.classList.toggle("active", tariffActive);
+
+    if(newActive){
+      renderNew();
+      if(!getActiveTrip()) openNewTripModal();
+    }
+    if(dailyActive) renderDaily();
+    if(monthActive) renderMonthly();
+    if(tariffActive) renderTariff();
+  }
+
+  $("tabNew").addEventListener("click", ()=> setActiveTab("new"));
+  $("tabDaily").addEventListener("click", ()=> setActiveTab("daily"));
+  $("tabMonthly").addEventListener("click", ()=> setActiveTab("monthly"));
+  $("tabTariff").addEventListener("click", ()=> setActiveTab("tariff"));
+
+  // ===== Estado de recorrido activo =====
+  let activeTripDate = null;
+  let activeTripId = null;
+
+  function setActiveTrip(date, id){
+    activeTripDate = date;
+    activeTripId = id;
+    localStorage.setItem("kalomai_active_trip_date", activeTripDate || "");
+    localStorage.setItem("kalomai_active_trip_id", activeTripId || "");
+  }
+
+  function clearActiveTrip(){
+    activeTripDate = null;
+    activeTripId = null;
+    localStorage.setItem("kalomai_active_trip_date", "");
+    localStorage.setItem("kalomai_active_trip_id", "");
+  }
+
+  function loadActiveTripFromStorage(){
+    const d = String(localStorage.getItem("kalomai_active_trip_date") || "").trim();
+    const id = String(localStorage.getItem("kalomai_active_trip_id") || "").trim();
+    if(d && id){
+      const store = loadStore();
+      const t = findTrip(store, d, id);
+      if(t){ activeTripDate = d; activeTripId = id; return; }
+    }
+    activeTripDate = null;
+    activeTripId = null;
+  }
+
+  function getActiveTrip(){
+    if(!activeTripDate || !activeTripId) return null;
+    const store = loadStore();
+    return findTrip(store, activeTripDate, activeTripId);
+  }
+
+  // ===== Modales =====
+  const overlay = $("modalOverlay");
+  const newTripModal = $("newTripModal");
+
+  function openNewTripModal(){
+    overlay.classList.add("open");
+    newTripModal.classList.add("open");
+    newTripModal.setAttribute("aria-hidden","false");
+
+    const today = toISODate(new Date());
+    const baseDate = String(($("listDate")?.value) || "").trim() || today;
+
+    $("newTripDate").value = baseDate;
+    $("newTripShift").value = "manana";
+    $("newTripHour").value = "";
+    $("newTripHour").focus();
+  }
+
+  function closeAllModals(){
+    overlay.classList.remove("open");
+    newTripModal.classList.remove("open");
+    newTripModal.setAttribute("aria-hidden","true");
+  }
+
+  if($("openNewTripModalBtn")) $("openNewTripModalBtn").addEventListener("click", openNewTripModal);
+  $("closeModalBtn").addEventListener("click", closeAllModals);
+  $("cancelModalBtn").addEventListener("click", closeAllModals);
+  overlay.addEventListener("click", closeAllModals);
+
+  $("acceptNewTripBtn").addEventListener("click", ()=>{
+    const date = String($("newTripDate").value || "").trim();
+    const shift = String($("newTripShift").value || "").trim();
+    const hour = String($("newTripHour").value || "").trim();
+
+    if(!date){ toast("Selecciona una fecha."); return; }
+    if(shift !== "manana" && shift !== "tarde"){ toast("Selecciona un turno."); return; }
+
+    const store = loadStore();
+    ensureDay(store, date);
+
+    const trip = {
+      id: uuid(),
+      shift,
+      tripHour: hour,
+      notes: "",
+      items: []
+    };
+
+    store.days[date].trips.push(trip);
+    saveStore(store);
+
+    setActiveTrip(date, trip.id);
+
+    // También fija la fecha de listado para que el Diario muestre el mismo día.
+    if($("listDate")) $("listDate").value = date;
+
+    closeAllModals();
+    toast("Recorrido creado.");
+    renderNew();
+    renderDaily();
+    renderMonthly();
+  });
+
+  // ===== UI: Recorrido activo (pestaña Nuevo) =====
+  function showActiveTripUI(trip){
+    $("newTripTopArea").style.display = trip ? "none" : "flex";
+    $("activeTripHeader").style.display = trip ? "block" : "none";
+
+    if(!trip){
+      $("tripNotes").value = "";
+      resetAddLine();
+      $("activeTripItems").innerHTML = "";
+      return;
+    }
+
+    const shiftText = (trip.shift === "manana" ? "Mañana" : "Tarde");
+    $("activeTripInfo").innerHTML =
+      `Fecha <strong>${esc(formatDateDDMMYY(activeTripDate))}</strong> · Turno <strong>${esc(shiftText)}</strong> · Hora <strong>${esc(trip.tripHour || "—")}</strong>`;
+  }
+
+  // ===== Combo de ítems =====
+  function resetAddLine(){
+    const sel = $("itemType");
+    sel.value = "";
+    $("itemQty").value = "0";
+    $("itemPrice").value = "0";
+  }
+
+  function rebuildItemTypeSelect(){
+    const sel = $("itemType");
+    const enabled = enabledCatalog();
+
+    sel.innerHTML =
+      `<option value="">Seleccionar ítem</option>` +
+      enabled
+        .slice()
+        .sort((a,b)=>a.label.localeCompare(b.label))
+        .map(x => `<option value="${esc(x.id)}">${esc(x.label)} (${esc(catLabel(x.category))})</option>`)
+        .join("");
+
+    resetAddLine();
+  }
+
+  $("itemType").addEventListener("change", ()=>{
+    const id = $("itemType").value;
+    if(!id){
+      resetAddLine();
+      return;
+    }
+    const it = enabledCatalog().find(x=>x.id===id);
+    if(!it) return;
+    $("itemQty").value = "1";
+    $("itemPrice").value = String(it.defaultPrice ?? 0);
+  });
+
+  // ===== Ítems del recorrido =====
+  function renderActiveTripItems(trip){
+    const wrap = $("activeTripItems");
+    if(!trip){
+      wrap.innerHTML = "";
+      return;
+    }
+
+    const c = calcTrip(trip);
+    $("activeTripVisitors").textContent = String(c.qtyVisitors);
+    $("activeTripTotal").textContent = fmtMoney(c.incomeTotal);
+
+    $("tripNotes").value = String(trip.notes || "");
+
+    if(!trip.items?.length){
+      wrap.innerHTML = `<div class="muted2" style="padding:10px 0;">Aún no hay ítems.</div>`;
+      return;
+    }
+
+    wrap.innerHTML = trip.items.map((it, idx)=>{
+      const subtotal = (Number(it.qty||0) * Number(it.unitPrice||0));
+      return `
+        <div class="itemRow">
+          <div>
+            <strong>${esc(it.label)}</strong>
+            <div class="muted2">${esc(catLabel(it.category))} · ${fmtMoney(it.unitPrice)} c/u</div>
+          </div>
+          <div class="right"><strong>${Number(it.qty||0)}</strong></div>
+          <div class="right"><strong>${fmtMoney(subtotal)}</strong></div>
+          <div class="right">
+            <button class="danger" data-del="${idx}" title="Quitar ítem">Quitar</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    wrap.querySelectorAll("button[data-del]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const idx = Number(btn.getAttribute("data-del"));
+        removeActiveItem(idx);
+      });
+    });
+  }
+
+  function removeActiveItem(idx){
+    const trip = getActiveTrip();
+    if(!trip) return;
+    const store = loadStore();
+    const t = findTrip(store, activeTripDate, activeTripId);
+    if(!t) return;
+    t.items.splice(idx, 1);
+    saveStore(store);
+    renderNew();
+    renderDaily();
+    renderMonthly();
+  }
+
+  $("addItemBtn").addEventListener("click", ()=>{
+    const trip = getActiveTrip();
+    if(!trip){ toast("Primero crea un recorrido."); return; }
+
+    const typeId = String($("itemType").value || "").trim();
+    const qty = Number($("itemQty").value || 0);
+    const price = Number($("itemPrice").value || 0);
+
+    if(!typeId){ toast("Selecciona un ítem."); return; }
+    if(!Number.isFinite(qty) || qty <= 0){ toast("Cantidad inválida."); return; }
+    if(!Number.isFinite(price) || price < 0){ toast("Precio inválido."); return; }
+
+    const it = enabledCatalog().find(x=>x.id===typeId);
+    if(!it){ toast("Ítem no disponible."); return; }
+
+    const store = loadStore();
+    const t = findTrip(store, activeTripDate, activeTripId);
+    if(!t){ toast("Recorrido no encontrado."); return; }
+
+    t.items.push({
+      typeId,
+      label: it.label,
+      category: it.category,
+      qty,
+      unitPrice: price
+    });
+
+    saveStore(store);
+    resetAddLine();
+    renderNew();
+    renderDaily();
+    renderMonthly();
+  });
+
+  // ===== Observaciones (auto-guardado) =====
+  const saveActiveNotesDebounced = debounce(()=>{
+    const trip = getActiveTrip();
+    if(!trip) return;
+    const store = loadStore();
+    const t = findTrip(store, activeTripDate, activeTripId);
+    if(!t) return;
+    t.notes = String($("tripNotes").value || "");
+    saveStore(store);
+    renderNew();
+    renderDaily();
+    renderMonthly();
+  }, 350);
+
+  $("tripNotes").addEventListener("input", saveActiveNotesDebounced);
+
+  $("closeActiveTripBtn").addEventListener("click", ()=>{
+    clearActiveTrip();
+    toast("Edición cerrada.");
+    renderNew();
+  });
+
+  // ===== Resumen del recorrido (inline) =====
+  function buildTripSummary(trip){
+    const rowsByType = new Map();
+
+    for(const it of (trip.items || [])){
+      const key = `${it.category}::${it.label}::${it.unitPrice}`;
+      const prev = rowsByType.get(key) || { label: it.label, category: it.category, qty: 0, subtotal: 0 };
+      prev.qty += Number(it.qty||0);
+      prev.subtotal += Number(it.qty||0) * Number(it.unitPrice||0);
+      rowsByType.set(key, prev);
+    }
+
+    const rows = Array.from(rowsByType.values())
+      .sort((a,b)=> (a.category+b.label).localeCompare(b.category+a.label));
+
+    const total = rows.reduce((s,r)=>s+r.subtotal,0);
+    return { rows, total };
+  }
+
+  function buildTripPrintHTML(dateIso, trip){
+    const shiftText = (trip.shift === "manana" ? "Mañana" : "Tarde");
+    const c = calcTrip(trip);
+    const summary = buildTripSummary(trip);
+
+    const rowsHtml = summary.rows.map(r => `
+      <tr>
+        <td>
+          <strong>${esc(r.label)}</strong>
+          <div class="muted2">${esc(catLabel(r.category))}</div>
+        </td>
+        <td class="right"><strong>${r.qty}</strong></td>
+        <td class="right"><strong>${fmtMoney(r.subtotal)}</strong></td>
+      </tr>
+    `).join("");
+
+    const notes = String(trip.notes || "").trim() || "—";
+
+    return `
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resumen de recorrido</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+    }
+    body{ margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    .wrap{ padding:18px; max-width:900px; margin:0 auto; }
+    h1{ margin:0 0 10px 0; font-size:20px; }
+    .meta{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:8px; margin:10px 0 14px; }
+    .meta div{ border:1px solid var(--border); border-radius:10px; padding:10px; font-size:13px; }
+    .meta strong{ display:block; font-size:12px; color:var(--muted); margin-bottom:2px; }
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ border-bottom:1px solid var(--border); padding:10px; font-size:13px; vertical-align:top; }
+    th{ text-align:left; font-size:12px; color:var(--muted); }
+    .right{ text-align:right; }
+    tfoot td{ border-bottom:none; padding-top:12px; }
+    .obs{ margin-top:14px; border:1px solid var(--border); border-radius:12px; padding:12px; }
+    .obs strong{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .muted2{ color:var(--muted); font-size:12px; }
+    @media print{ .noPrint{ display:none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Resumen de recorrido</h1>
+
+    <div class="meta">
+      <div><strong>Fecha</strong>${esc(formatDateDDMMYY(dateIso))}</div>
+      <div><strong>Turno</strong>${esc(shiftText)}</div>
+      <div><strong>Hora</strong>${esc(trip.tripHour || "—")}</div>
+      <div><strong>Visitantes</strong>${c.qtyVisitors}</div>
+      <div><strong>Total</strong>${fmtMoney(summary.total)}</div>
+      <div><strong>Recorrido ID</strong>${esc(trip.id)}</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Ítem</th>
+          <th class="right" style="width:120px;">Cantidad</th>
+          <th class="right" style="width:160px;">Subtotal (Bs)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml || `<tr><td colspan="3" class="muted2">No hay ítems.</td></tr>`}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2" class="right"><strong>Total</strong></td>
+          <td class="right"><strong>${fmtMoney(summary.total)}</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="obs">
+      <strong>Observaciones</strong>
+      <div>${esc(notes)}</div>
+    </div>
+
+    <div class="noPrint" style="margin-top:14px; color:var(--muted); font-size:12px;">
+      Consejo: En el diálogo de impresión, selecciona “Guardar como PDF”.
+    </div>
+  </div>
+
+  <script>
+    window.onload = () => window.print();
+  </script>
+</body>
+</html>
+    `.trim();
+  }
+
+  function printTrip(dateIso, trip){
+    const html = buildTripPrintHTML(dateIso, trip);
+    const w = window.open("", "_blank");
+    if(!w){ toast("No se pudo abrir la impresión. Revisa bloqueador de popups."); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
+  function renderTripSummaryInline(){
+    const trip = getActiveTrip();
+
+    if(!trip || !activeTripDate){
+      $("summaryDate").textContent = "—";
+      $("summaryShift").textContent = "—";
+      $("summaryHour").textContent = "—";
+      $("summaryVisitors").textContent = "0";
+      $("summaryTotalTop").textContent = "Bs 0";
+      $("summaryTotalFoot").textContent = "Bs 0";
+      $("summaryNotes").textContent = "—";
+      $("summaryTbody").innerHTML = `<tr><td colspan="3" style="color:#444;">No hay un recorrido activo.</td></tr>`;
+      return;
+    }
+
+    const shiftText = (trip.shift === "manana" ? "Mañana" : "Tarde");
+    const c = calcTrip(trip);
+    const summary = buildTripSummary(trip);
+
+    $("summaryDate").textContent = formatDateDDMMYY(activeTripDate);
+    $("summaryShift").textContent = shiftText;
+    $("summaryHour").textContent = trip.tripHour || "—";
+    $("summaryVisitors").textContent = String(c.qtyVisitors);
+    $("summaryTotalTop").textContent = fmtMoney(summary.total);
+    $("summaryTotalFoot").textContent = fmtMoney(summary.total);
+    $("summaryNotes").textContent = String(trip.notes || "").trim() || "—";
+
+    $("summaryTbody").innerHTML = summary.rows.length
+      ? summary.rows.map(r => `
+          <tr>
+            <td>
+              <strong>${esc(r.label)}</strong>
+              <div class="muted2">${esc(catLabel(r.category))}</div>
+            </td>
+            <td class="right"><strong>${r.qty}</strong></td>
+            <td class="right"><strong>${fmtMoney(r.subtotal)}</strong></td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="3" style="color:#444;">No hay ítems en este recorrido.</td></tr>`;
+  }
+
+  if($("exportTripInlineBtn")){
+    $("exportTripInlineBtn").addEventListener("click", ()=>{
+      const trip = getActiveTrip();
+      if(!trip){ toast("No hay un recorrido activo."); return; }
+      printTrip(activeTripDate, trip);
+    });
+  }
+
+  if($("scrollTripSummaryBtn")){
+    $("scrollTripSummaryBtn").addEventListener("click", ()=>{
+      $("tripSummarySection")?.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+  }
+
+  // ===== Diario: listado =====
+  function renderDailyList(){
+    const iso = String($("listDate").value || "").trim();
+    const store = loadStore();
+    const trips = store.days?.[iso]?.trips || [];
+
+    $("storageHint").textContent = `Guardado local: ${fmtBytes(JSON.stringify(store).length)}.`;
+
+    const wrap = $("tripCards");
+    if(!iso){
+      wrap.innerHTML = `<div class="note">Selecciona una fecha para listar.</div>`;
+      return;
+    }
+    if(!trips.length){
+      wrap.innerHTML = `<div class="note">No hay recorridos para esta fecha.</div>`;
+      return;
+    }
+
+    wrap.innerHTML = trips.slice().reverse().map(tr=>{
+      const shiftText = tr.shift === "manana" ? "Mañana" : "Tarde";
+      const c = calcTrip(tr);
+
+      return `
+        <div class="tripCard">
+          <div class="tripTop">
+            <div>
+              <div class="tripTitle">${esc(shiftText)} <span class="muted2">· ${esc(tr.tripHour || "—")}</span></div>
+              <div class="tripSub">
+                <span class="pill">Visitantes: <strong>${c.qtyVisitors}</strong></span>
+                <span class="pill">Total: <strong>${fmtMoney(c.incomeTotal)}</strong></span>
+                <span class="pill mutedPill">ID: ${esc(tr.id)}</span>
+              </div>
+            </div>
+            <div class="tripBtns">
+              <button class="ghost" data-edit="${esc(tr.id)}">Editar</button>
+              <button class="danger" data-del="${esc(tr.id)}">Borrar</button>
+            </div>
+          </div>
+          ${tr.notes ? `<div class="tripNotes">${esc(tr.notes)}</div>` : ``}
+        </div>
+      `;
+    }).join("");
+
+    wrap.querySelectorAll("button[data-edit]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-edit");
+        if(!id) return;
+        setActiveTrip(iso, id);
+        setActiveTab("new");
+        renderNew();
+      });
+    });
+
+    wrap.querySelectorAll("button[data-del]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-del");
+        if(!id) return;
+        if(!confirm("¿Borrar este recorrido? Esta acción no se puede deshacer.")) return;
+
+        const store2 = loadStore();
+        const day = store2.days?.[iso];
+        if(!day) return;
+
+        const idx = (day.trips || []).findIndex(x=>x.id===id);
+        if(idx>=0){
+          day.trips.splice(idx, 1);
+          saveStore(store2);
+
+          if(activeTripDate===iso && activeTripId===id){
+            clearActiveTrip();
+            renderNew();
+          }
+
+          toast("Recorrido borrado.");
+          renderDaily();
+          renderMonthly();
+        }
+      });
+    });
+  }
+
+  // ===== Diario: resumen del día (inline) =====
+  function buildDaySummaryData(iso){
+    const store = loadStore();
+    const trips = store.days?.[iso]?.trips || [];
+
+    const base = {
+      iso,
+      tripsRaw: trips,
+      shifts: {
+        manana: { trips: 0, visitors: 0, revenue: 0 },
+        tarde:  { trips: 0, visitors: 0, revenue: 0 }
+      },
+      extrasByType: new Map(), // typeId -> { label, qty, revenue }
+      totalTrips: trips.length,
+      totalVisitors: 0,
+      totalRevenue: 0,
+      totalExtrasRevenue: 0,
+      totalExtrasQty: 0
+    };
+
+    for(const tr of trips){
+      const k = tr.shift === "tarde" ? "tarde" : "manana";
+      base.shifts[k].trips += 1;
+
+      const c = calcTrip(tr);
+      base.shifts[k].visitors += c.qtyVisitors;
+      base.shifts[k].revenue += c.incomeTotal;
+
+      for(const it of (tr.items || [])){
+        if(it.category === "visitor") continue;
+        const typeId = String(it.typeId || "");
+        if(!typeId) continue;
+
+        const qty = Number(it.qty || 0);
+        const sub = qty * Number(it.unitPrice || 0);
+
+        const prev = base.extrasByType.get(typeId) || { label: it.label || typeId, qty: 0, revenue: 0 };
+        prev.qty += qty;
+        prev.revenue += sub;
+        base.extrasByType.set(typeId, prev);
+
+        base.totalExtrasQty += qty;
+        base.totalExtrasRevenue += sub;
+      }
+    }
+
+    base.totalVisitors = base.shifts.manana.visitors + base.shifts.tarde.visitors;
+    base.totalRevenue = base.shifts.manana.revenue + base.shifts.tarde.revenue;
+
+    return base;
+  }
+
+  function renderDaySummary(){
+    const iso = String($("listDate").value || "").trim();
+    $("dayInlineDateLabel").textContent = iso ? formatDateDDMMYY(iso) : "—";
+
+    const exportBtn = $("exportDayBtn");
+    const kpiWrap = $("dayInlineKpis");
+    const tbody = $("dayExtrasTbody");
+
+    if(!iso){
+      $("daySummaryEmpty").style.display = "block";
+      $("daySummaryEmpty").textContent = "Selecciona una fecha para ver el resumen.";
+      kpiWrap.innerHTML = "";
+      tbody.innerHTML = "";
+      exportBtn.disabled = true;
+      return;
+    }
+
+    const s = buildDaySummaryData(iso);
+
+    if(!s.totalTrips){
+      $("daySummaryEmpty").style.display = "block";
+      $("daySummaryEmpty").textContent = "No hay recorridos para esta fecha.";
+      kpiWrap.innerHTML = "";
+      tbody.innerHTML = "";
+      exportBtn.disabled = true;
+      return;
+    }
+
+    $("daySummaryEmpty").style.display = "none";
+    exportBtn.disabled = false;
+
+    kpiWrap.innerHTML = `
+      <div class="kpi">
+        <div class="muted2">Recorridos</div>
+        <div class="val">${s.totalTrips}</div>
+        <div class="muted2">Mañana ${s.shifts.manana.trips} · Tarde ${s.shifts.tarde.trips}</div>
+      </div>
+      <div class="kpi">
+        <div class="muted2">Visitantes</div>
+        <div class="val">${s.totalVisitors}</div>
+        <div class="muted2">Mañana ${s.shifts.manana.visitors} · Tarde ${s.shifts.tarde.visitors}</div>
+      </div>
+      <div class="kpi">
+        <div class="muted2">Ingresos (Bs)</div>
+        <div class="val">${fmtMoney(s.totalRevenue)}</div>
+        <div class="muted2">Mañana ${fmtMoney(s.shifts.manana.revenue)} · Tarde ${fmtMoney(s.shifts.tarde.revenue)}</div>
+      </div>
+      <div class="kpi">
+        <div class="muted2">Extras (Bs)</div>
+        <div class="val">${fmtMoney(s.totalExtrasRevenue)}</div>
+        <div class="muted2">Cantidad ${s.totalExtrasQty}</div>
+      </div>
+    `;
+
+    const extras = Array.from(s.extrasByType.entries())
+      .map(([typeId, v]) => ({ typeId, ...v }))
+      .sort((a,b)=> String(a.label).localeCompare(String(b.label)));
+
+    tbody.innerHTML = extras.length
+      ? extras.map(x => `
+          <tr>
+            <td><strong>${esc(x.label)}</strong></td>
+            <td class="right"><strong>${x.qty}</strong></td>
+            <td class="right"><strong>${fmtMoney(x.revenue)}</strong></td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="3" class="muted2">No hay extras.</td></tr>`;
+  }
+
+  function buildDayPrintHTML(iso){
+    const s = buildDaySummaryData(iso);
+
+    const extrasRows = Array.from(s.extrasByType.entries())
+      .map(([typeId, v]) => ({ typeId, ...v }))
+      .sort((a,b)=> String(a.label).localeCompare(String(b.label)))
+      .map(x => `
+        <tr>
+          <td><strong>${esc(x.label)}</strong></td>
+          <td class="right"><strong>${x.qty}</strong></td>
+          <td class="right"><strong>${fmtMoney(x.revenue)}</strong></td>
+        </tr>
+      `).join("");
+
+    return `
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resumen del día</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+    }
+    body{ margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    .wrap{ padding:18px; max-width:980px; margin:0 auto; }
+    h1{ margin:0 0 10px 0; font-size:20px; }
+    .kpis{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:10px; margin:12px 0 14px; }
+    .kpi{ border:1px solid var(--border); border-radius:12px; padding:12px; }
+    .kpi .t{ color:var(--muted); font-size:12px; }
+    .kpi .v{ font-size:18px; font-weight:800; margin-top:4px; }
+    .kpi .s{ color:var(--muted); font-size:12px; margin-top:6px; }
+    table{ width:100%; border-collapse:collapse; margin-top:8px; }
+    th, td{ border-bottom:1px solid var(--border); padding:10px; font-size:13px; vertical-align:top; }
+    th{ text-align:left; font-size:12px; color:var(--muted); }
+    .right{ text-align:right; }
+    .muted2{ color:var(--muted); font-size:12px; }
+    @media print{ .noPrint{ display:none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Resumen del día — ${esc(formatDateDDMMYY(iso))}</h1>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="t">Recorridos</div>
+        <div class="v">${s.totalTrips}</div>
+        <div class="s">Mañana ${s.shifts.manana.trips} · Tarde ${s.shifts.tarde.trips}</div>
+      </div>
+      <div class="kpi">
+        <div class="t">Visitantes</div>
+        <div class="v">${s.totalVisitors}</div>
+        <div class="s">Mañana ${s.shifts.manana.visitors} · Tarde ${s.shifts.tarde.visitors}</div>
+      </div>
+      <div class="kpi">
+        <div class="t">Ingresos (Bs)</div>
+        <div class="v">${fmtMoney(s.totalRevenue)}</div>
+        <div class="s">Mañana ${fmtMoney(s.shifts.manana.revenue)} · Tarde ${fmtMoney(s.shifts.tarde.revenue)}</div>
+      </div>
+      <div class="kpi">
+        <div class="t">Extras (Bs)</div>
+        <div class="v">${fmtMoney(s.totalExtrasRevenue)}</div>
+        <div class="s">Cantidad ${s.totalExtrasQty}</div>
+      </div>
+    </div>
+
+    <h2 style="margin:0 0 8px 0; font-size:16px;">Extras</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Extra</th>
+          <th class="right" style="width:130px;">Cantidad</th>
+          <th class="right" style="width:160px;">Ingresos (Bs)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${extrasRows || `<tr><td colspan="3" class="muted2">No hay extras.</td></tr>`}
+      </tbody>
+    </table>
+
+    <div class="noPrint" style="margin-top:14px; color:var(--muted); font-size:12px;">
+      Consejo: En el diálogo de impresión, selecciona “Guardar como PDF”.
+    </div>
+  </div>
+
+  <script>
+    window.onload = () => window.print();
+  </script>
+</body>
+</html>
+    `.trim();
+  }
+
+  function printDay(iso){
+    const html = buildDayPrintHTML(iso);
+    const w = window.open("", "_blank");
+    if(!w){ toast("No se pudo abrir la impresión. Revisa bloqueador de popups."); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
+  $("exportDayBtn").addEventListener("click", ()=>{
+    const iso = String($("listDate").value || "").trim();
+    if(!iso){ toast("Selecciona una fecha."); return; }
+    const s = buildDaySummaryData(iso);
+    if(!s.totalTrips){ toast("No hay recorridos para exportar."); return; }
+    printDay(iso);
+  });
+
+  // ===== Nuevo: render =====
+  function renderNew(){
+    rebuildItemTypeSelect();
+
+    const trip = getActiveTrip();
+    showActiveTripUI(trip);
+    renderActiveTripItems(trip);
+    renderTripSummaryInline();
+  }
+
+  // ===== Diario: render =====
+  function renderDaily(){
+    renderDailyList();
+    renderDaySummary();
+  }
+
+  // ===== Diario: fecha a listar =====
+  $("listDate").addEventListener("change", ()=>{
+    renderDaily();
+    renderMonthly();
+  });
+
+  $("listTodayBtn").addEventListener("click", ()=>{
+    $("listDate").value = toISODate(new Date());
+    renderDaily();
+    renderMonthly();
+  });
+
+  // ===== Monthly: chart metric selector dinámico =====
+  function rebuildChartMetricOptions(){
+    const sel = $("chartMetric");
+    const all = [
+      { id:"rec_total", label:"Recorridos (Total)" },
+      { id:"rec_manana", label:"Recorridos (Mañana)" },
+      { id:"rec_tarde", label:"Recorridos (Tarde)" },
+      { id:"vis_total", label:"Visitantes (Total)" },
+      { id:"vis_manana", label:"Visitantes (Mañana)" },
+      { id:"vis_tarde", label:"Visitantes (Tarde)" },
+      { id:"ing_total", label:"Ingresos (Total)" },
+      { id:"ing_extras", label:"Ingresos (Extras)" }
+    ];
+    sel.innerHTML = all.map(x=>`<option value="${x.id}">${x.label}</option>`).join("");
+    sel.value = "ing_total";
+  }
+
+  // ===== Monthly summary =====
+  function monthDays(ym){
+    // ym = YYYY-MM
+    const [y, m] = ym.split("-").map(Number);
+    const d = new Date(y, m-1, 1);
+    const out = [];
+    while(d.getMonth() === (m-1)){
+      out.push(toISODate(d));
+      d.setDate(d.getDate()+1);
+    }
+    return out;
+  }
+
+  function summarizeDay(trips){
+    const s = {
+      rec_manana:0, rec_tarde:0, rec_total:0,
+      vis_manana:0, vis_tarde:0, vis_total:0,
+      ing_total:0, ing_extras:0
+    };
+
+    for(const t of trips){
+      const c = calcTrip(t);
+      s.rec_total += 1;
+      if(t.shift === "manana") s.rec_manana += 1;
+      else s.rec_tarde += 1;
+
+      s.vis_total += c.qtyVisitors;
+      if(t.shift === "manana") s.vis_manana += c.qtyVisitors;
+      else s.vis_tarde += c.qtyVisitors;
+
+      s.ing_total += c.incomeTotal;
+
+      // extras income:
+      let extras = 0;
+      for(const it of (t.items||[])){
+        if(it.category !== "visitor"){
+          extras += Number(it.qty||0) * Number(it.unitPrice||0);
+        }
+      }
+      s.ing_extras += extras;
+    }
+    return s;
+  }
+
+  function renderMonthly(){
+    const ym = $("month").value;
+    $("monthBadge").textContent = ym || "—";
+
+    const store = loadStore();
+    const days = ym ? monthDays(ym) : [];
+    const daily = days.map(iso=>{
+      const trips = store.days?.[iso]?.trips || [];
+      return { iso, trips, sum: summarizeDay(trips) };
+    });
+
+    // KPIs (month totals)
+    const total = daily.reduce((acc, d)=>{
+      for(const k of Object.keys(d.sum)){
+        acc[k] = (acc[k]||0) + d.sum[k];
+      }
+      return acc;
+    }, {});
+
+    $("kpis").innerHTML = `
+      <div class="kpi">
+        <div class="muted2">Recorridos</div>
+        <div class="val">${total.rec_total||0}</div>
+        <div class="muted2">Mañana ${total.rec_manana||0} · Tarde ${total.rec_tarde||0}</div>
+      </div>
+      <div class="kpi">
+        <div class="muted2">Visitantes</div>
+        <div class="val">${total.vis_total||0}</div>
+        <div class="muted2">Mañana ${total.vis_manana||0} · Tarde ${total.vis_tarde||0}</div>
+      </div>
+      <div class="kpi">
+        <div class="muted2">Ingresos (Bs)</div>
+        <div class="val">${fmtMoney(total.ing_total||0)}</div>
+        <div class="muted2">Total del mes</div>
+      </div>
+      <div class="kpi">
+        <div class="muted2">Extras (Bs)</div>
+        <div class="val">${fmtMoney(total.ing_extras||0)}</div>
+        <div class="muted2">Incluido en ingresos</div>
+      </div>
+    `;
+
+    // table
+    $("monthTbody").innerHTML = daily.map(d=>{
+      const s = d.sum;
+      return `
+        <tr>
+          <td><strong>${esc(d.iso)}</strong><div class="muted2">${esc(formatDateDDMMYY(d.iso))}</div></td>
+          <td class="right">${s.rec_manana}</td>
+          <td class="right">${s.rec_tarde}</td>
+          <td class="right"><strong>${s.rec_total}</strong></td>
+          <td class="right">${s.vis_manana}</td>
+          <td class="right">${s.vis_tarde}</td>
+          <td class="right"><strong>${s.vis_total}</strong></td>
+          <td class="right"><strong>${fmtMoney(s.ing_total)}</strong></td>
+          <td class="right">${fmtMoney(s.ing_extras)}</td>
+          <td>
+            <button class="ghost" data-viewday="${esc(d.iso)}">Ver día</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    $("monthTbody").querySelectorAll("button[data-viewday]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const iso = btn.getAttribute("data-viewday");
+        if(!iso) return;
+        $("listDate").value = iso;
+        setActiveTab("daily");
+        renderDaily();
+      });
+    });
+
+    renderChart(daily);
+  }
+
+  // ===== Simple chart (canvas) =====
+  let _chart = null;
+  function renderChart(daily){
+    const canvas = $("chart");
+    const ctx = canvas.getContext("2d");
+
+    const metric = $("chartMetric").value;
+    const labels = daily.map(d=>d.iso.slice(8,10));
+    const values = daily.map(d=>d.sum[metric] || 0);
+
+    // draw minimal chart (no external libs)
+    const w = canvas.width = canvas.parentElement.clientWidth;
+    const h = canvas.height = 220;
+
+    ctx.clearRect(0,0,w,h);
+
+    // frame
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    ctx.fillRect(0,0,w,h);
+
+    const pad = 36;
+    const x0 = pad, y0 = pad, x1 = w-pad, y1 = h-pad;
+    const maxV = Math.max(1, ...values);
+    const stepX = (x1-x0) / Math.max(1, (values.length-1));
+
+    // axes
+    ctx.strokeStyle = "rgba(255,255,255,0.14)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x0, y1);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+
+    // line
+    ctx.strokeStyle = "rgba(110,231,255,0.85)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    values.forEach((v,i)=>{
+      const x = x0 + i*stepX;
+      const y = y1 - ((v/maxV) * (y1-y0));
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    // points
+    ctx.fillStyle = "rgba(167,139,250,0.95)";
+    values.forEach((v,i)=>{
+      const x = x0 + i*stepX;
+      const y = y1 - ((v/maxV) * (y1-y0));
+      ctx.beginPath();
+      ctx.arc(x,y,3,0,Math.PI*2);
+      ctx.fill();
+    });
+
+    // labels bottom (sparse)
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    labels.forEach((lb,i)=>{
+      if(values.length > 16 && i % 2 === 1) return;
+      const x = x0 + i*stepX;
+      ctx.fillText(lb, x-6, y1+18);
+    });
+
+    // max label
+    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.fillText(String(maxV), 6, y0+4);
+    ctx.fillText("0", 12, y1+4);
+  }
+
+  $("chartMetric").addEventListener("change", ()=>{
+    renderMonthly();
+  });
+
+  $("month").addEventListener("change", ()=>{
+    renderMonthly();
+  });
+
+  // ===== Tarifario =====
+  function resetTariffForm(){
+    $("catLabel").value = "";
+    $("catCategory").value = "visitor";
+    $("catPrice").value = "0";
+  }
+
+  function renderTariff(){
+    const list = loadCatalog().slice().sort((a,b)=>a.label.localeCompare(b.label));
+
+    $("catalogTbody").innerHTML = list.map(it=>{
+      const st = (it.enabled !== false) ? "Activo" : "Inactivo";
+      return `
+        <tr>
+          <td><strong>${esc(it.label)}</strong><div class="muted2">${esc(it.id)}</div></td>
+          <td>${esc(catLabel(it.category))}</td>
+          <td class="right"><strong>${fmtMoney(it.defaultPrice || 0)}</strong></td>
+          <td class="right">${st}</td>
+          <td>
+            <button class="ghost" data-edit="${esc(it.id)}">Editar</button>
+            <button class="ghost" data-toggle="${esc(it.id)}">${(it.enabled !== false) ? "Deshabilitar" : "Habilitar"}</button>
+            <button class="danger" data-delcat="${esc(it.id)}">Eliminar</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    $("catalogTbody").querySelectorAll("button[data-edit]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-edit");
+        const it = loadCatalog().find(x=>x.id===id);
+        if(!it) return;
+        $("catLabel").value = it.label;
+        $("catCategory").value = it.category;
+        $("catPrice").value = String(it.defaultPrice ?? 0);
+        toast("Editando ítem (se actualizará al guardar).");
+      });
+    });
+
+    $("catalogTbody").querySelectorAll("button[data-toggle]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-toggle");
+        const list = loadCatalog();
+        const it = list.find(x=>x.id===id);
+        if(!it) return;
+        it.enabled = (it.enabled === false) ? true : false;
+        saveCatalog(list);
+        rebuildItemTypeSelect();
+        renderTariff();
+        toast("Actualizado.");
+      });
+    });
+
+    $("catalogTbody").querySelectorAll("button[data-delcat]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-delcat");
+        if(!confirm("¿Eliminar del catálogo? No borra datos históricos, pero deja de aparecer para nuevos ítems.")) return;
+        const list = loadCatalog().filter(x=>x.id!==id);
+        saveCatalog(list);
+        rebuildItemTypeSelect();
+        renderTariff();
+        toast("Eliminado.");
+      });
+    });
+  }
+
+  $("addCatalogBtn").addEventListener("click", ()=>{
+    const label = String($("catLabel").value || "").trim();
+    const category = String($("catCategory").value || "").trim();
+    const price = Number($("catPrice").value || 0);
+
+    if(!label){ toast("Ingresa un nombre."); return; }
+    if(category !== "visitor" && category !== "extra"){ toast("Categoría inválida."); return; }
+    if(!Number.isFinite(price) || price < 0){ toast("Precio inválido."); return; }
+
+    const id = label.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"")
+      .slice(0, 28) || uuid().slice(0,8);
+
+    const list = loadCatalog();
+    const existing = list.find(x=>x.id===id) || list.find(x=>x.label.toLowerCase()===label.toLowerCase());
+
+    if(existing){
+      existing.label = label;
+      existing.category = category;
+      existing.defaultPrice = price;
+      existing.enabled = true;
+      toast("Ítem actualizado.");
+    }else{
+      list.push({ id, label, category, defaultPrice: price, enabled: true });
+      toast("Ítem agregado.");
+    }
+
+    saveCatalog(list);
+    resetTariffForm();
+    rebuildItemTypeSelect();
+    renderTariff();
+  });
+
+  $("resetCatalogBtn").addEventListener("click", ()=>{
+    if(!confirm("¿Restaurar tarifario base? Esto sobrescribirá el catálogo actual.")) return;
+    saveCatalog(DEFAULT_CATALOG.slice());
+    rebuildItemTypeSelect();
+    renderTariff();
+    toast("Tarifario restaurado.");
+  });
+
+  // ===== Export/Import JSON =====
+  $("exportJsonBtn").addEventListener("click", ()=>{
+    const store = loadStore();
+    const blob = new Blob([JSON.stringify(store, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `kalomai_${toISODate(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  $("importJsonBtn").addEventListener("click", ()=>{
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.addEventListener("change", async ()=>{
+      const file = input.files?.[0];
+      if(!file) return;
+
+      try{
+        const txt = await file.text();
+        const obj = JSON.parse(txt);
+        if(!obj || typeof obj !== "object" || !obj.days || typeof obj.days !== "object"){
+          toast("Archivo inválido (estructura).");
+          return;
+        }
+        for(const d of Object.keys(obj.days)){
+          if(!Array.isArray(obj.days[d].trips)) obj.days[d].trips = [];
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+        loadActiveTripFromStorage();
+        renderNew();
+        renderDaily();
+        renderMonthly();
+        toast("Importación completada.");
+      }catch{
+        toast("No se pudo importar (JSON inválido).");
+      }
+    });
+    input.click();
+  });
+
+  // ===== PWA bootstrap (sin UI) =====
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    });
+  }
+
+  function initDefaults(){
+    const today = toISODate(new Date());
+    $("listDate").value = today;
+    $("newTripDate").value = today;
+    $("month").value = today.slice(0,7);
+    $("monthBadge").textContent = $("month").value;
+  }
+
+  function boot(){
+    initDefaults();
+    refreshCatalogCache();
+    rebuildItemTypeSelect();
+    rebuildChartMetricOptions();
+    resetTariffForm();
+
+    loadActiveTripFromStorage();
+    renderNew();
+    renderDaily();
+    renderMonthly();
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
