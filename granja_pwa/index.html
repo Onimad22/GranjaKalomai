@@ -2,630 +2,546 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="theme-color" content="#0b1220" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Registro — Granja (PWA)</title>
 
-  <!-- Manifest PWA -->
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0b1220">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
 
   <style>
     :root{
       --bg:#0b1220;
-      --card:#101a2b;
-      --card2:#0f1a2d;
-      --muted:#9aa6bd;
-      --text:#eaf0ff;
-      --text2:#d7e0ff;
-      --border:rgba(255,255,255,.10);
-      --border2:rgba(255,255,255,.14);
-      --accent:#6ee7ff;
+      --text:#e6eefc;
+      --muted:#a7b6d6;
+      --accent:#67e8f9;
       --accent2:#a78bfa;
-      --ok:#34d399;
-      --warn:#fbbf24;
       --danger:#fb7185;
-      --shadow: 0 12px 30px rgba(0,0,0,.35);
-      --radius:18px;
-      --radius2:14px;
+      --ok:#34d399;
+      --shadow: 0 12px 28px rgba(0,0,0,.38);
+      --radius: 14px;
+      --radius2: 18px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      --card: rgba(255,255,255,.04);
+      --stroke: rgba(255,255,255,.08);
     }
-
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
+    *{box-sizing:border-box}
     body{
       margin:0;
-      background: radial-gradient(900px 500px at 30% -10%, rgba(110,231,255,.12), transparent 60%),
-                  radial-gradient(700px 400px at 90% 0%, rgba(167,139,250,.10), transparent 60%),
-                  var(--bg);
+      font-family:var(--font);
+      background:
+        radial-gradient(1100px 650px at 20% 0%, rgba(103,232,249,.14), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(167,139,250,.12), transparent 55%),
+        var(--bg);
       color:var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }
-
-    a{ color:inherit; }
-    button, input, select, textarea{ font: inherit; color:inherit; }
-    input, select, textarea{
-      background: rgba(255,255,255,.06);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      outline: none;
-    }
-    input:focus, select:focus, textarea:focus{
-      border-color: rgba(110,231,255,.45);
-      box-shadow: 0 0 0 3px rgba(110,231,255,.12);
-    }
-    textarea{ width:100%; min-height:84px; resize:vertical; }
-
-    .wrap{
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 18px 14px 90px;
-    }
-
-    .safePad{
-      padding-bottom: max(90px, env(safe-area-inset-bottom));
+      -moz-osx-font-smoothing: grayscale;
     }
 
     header{
-      position: sticky;
-      top:0;
-      z-index: 20;
-      background: rgba(11,18,32,.72);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.07);
+      padding:12px 16px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      position:sticky; top:0;
+      backdrop-filter: blur(10px);
+      background: rgba(11,18,32,.80);
+      z-index:20;
     }
+    .wrap{max-width:1200px;margin:0 auto;padding:0 14px 24px;}
+    .wrap.hd{padding:0}
 
-    .hdInner{
-      max-width: 1040px;
-      margin:0 auto;
-      padding: 12px 14px;
+    .topbar{
       display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
+      align-items:flex-end;
+      justify-content:space-between;
       gap:10px;
-      min-width: 180px;
-    }
-    .logo{
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, rgba(110,231,255,.95), rgba(167,139,250,.85));
-      box-shadow: 0 10px 24px rgba(0,0,0,.35);
-      display:grid;
-      place-items:center;
-      font-weight: 900;
-      color:#0b1220;
-    }
-    .brand h1{
-      margin:0;
-      font-size: 14px;
-      line-height: 1.1;
-      letter-spacing: .2px;
-      color: var(--text2);
-    }
-    .brand .sub{
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 2px;
+      flex-wrap:wrap;
     }
 
     .tabs{
       display:flex;
       gap:8px;
-      padding: 6px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 16px;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,.15);
-      flex-wrap: wrap;
-      justify-content: flex-end;
+      width:100%;
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .tabs::-webkit-scrollbar{display:none;}
 
     .tabbtn{
-      border: 1px solid transparent;
-      background: transparent;
-      padding: 9px 12px;
-      border-radius: 12px;
-      color: var(--muted);
-      cursor: pointer;
-      user-select:none;
-      transition: .15s ease;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-weight: 650;
-      letter-spacing: .2px;
-    }
-    .tabbtn:hover{
+      flex:1 1 0;
+      min-width: 0;
+      border:1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.05);
-      color: var(--text2);
+      color: var(--text);
+      padding:12px 10px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12.5px;
+      min-height:44px;
+      text-align:center;
+      white-space:nowrap;
     }
     .tabbtn.active{
-      background: rgba(110,231,255,.10);
-      color: var(--text);
-      border-color: rgba(110,231,255,.20);
-      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      border-color: rgba(103,232,249,.40);
+      background: linear-gradient(180deg, rgba(103,232,249,.22), rgba(103,232,249,.08));
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
     }
 
-    .panel{
-      display:none;
-      margin-top: 16px;
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      font-size:12px;color: var(--muted);
+      white-space:nowrap;
     }
-    .panel.active{ display:block; }
+    .dot{width:8px;height:8px;border-radius:999px;background: var(--accent);}
+
+    .panel{margin-top:12px;display:none;}
+    .panel.active{display:block;}
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:var(--radius2);
+      box-shadow:var(--shadow);
       overflow:hidden;
     }
     .card .hd{
-      padding: 14px 16px;
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
       display:flex;
-      align-items:center;
-      justify-content: space-between;
+      align-items:flex-end;
+      justify-content:space-between;
       gap:10px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      flex-wrap:wrap;
     }
-    .card .hd h2{
-      margin:0;
-      font-size: 15px;
-      letter-spacing: .2px;
-      color: var(--text2);
-    }
-    .card .bd{ padding: 14px 16px; }
+    .card .hd h2{margin:0;font-size:13.5px;letter-spacing:.25px;font-weight:900;color:#dbeafe;}
+    .card .bd{padding:14px;}
 
-    .badge{
-      display:flex;
-      align-items:center;
-      gap:8px;
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;}
+    input, select, textarea{
+      width:100%;
+      background: rgba(15,23,42,.75);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--text);
+      padding:12px 12px;
+      border-radius: 12px;
+      outline:none;
+      min-height:44px;
+      font-size:14px;
+    }
+    textarea{min-height:92px}
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(103,232,249,.55);
+      box-shadow: 0 0 0 3px rgba(103,232,249,.14);
+    }
+
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .grid3{display:grid;grid-template-columns: 1.2fr .7fr .7fr auto;gap:10px;align-items:end;}
+    .grid4{display:grid;grid-template-columns: 1.2fr .9fr .7fr .7fr;gap:10px;align-items:end;}
+    @media (max-width: 920px){
+      .grid2,.grid3,.grid4{grid-template-columns:1fr;}
+      header{padding:12px 14px 12px;}
+      .wrap{padding:0 12px 24px;}
+    }
+
+    .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    button{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding:12px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12.5px;
+      min-height:44px;
+    }
+    button.primary{
+      border-color: rgba(103,232,249,.35);
+      background: linear-gradient(180deg, rgba(103,232,249,.22), rgba(103,232,249,.08));
+    }
+    button.ok{
+      border-color: rgba(52,211,153,.35);
+      background: linear-gradient(180deg, rgba(52,211,153,.18), rgba(52,211,153,.07));
+    }
+    button.danger{
+      border-color: rgba(251,113,133,.35);
+      background: linear-gradient(180deg, rgba(251,113,133,.18), rgba(251,113,133,.07));
+    }
+    button.ghost{background: transparent;}
+    button:active{transform: translateY(1px)}
+    button.full{flex:1 1 220px}
+    button[disabled]{opacity:.45;cursor:not-allowed;transform:none;}
+
+    .muted{color:var(--muted)}
+    .safePad{padding-bottom: env(safe-area-inset-bottom, 0px);}
+
+    .note{
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.03);
       color: var(--muted);
-      font-size: 12px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.08);
-      padding: 7px 10px;
-      border-radius: 999px;
-      white-space: nowrap;
-    }
-    .dot{
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 0 3px rgba(110,231,255,.12);
+      font-size:12.5px;
+      line-height:1.45;
     }
 
-    .btns{
+    .ticket{
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(15,23,42,.20);
+      border-radius:18px;
+      overflow:hidden;
+    }
+    .ticketHd{
+      padding:12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .ticketHd .title{font-weight:900;color:#dbeafe;font-size:13px;}
+    .ticketBd{padding:12px;}
+
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      font-weight:900;color:#dbeafe;font-size:12px;
+      margin-right:8px;
+    }
+
+    /* Items del recorrido: tabla simple (solo quitar) */
+    .itemsWrap{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      overflow:hidden;
+      background: rgba(15,23,42,.22);
+    }
+    .itemsHeader, .itemsRow{
+      display:grid;
+      grid-template-columns: 1fr 140px 180px 160px;
+      gap:10px;
+      padding:10px 12px;
+      align-items:center;
+    }
+    .itemsHeader{
+      position:sticky;
+      top:0;
+      background: rgba(11,18,32,.92);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      color:#dbeafe;
+      font-weight:900;
+      font-size:12.5px;
+    }
+    .itemsRow{
+      border-bottom:1px solid rgba(255,255,255,.06);
+      font-size:12.5px;
+    }
+    .itemsRow:last-child{border-bottom:none;}
+    .itemsRow .right{text-align:right;}
+    .itemsRow button{
+      min-height:36px;
+      padding:8px 10px;
+      border-radius:12px;
+      font-size:12px;
+      width:100%;
+    }
+    @media (max-width: 920px){
+      .itemsHeader{display:none;}
+      .itemsRow{
+        grid-template-columns: 1fr;
+        gap:8px;
+      }
+      .itemsRow .right{text-align:left;}
+      .itemsRow .cellLabel{
+        display:flex;justify-content:space-between;gap:10px;
+        padding:10px;
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:14px;
+        background: rgba(255,255,255,.03);
+      }
+      .itemsRow .cellLabel strong{font-weight:900;}
+    }
+
+    /* Recorridos del día: mini tarjetas */
+    .tripCards{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 980px){ .tripCards{grid-template-columns: 1fr 1fr;} }
+    @media (max-width: 560px){ .tripCards{grid-template-columns: 1fr;} }
+
+    .tripCard{
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(15,23,42,.22);
+      border-radius:18px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .tripCardTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .tripMeta .t{font-weight:900;color:#dbeafe;font-size:13px;}
+    .tripMeta .s{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.35;}
+    .tripCardBtns{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .tripCardBtns button{
+      flex:1 1 120px;
+      min-height:38px;
+      padding:8px 10px;
+      border-radius:12px;
+      font-size:12px;
+    }
+
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      z-index:200;
+    }
+    .overlay.open{display:block;}
+    .modal{
+      position:fixed;
+      inset: 0;
+      display:none;
+      z-index:210;
+      padding: 14px;
+      align-items:center;
+      justify-content:center;
+    }
+    .modal.open{display:flex;}
+    .modalCard{
+      width: min(920px, 100%);
+      border-radius: 22px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(15,23,42,.96);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalHd{
+      padding:12px 12px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .modalHd .t{font-weight:900;color:#dbeafe;}
+    .modalBd{padding:12px;}
+    .modalFt{
+      padding:12px;
+      border-top:1px solid rgba(255,255,255,.08);
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      margin-top: 12px;
     }
-    button{
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      border-radius: 14px;
-      padding: 10px 12px;
-      cursor:pointer;
-      transition: .15s ease;
-      user-select:none;
-      font-weight: 700;
-      letter-spacing: .15px;
-    }
-    button:hover{ background: rgba(255,255,255,.09); }
-    button:disabled{ opacity:.55; cursor:not-allowed; }
+    .modalFt button{flex:1 1 220px}
 
-    .primary{
-      background: rgba(110,231,255,.16);
-      border-color: rgba(110,231,255,.22);
-    }
-    .primary:hover{ background: rgba(110,231,255,.22); }
-    .ok{
-      background: rgba(52,211,153,.16);
-      border-color: rgba(52,211,153,.25);
-    }
-    .ok:hover{ background: rgba(52,211,153,.22); }
-    .danger{
-      background: rgba(251,113,133,.14);
-      border-color: rgba(251,113,133,.24);
-    }
-    .danger:hover{ background: rgba(251,113,133,.20); }
-    .ghost{
-      background: transparent;
-      border-color: rgba(255,255,255,.10);
-      color: var(--text2);
-    }
-    .ghost:hover{ background: rgba(255,255,255,.06); }
-
-    .full{ width: 100%; }
-
-    label{
-      display:block;
-      color: var(--muted);
-      font-size: 12px;
-      margin: 0 0 6px;
-    }
-
-    .grid2{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 12px;
-    }
-    .grid3{
-      display:grid;
-      grid-template-columns: 1.2fr .7fr .7fr auto;
-      gap: 10px;
-      align-items:end;
-    }
-
-    @media (max-width: 740px){
-      .grid2{ grid-template-columns: 1fr; }
-      .grid3{ grid-template-columns: 1fr 1fr; }
-      .grid3 > div:nth-child(4){ grid-column: 1 / -1; }
-      .brand{ min-width: auto; }
-      .tabs{ justify-content: flex-start; }
-    }
-
-    .note{
-      margin-top: 12px;
-      padding: 12px;
-      border: 1px dashed rgba(255,255,255,.18);
-      border-radius: 14px;
-      color: var(--text2);
-      background: rgba(255,255,255,.03);
-      line-height: 1.35;
-    }
-    .muted2{ color: var(--muted); font-size: 12px; }
-
-    .ticket{
-      margin-top: 12px;
-      border: 1px solid rgba(255,255,255,.09);
-      border-radius: 16px;
-      overflow:hidden;
-      background: rgba(255,255,255,.03);
-    }
-    .ticketHd{
-      padding: 12px 12px;
+    .toast{
+      position:fixed;
+      right:14px;
+      bottom:14px;
+      max-width: 420px;
+      z-index:300;
       display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap:10px;
-      border-bottom: 1px solid rgba(255,255,255,.07);
-      background: rgba(255,255,255,.03);
+      flex-direction:column;
+      gap:8px;
     }
-    .ticketHd .title{
-      font-weight: 800;
-      letter-spacing: .2px;
-      color: var(--text2);
-    }
-    .ticketBd{
-      padding: 12px;
-    }
-
-    .itemsWrap{
-      margin-top: 6px;
-      display:flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .itemRow{
-      display:grid;
-      grid-template-columns: 1fr 90px 120px 90px;
-      gap: 10px;
-      align-items:center;
-      padding: 10px 10px;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 14px;
-      background: rgba(0,0,0,.10);
-    }
-    .itemRow .right{ text-align:right; }
-    .itemsHeader{
-      display:grid;
-      grid-template-columns: 1fr 90px 120px 90px;
-      gap: 10px;
-      padding: 0 4px 8px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .tripCards{
-      margin-top: 12px;
-      display:flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .tripCard{
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 16px;
-      background: rgba(255,255,255,.03);
-      overflow:hidden;
-    }
-    .tripTop{
-      display:flex;
-      align-items:flex-start;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px 12px;
-    }
-    .tripTitle{
-      font-weight: 900;
-      letter-spacing: .2px;
-      color: var(--text2);
-    }
-    .tripSub{
-      margin-top: 6px;
-      display:flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items:center;
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .pill{
-      border: 1px solid rgba(255,255,255,.10);
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.12);
-      color: var(--text2);
-    }
-    .mutedPill{
-      color: var(--muted);
-      background: rgba(255,255,255,.03);
-    }
-    .tripBtns{
-      display:flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-    .tripNotes{
-      padding: 10px 12px 12px;
-      border-top: 1px solid rgba(255,255,255,.07);
-      color: var(--text2);
-      opacity: .95;
-      line-height: 1.35;
+    .toast .msg{
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(15,23,42,.92);
+      box-shadow: var(--shadow);
+      font-size:12.5px;
+      color: var(--text);
     }
 
     /* Monthly */
     .kpis{
       display:grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap: 12px;
-      margin-top: 12px;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+      margin-top:12px;
     }
-    @media (max-width: 820px){
-      .kpis{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    }
+    @media (max-width: 1020px){ .kpis{grid-template-columns: 1fr 1fr;} }
+    @media (max-width: 520px){ .kpis{grid-template-columns: 1fr;} }
     .kpi{
-      border: 1px solid rgba(255,255,255,.08);
+      padding:12px;
       border-radius: 16px;
-      background: rgba(255,255,255,.03);
-      padding: 12px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(15,23,42,.25);
     }
-    .kpi .val{
-      font-size: 20px;
-      font-weight: 900;
-      margin-top: 4px;
-      color: var(--text2);
+    .kpi .t{font-size:12px;color:var(--muted);margin-bottom:6px;}
+    .kpi .v{font-size:22px;font-weight:900;line-height:1.05;}
+    .kpi .s{font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.35;}
+
+    .chartwrap{
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      background: rgba(15,23,42,.22);
+      padding:12px;
     }
+    canvas{display:block;width:100%;height:240px;}
 
     .tableWrap{
-      margin-top: 12px;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 16px;
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
       overflow:auto;
-      background: rgba(0,0,0,.08);
-      max-height: 420px;
+      background: rgba(15,23,42,.22);
+      max-height: 520px;
+      display:block;
     }
+    table{border-collapse:collapse; width:100%; min-width: 760px;}
+    th, td{padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.06); font-size:12.5px;}
+    th{position:sticky; top:0; background: rgba(11,18,32,.92); z-index:2; text-align:left; color:#dbeafe; font-weight:900;}
+    td{color:var(--text)}
+    .right{text-align:right}
+    .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+    .actions button{min-height:34px;padding:7px 10px;border-radius:12px;font-weight:900;font-size:12px}
 
-    table{
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 720px;
-    }
-    th, td{
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(255,255,255,.07);
-      vertical-align: top;
-      font-size: 13px;
-    }
-    th{
-      position: sticky;
-      top:0;
-      z-index: 1;
-      text-align:left;
-      background: rgba(15,26,45,.95);
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing: .2px;
-    }
-    td.right, th.right{ text-align:right; }
-
-    /* Modal */
-    .overlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.55);
-      display:none;
-      z-index: 80;
-    }
-    .overlay.open{ display:block; }
-
-    .modal{
-      position: fixed;
-      inset: 0;
-      display:none;
-      z-index: 90;
-      overflow:auto;
-      padding: 18px 14px;
-    }
-    .modal.open{ display:block; }
-
-    .modalCard{
-      max-width: 720px;
-      margin: 0 auto;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(16,26,43,.95), rgba(16,26,43,.86));
-      box-shadow: 0 30px 80px rgba(0,0,0,.55);
-      overflow:hidden;
-    }
-    .modalHd{
-      padding: 12px 14px;
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap:10px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-    }
-    .modalHd h3{
-      margin:0;
-      font-size: 14px;
-      letter-spacing: .2px;
-      color: var(--text2);
-    }
-    .modalBd{ padding: 14px; }
-    .modalFt{
-      padding: 12px 14px;
-      border-top: 1px solid rgba(255,255,255,.08);
-      display:flex;
-      gap:10px;
-      justify-content:flex-end;
-      flex-wrap: wrap;
-    }
-
-    /* Toast */
-    .toast{
-      position: fixed;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      background: rgba(15,26,45,.95);
-      border: 1px solid rgba(255,255,255,.12);
-      padding: 10px 12px;
-      border-radius: 999px;
-      color: var(--text2);
-      font-weight: 700;
-      box-shadow: 0 20px 50px rgba(0,0,0,.45);
-      z-index: 120;
-      display:none;
-    }
-    .toast.show{ display:block; }
-
-    /* Print-like summary block */
+    /* ===== Print-like blocks inside modals (match exported info) ===== */
     .printLike{
-      background: #ffffff;
-      color: #111827;
-      border-radius: 14px;
-      border: 1px solid #e5e7eb;
+      background:#fff;
+      color:#111;
+      border-radius:18px;
+      border:1px solid rgba(0,0,0,.12);
       overflow:hidden;
     }
     .printLike .pHd{
-      padding: 12px 14px;
-      border-bottom: 1px solid #e5e7eb;
-      background: #f9fafb;
+      padding:14px 14px 10px;
     }
-    .printLike h1{
+    .printLike .pHd h1{
       margin:0;
-      font-size: 16px;
-      letter-spacing: .2px;
+      font-size:18px;
+      font-weight:900;
     }
     .printLike .pMeta{
-      padding: 12px 14px;
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 8px 10px;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 13px;
+      padding:0 14px 12px;
+      font-size:13px;
+      color:#222;
+      line-height:1.6;
     }
-    .printLike .pMeta strong{ color:#111827; }
+    .printLike .pMeta strong{font-weight:900;}
     .printLike .pTableWrap{
-      padding: 12px 14px;
+      padding:0 14px 12px;
     }
     .printLike table{
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 0;
-      color:#111827;
+      width:100%;
+      min-width:0;
+      border-collapse:collapse;
+      font-size:13px;
+      color:#111;
     }
     .printLike th, .printLike td{
-      border-bottom: 1px solid #e5e7eb;
-      padding: 10px;
-      font-size: 13px;
-      vertical-align: top;
+      border:1px solid #e5e7eb;
+      padding:10px 10px;
+      vertical-align:top;
     }
     .printLike th{
-      background: #f9fafb;
-      color: #374151;
-      font-size: 12px;
-      position: static;
+      background:#f3f4f6;
+      color:#111;
+      position:static;
+      font-weight:900;
     }
-    .printLike td.right, .printLike th.right{ text-align:right; }
-    .printLike tfoot td{ border-bottom:none; padding-top: 12px; }
+    .printLike td.right{text-align:right;}
+    .printLike .muted2{color:#555;font-size:12px;margin-top:2px;}
     .printLike .pObs{
-      padding: 12px 14px;
-      border-top: 1px solid #e5e7eb;
-      background: #fafafa;
-      font-size: 13px;
+      margin:0 14px 14px;
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
     }
     .printLike .pObsTitle{
-      font-weight: 800;
-      color:#374151;
-      font-size: 12px;
-      margin-bottom: 6px;
+      font-weight:900;
+      color:#333;
+      margin-bottom:6px;
     }
     .printLike .pObsBody{
-      color:#111827;
-      white-space: pre-wrap;
+      color:#111;
+      white-space:pre-wrap;
+    }
+
+    /* Day summary modal layout */
+    .dayGrid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:12px;
+    }
+    @media (max-width: 860px){
+      .dayGrid{grid-template-columns: 1fr;}
+    }
+    .dayCard{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .dayCard .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .dayCard .btnRow button{
+      flex:1 1 180px;
+      min-height:40px;
+      padding:10px 12px;
+      border-radius:12px;
     }
   </style>
 </head>
 
 <body>
 <header>
-  <div class="hdInner">
-    <div class="brand">
-      <div class="logo">K</div>
-      <div>
-        <h1>Control de recorrido</h1>
-        <div class="sub">Granja Kalomai · PWA</div>
+  <div class="wrap hd">
+    <div style="padding:0 14px">
+      <div class="topbar">
+        <div class="tabs" role="tablist" aria-label="Secciones">
+          <button class="tabbtn active" id="tabDaily" role="tab" aria-selected="true">Diario</button>
+          <button class="tabbtn" id="tabMonthly" role="tab" aria-selected="false">Mensual</button>
+          <button class="tabbtn" id="tabTariff" role="tab" aria-selected="false">Tarifas</button>
+        </div>
       </div>
-    </div>
-
-    <div class="tabs" role="tablist" aria-label="Secciones">
-      <button class="tabbtn" id="tabNew" role="tab" aria-selected="false">Nuevo</button>
-      <button class="tabbtn active" id="tabDaily" role="tab" aria-selected="true">Diario</button>
-      <button class="tabbtn" id="tabMonthly" role="tab" aria-selected="false">Mensual</button>
-      <button class="tabbtn" id="tabTariff" role="tab" aria-selected="false">Tarifas</button>
     </div>
   </div>
 </header>
 
 <div class="wrap safePad">
 
-  <!-- PANEL: NEW -->
-  <section class="panel" id="panelNew" role="tabpanel" aria-labelledby="tabNew">
+  <!-- PANEL: DAILY -->
+  <section class="panel active" id="panelDaily" role="tabpanel" aria-labelledby="tabDaily">
     <div class="card">
       <div class="hd">
-        <h2>Nuevo recorrido</h2>
-        <div class="badge" title="Crea un nuevo recorrido o edita el recorrido activo">
-          <span class="dot" style="background: var(--accent2)"></span>
-          <span>Edición</span>
-        </div>
+        <div></div>
       </div>
 
       <div class="bd">
         <div class="btns" id="newTripTopArea" style="margin-top:0">
-          <button class="primary full" id="openNewTripModalBtn">Crear nuevo recorrido</button>
+          <button class="primary full" id="openNewTripModalBtn">Habilitar nuevo recorrido</button>
         </div>
 
         <div id="activeTripHeader" style="display:none; margin-top:12px;">
@@ -637,12 +553,12 @@
                 <span>Visitantes: <strong id="activeTripVisitors">0</strong></span>
               </span>
 
-              <span class="badge" title="Total del recorrido (visitantes + extras)">
+              <span class="badge" title="Total del recorrido">
                 <span class="dot" style="background: var(--accent)"></span>
                 <span>Total: <strong id="activeTripTotal">Bs 0</strong></span>
               </span>
 
-              <button class="ghost" id="scrollTripSummaryBtn" title="Ir al resumen consolidado del recorrido">Resumen</button>
+              <button class="ghost" id="openSummaryBtn" title="Ver detalle consolidado del recorrido">Ver resumen</button>
               <button class="ghost" id="closeActiveTripBtn" title="Cerrar el recorrido en edición (no borra nada)">Cerrar edición</button>
             </div>
           </div>
@@ -697,119 +613,24 @@
             </div>
           </div>
 
-          <!-- Resumen del recorrido (inline) -->
-          <div class="ticket" id="tripSummarySection" style="margin-top:12px;">
-            <div class="ticketHd">
-              <div class="title">Resumen del recorrido</div>
-              <button class="ok" id="exportTripInlineBtn" title="Imprimir / Guardar como PDF">Exportar</button>
-            </div>
-
-            <div class="ticketBd">
-              <div class="printLike" id="summaryPrintLike">
-                <div class="pHd">
-                  <h1>Resumen de recorrido</h1>
-                </div>
-
-                <div class="pMeta">
-                  <div><strong>Fecha:</strong> <span id="summaryDate">—</span></div>
-                  <div><strong>Turno:</strong> <span id="summaryShift">—</span></div>
-                  <div><strong>Hora:</strong> <span id="summaryHour">—</span></div>
-                  <div><strong>Visitantes:</strong> <span id="summaryVisitors">0</span></div>
-                  <div><strong>Total:</strong> <span id="summaryTotalTop">Bs 0</span></div>
-                </div>
-
-                <div class="pTableWrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Ítem</th>
-                        <th class="right" style="width:110px;">Cantidad</th>
-                        <th class="right" style="width:150px;">Subtotal (Bs)</th>
-                      </tr>
-                    </thead>
-                    <tbody id="summaryTbody"></tbody>
-                    <tfoot>
-                      <tr>
-                        <td colspan="2" class="right"><strong>Total</strong></td>
-                        <td class="right"><strong id="summaryTotalFoot">Bs 0</strong></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-
-                <div class="pObs">
-                  <div class="pObsTitle">Observaciones</div>
-                  <div class="pObsBody" id="summaryNotes">—</div>
-                </div>
-              </div>
-            </div>
+          <div class="btns">
+            <button class="primary full" id="openNewTripModalBtn2">Habilitar nuevo recorrido</button>
           </div>
-
         </div>
 
-        <div class="note" style="margin-top:12px">
-          Tip: Desde <strong>Diario</strong> puedes seleccionar un recorrido para editarlo aquí.
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PANEL: DAILY -->
-  <section class="panel active" id="panelDaily" role="tabpanel" aria-labelledby="tabDaily">
-    <div class="card">
-      <div class="hd">
-        <h2>Diario</h2>
-        <div class="badge" title="Listado de recorridos y resumen del día">
-          <span class="dot" style="background: var(--accent)"></span>
-          <span>Operación</span>
-        </div>
-      </div>
-
-      <div class="bd">
-        <!-- Fecha a listar -->
-        <div style="margin-top:0;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <!-- Fecha a listar: selector pequeño + Hoy + Resumen -->
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
           <div style="min-width:160px;max-width:190px;flex:0 0 auto;">
             <label>Fecha a listar</label>
             <input id="listDate" type="date" style="padding:10px 10px;min-height:40px;" />
           </div>
           <div style="flex:0 0 auto; display:flex; gap:10px; flex-wrap:wrap;">
             <button class="ghost" id="listTodayBtn" style="min-height:40px;padding:10px 12px;border-radius:12px;">Hoy</button>
+            <button class="ghost" id="openDaySummaryBtn" style="min-height:40px;padding:10px 12px;border-radius:12px;">Resumen</button>
           </div>
         </div>
 
         <div class="tripCards" id="tripCards"></div>
-
-        <!-- Resumen del día (inline) -->
-        <div class="ticket" id="daySummarySection" style="margin-top:12px;">
-          <div class="ticketHd">
-            <div class="title">Resumen del día</div>
-            <button class="ok" id="exportDayBtn" title="Imprimir / Guardar como PDF">Exportar</button>
-          </div>
-
-          <div class="ticketBd">
-            <div class="note" style="margin-top:0">
-              Fecha: <strong id="dayInlineDateLabel">—</strong>
-            </div>
-
-            <div class="kpis" id="dayInlineKpis"></div>
-
-            <div class="tableWrap" style="max-height:420px; min-width:0;">
-              <table style="min-width:640px;">
-                <thead>
-                  <tr>
-                    <th>Extra</th>
-                    <th class="right" style="width:130px;">Cantidad</th>
-                    <th class="right" style="width:160px;">Ingresos (Bs)</th>
-                  </tr>
-                </thead>
-                <tbody id="dayExtrasTbody"></tbody>
-              </table>
-            </div>
-
-            <div class="note" id="daySummaryEmpty" style="display:none;">No hay recorridos para esta fecha.</div>
-          </div>
-        </div>
-
         <div class="note" id="storageHint"></div>
       </div>
     </div>
@@ -819,60 +640,68 @@
   <section class="panel" id="panelMonthly" role="tabpanel" aria-labelledby="tabMonthly">
     <div class="card">
       <div class="hd">
-        <h2>Resumen mensual</h2>
-        <div class="badge" title="Resumen del mes por turnos y totales">
-          <span class="dot" style="background: var(--accent2)"></span>
-          <span id="monthBadge">—</span>
+        <h2>Resumen mensual (Gerencia)</h2>
+        <div class="btns" style="margin:0;">
+          <button class="ok" id="reportBtn">Reporte (PDF/Imprimir)</button>
+          <button class="ok" id="exportBtn">Exportar (JSON)</button>
+          <button id="importBtn">Importar (JSON)</button>
         </div>
       </div>
+
       <div class="bd">
-        <div class="grid2">
-          <div>
-            <label>Mes</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;justify-content:space-between;">
+          <div style="min-width:190px">
+            <label>Mes activo</label>
             <input id="month" type="month" />
           </div>
-          <div>
-            <label>Métrica del gráfico</label>
-            <select id="chartMetric"></select>
+          <div class="badge" title="Mes seleccionado">
+            <span class="dot" style="background: var(--accent2)"></span>
+            <span>Mes activo: <strong id="monthBadge">—</strong></span>
           </div>
         </div>
 
         <div class="kpis" id="kpis"></div>
 
-        <div class="ticket" style="margin-top:12px;">
-          <div class="ticketHd">
-            <div class="title">Gráfico</div>
-            <div class="muted2">Diario · Serie seleccionada</div>
+        <div class="chartwrap">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+            <div style="min-width:320px">
+              <label>Gráfico por día de semana</label>
+              <select id="chartMetric"></select>
+              <div class="muted" style="font-size:11.5px;margin-top:6px;line-height:1.35">
+                Métricas generales o cualquier ítem del Tarifario (cantidad o ingresos).
+              </div>
+            </div>
           </div>
-          <div class="ticketBd">
-            <canvas id="chart" height="120"></canvas>
+
+          <div style="margin-top:10px;">
+            <canvas id="chart" width="900" height="300"></canvas>
+            <div class="muted" style="font-size:12px;margin-top:8px;">
+              Consolidado por día de semana (Lun–Dom). Suma de todos los recorridos del mes.
+            </div>
           </div>
         </div>
 
-        <div class="tableWrap">
+        <div class="tableWrap" style="max-height:520px;">
           <table>
             <thead>
               <tr>
-                <th style="width:120px;">Fecha</th>
-                <th class="right" style="width:110px;">Rec. Mañana</th>
-                <th class="right" style="width:110px;">Rec. Tarde</th>
-                <th class="right" style="width:120px;">Rec. Total</th>
-                <th class="right" style="width:120px;">Vis. Mañana</th>
-                <th class="right" style="width:120px;">Vis. Tarde</th>
-                <th class="right" style="width:120px;">Vis. Total</th>
-                <th class="right" style="width:140px;">Ingresos (Bs)</th>
-                <th class="right" style="width:140px;">Extras (Bs)</th>
-                <th style="width:140px;">Acción</th>
+                <th style="width:120px">Fecha</th>
+                <th class="right">Adultos</th>
+                <th class="right">Menores</th>
+                <th class="right">Adulto mayor</th>
+                <th class="right">Entradas</th>
+                <th class="right">Pony</th>
+                <th class="right">Caballo</th>
+                <th class="right">Tazas</th>
+                <th class="right">Total día</th>
+                <th class="right" style="width:140px">Acciones</th>
               </tr>
             </thead>
             <tbody id="monthTbody"></tbody>
           </table>
         </div>
 
-        <div class="btns" style="margin-top:12px;">
-          <button class="ghost" id="exportJsonBtn">Exportar datos (JSON)</button>
-          <button class="ghost" id="importJsonBtn">Importar datos (JSON)</button>
-        </div>
+        <div class="note" id="monthInfo"></div>
       </div>
     </div>
   </section>
@@ -881,55 +710,82 @@
   <section class="panel" id="panelTariff" role="tabpanel" aria-labelledby="tabTariff">
     <div class="card">
       <div class="hd">
-        <h2>Tarifario</h2>
-        <div class="badge" title="Gestiona tipos de ítems y precios por defecto">
-          <span class="dot" style="background: var(--warn)"></span>
-          <span>Catálogo</span>
+        <h2>Tarifario (Catálogo de ítems)</h2>
+        <div class="badge" title="Los ítems deshabilitados no aparecen en el combo del Registro diario.">
+          <span class="dot" style="background: var(--ok)"></span>
+          <span>Combo: solo habilitados</span>
         </div>
       </div>
+
       <div class="bd">
-        <div class="grid2">
-          <div>
-            <label>Nombre del ítem</label>
-            <input id="catLabel" placeholder="Ej: Adulto, Niño, Alimento, Paseo pony…" />
+        <div class="note" style="margin-top:0">
+          <span class="pill">Regla de borrado</span>
+          Un ítem <strong>solo se puede borrar</strong> si <strong>nunca fue usado</strong> en un recorrido. Si ya se usó, podrás <strong>deshabilitarlo</strong>.
+        </div>
+
+        <div class="ticket" style="margin-top:12px">
+          <div class="ticketHd">
+            <div>
+              <div class="title" id="tariffFormTitle">Nuevo ítem</div>
+              <div class="muted" style="font-size:12px;margin-top:2px">Crea o edita ítems del combo.</div>
+            </div>
+            <div class="badge">
+              <span class="dot" style="background: var(--accent2)"></span>
+              <span>Total ítems: <strong id="tariffCount">0</strong></span>
+            </div>
           </div>
-          <div>
-            <label>Categoría</label>
-            <select id="catCategory">
-              <option value="visitor">Visitante</option>
-              <option value="extra">Extra</option>
-            </select>
-          </div>
-          <div>
-            <label>Precio por defecto (Bs)</label>
-            <input id="catPrice" type="number" min="0" step="0.01" value="0" />
-          </div>
-          <div style="display:flex;gap:10px;align-items:flex-end;">
-            <button class="ok full" id="addCatalogBtn">Agregar / Actualizar</button>
+          <div class="ticketBd">
+            <div class="grid4">
+              <div>
+                <label>Nombre (visible)</label>
+                <input id="tariffLabel" type="text" placeholder="Ej: Vuelta — Pony" />
+              </div>
+              <div>
+                <label>Categoría</label>
+                <select id="tariffCategory">
+                  <option value="visitor">Visitante</option>
+                  <option value="extra">Extra</option>
+                </select>
+              </div>
+              <div>
+                <label>Precio por defecto (Bs)</label>
+                <input id="tariffPrice" type="number" min="0" step="0.01" placeholder="0.00" />
+              </div>
+              <div>
+                <label>Estado</label>
+                <select id="tariffEnabled">
+                  <option value="true">Habilitado</option>
+                  <option value="false">Deshabilitado</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="btns">
+              <button class="ok full" id="tariffSaveBtn">Guardar</button>
+              <button class="ghost full" id="tariffCancelBtn" disabled>Cancelar edición</button>
+            </div>
           </div>
         </div>
 
-        <div class="note" style="margin-top:12px">
-          Importante: Este catálogo se guarda en el dispositivo. Si deshabilitas un ítem, no se elimina el histórico: solo deja de aparecer al agregar nuevos ítems.
-        </div>
-
-        <div class="tableWrap" style="margin-top:12px;">
-          <table style="min-width:720px;">
+        <div class="tableWrap" style="max-height:520px;">
+          <table>
             <thead>
               <tr>
-                <th>Ítem</th>
-                <th style="width:120px;">Categoría</th>
-                <th class="right" style="width:140px;">Precio (Bs)</th>
-                <th class="right" style="width:110px;">Estado</th>
-                <th style="width:220px;">Acciones</th>
+                <th>Nombre</th>
+                <th style="width:140px">Categoría</th>
+                <th class="right" style="width:150px">Precio defecto</th>
+                <th style="width:130px">Estado</th>
+                <th class="right" style="width:280px">Acciones</th>
               </tr>
             </thead>
-            <tbody id="catalogTbody"></tbody>
+            <tbody id="tariffTbody"></tbody>
           </table>
         </div>
 
-        <div class="btns" style="margin-top:12px;">
-          <button class="ghost" id="resetCatalogBtn">Restaurar tarifario base</button>
+        <div class="btns">
+          <button class="danger full" id="tariffResetBtn" title="Restaura el tarifario base. No borra recorridos.">
+            Restaurar tarifario base
+          </button>
         </div>
       </div>
     </div>
@@ -940,15 +796,15 @@
 <!-- Modales -->
 <div class="overlay" id="modalOverlay"></div>
 
-<!-- Modal: crear nuevo recorrido -->
+<!-- Modal: nuevo recorrido -->
 <div class="modal" id="newTripModal" aria-hidden="true">
   <div class="modalCard">
     <div class="modalHd">
-      <h3>Nuevo recorrido</h3>
-      <button class="ghost" id="closeModalBtn" title="Cerrar">Cerrar</button>
+      <div class="t">Habilitar nuevo recorrido</div>
+      <button class="ghost" id="closeModalBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
     </div>
     <div class="modalBd">
-      <div class="grid2">
+      <div class="grid3" style="grid-template-columns: 1fr 1fr 1fr;">
         <div>
           <label>Fecha</label>
           <input id="newTripDate" type="date" />
@@ -961,17 +817,93 @@
           </select>
         </div>
         <div>
-          <label>Hora (opcional)</label>
-          <input id="newTripHour" placeholder="Ej: 10:30" />
+          <label>Hora</label>
+          <input id="newTripHour" type="time" />
         </div>
-      </div>
-      <div class="note" style="margin-top:12px">
-        Luego podrás agregar ítems (visitantes y extras), observaciones, y exportar el resumen.
       </div>
     </div>
     <div class="modalFt">
       <button class="ghost" id="cancelModalBtn">Cancelar</button>
-      <button class="ok" id="acceptNewTripBtn">Crear</button>
+      <button class="ok" id="acceptNewTripBtn">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: resumen de recorrido (misma info que exportación) -->
+<div class="modal" id="summaryModal" aria-hidden="true" style="z-index:240">
+  <div class="modalCard">
+    <div class="modalHd">
+      <div class="t">Resumen del recorrido</div>
+      <button class="ghost" id="closeSummaryBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+    </div>
+
+    <div class="modalBd">
+      <div class="printLike" id="summaryPrintLike">
+        <div class="pHd">
+          <h1>Resumen de recorrido</h1>
+        </div>
+
+        <div class="pMeta">
+          <div><strong>Fecha:</strong> <span id="summaryDate">—</span></div>
+          <div><strong>Turno:</strong> <span id="summaryShift">—</span></div>
+          <div><strong>Hora:</strong> <span id="summaryHour">—</span></div>
+          <div><strong>Visitantes:</strong> <span id="summaryVisitors">0</span></div>
+          <div><strong>Total:</strong> <span id="summaryTotalTop">Bs 0</span></div>
+        </div>
+
+        <div class="pTableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ítem</th>
+                <th class="right" style="width:110px;">Cantidad</th>
+                <th class="right" style="width:150px;">Subtotal (Bs)</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTbody"></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" class="right"><strong>Total</strong></td>
+                <td class="right"><strong id="summaryTotalFoot">Bs 0</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="pObs">
+          <div class="pObsTitle">Observaciones</div>
+          <div class="pObsBody" id="summaryNotes">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modalFt">
+      <button class="ok" id="exportTripPdfBtn">Exportar recorrido</button>
+      <button class="ghost" id="closeSummaryBtn2">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: resumen del día (una tarjeta por recorrido) -->
+<div class="modal" id="daySummaryModal" aria-hidden="true" style="z-index:245">
+  <div class="modalCard">
+    <div class="modalHd">
+      <div class="t">Resumen del día</div>
+      <button class="ghost" id="closeDaySummaryBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+    </div>
+
+    <div class="modalBd">
+      <div class="note" style="margin-top:0">
+        Fecha: <strong id="daySummaryDateLabel">—</strong>
+      </div>
+
+      <div class="dayGrid" id="daySummaryGrid" style="margin-top:12px;"></div>
+
+      <div class="note" id="daySummaryEmpty" style="display:none;">No hay recorridos para esta fecha.</div>
+    </div>
+
+    <div class="modalFt">
+      <button class="ghost" id="closeDaySummaryBtn2">Cerrar</button>
     </div>
   </div>
 </div>
@@ -980,197 +912,305 @@
 
 <script>
 (() => {
-  // ===== Helpers =====
+  "use strict";
+
+  // ===== PWA bootstrap (sin UI) =====
+  (function pwaInit(){
+    const isSecure = location.protocol === "https:" || location.hostname === "localhost";
+    const isFile = location.protocol === "file:";
+    if (isFile || !isSecure) return;
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    }
+  })();
+
+  // ===== Keys =====
+  const STORAGE_KEY = "kalomai_granja_monthly_v8";
+  const CATALOG_KEY = "kalomai_granja_tarifario_v2";
+
+  // ===== Base tarifario =====
+  const BASE_CATALOG = [
+    { id:"adult",  label:"Entrada — Adulto",        category:"visitor", defaultPrice: 10, isEnabled:true },
+    { id:"minor",  label:"Entrada — Menor",         category:"visitor", defaultPrice: 5,  isEnabled:true },
+    { id:"senior", label:"Entrada — Adulto mayor",  category:"visitor", defaultPrice: 2,  isEnabled:true },
+
+    { id:"pony",   label:"Vuelta — Pony",           category:"extra",   defaultPrice: 0,  isEnabled:true },
+    { id:"horse",  label:"Vuelta — Caballo",        category:"extra",   defaultPrice: 0,  isEnabled:true },
+    { id:"cups",   label:"Consumo — Taza comida",   category:"extra",   defaultPrice: 0,  isEnabled:true },
+  ];
+
   const $ = (id) => document.getElementById(id);
 
-  function esc(s){
-    return String(s ?? "").replace(/[&<>"']/g, (m)=>({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[m]));
-  }
-
-  function toast(msg){
-    const t = $("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    clearTimeout(toast._tm);
-    toast._tm = setTimeout(()=>t.classList.remove("show"), 2400);
-  }
-
-  function debounce(fn, ms){
-    let tm = null;
-    return (...args)=>{
-      clearTimeout(tm);
-      tm = setTimeout(()=>fn(...args), ms);
-    };
-  }
-
-  function uuid(){
-    return (crypto?.randomUUID?.() || ("id-"+Math.random().toString(16).slice(2)+Date.now().toString(16)));
-  }
-
-  function toISODate(d){
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-    return `${y}-${m}-${day}`;
-  }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function toISODate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  function toMonthKeyFromISODate(iso){ return iso.slice(0,7); }
 
   function formatDateDDMMYY(iso){
-    const [y,m,d] = String(iso).split("-");
-    if(!y||!m||!d) return iso;
-    return `${d}/${m}/${y}`;
+    if(!iso || typeof iso !== "string" || iso.length < 10) return iso || "—";
+    const y = iso.slice(2,4);
+    const m = iso.slice(5,7);
+    const d = iso.slice(8,10);
+    return `${d}-${m}-${y}`;
   }
 
+  function safeInt(v){
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+  }
+  function safeMoney(v){
+    const n = Number(v);
+    if(!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.round(n * 100) / 100);
+  }
   function fmtMoney(n){
-    const x = Number(n || 0);
-    const s = x.toFixed(2);
-    return `Bs ${s}`;
+    const val = Math.round(n * 100) / 100;
+    return `Bs ${val}`;
   }
-
-  function fmtBytes(n){
-    const x = Number(n||0);
-    if(x < 1024) return `${x} B`;
-    if(x < 1024*1024) return `${(x/1024).toFixed(1)} KB`;
-    return `${(x/1024/1024).toFixed(2)} MB`;
+  function esc(s){
+    return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
   }
-
+  function toast(msg){
+    const host = $("toast");
+    const el = document.createElement("div");
+    el.className = "msg";
+    el.textContent = msg;
+    host.appendChild(el);
+    setTimeout(()=>{ el.style.opacity="0"; el.style.transition="opacity .35s"; }, 2200);
+    setTimeout(()=>{ el.remove(); }, 2700);
+  }
+  function confirmDanger(message){ return window.confirm(message); }
+  function uid(){
+    return (crypto?.randomUUID?.() || ("id_" + Math.random().toString(16).slice(2) + "_" + Date.now()));
+  }
   function catLabel(cat){
-    return cat === "visitor" ? "Visitante" : "Extra";
+    return (cat === "visitor") ? "Visitante" : "Extra";
   }
 
-  // ===== Storage =====
-  const STORAGE_KEY = "kalomai_trips_v1";
-  const CATALOG_KEY = "kalomai_catalog_v1";
-
+  // ===== Store =====
   function loadStore(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return { days: {} };
+      if(!raw) return { days:{} };
       const obj = JSON.parse(raw);
-      if(!obj.days) obj.days = {};
+      if(!obj || typeof obj !== "object") return { days:{} };
+      if(!obj.days || typeof obj.days !== "object") obj.days = {};
+      for(const k of Object.keys(obj.days)){
+        if(!Array.isArray(obj.days[k].trips)) obj.days[k].trips = [];
+      }
       return obj;
     }catch{
-      return { days: {} };
+      return { days:{} };
     }
   }
-
   function saveStore(store){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   }
-
-  function ensureDay(store, iso){
-    if(!store.days) store.days = {};
-    if(!store.days[iso]) store.days[iso] = { trips: [] };
-    if(!Array.isArray(store.days[iso].trips)) store.days[iso].trips = [];
+  function ensureDay(store, isoDate){
+    if(!store.days[isoDate]) store.days[isoDate] = { trips:[], updatedAt: new Date().toISOString() };
+    if(!Array.isArray(store.days[isoDate].trips)) store.days[isoDate].trips = [];
+    return store.days[isoDate];
   }
-
-  function findTrip(store, iso, id){
-    const day = store.days?.[iso];
-    if(!day?.trips) return null;
-    return day.trips.find(t=>t.id===id) || null;
+  function findTrip(store, isoDate, tripId){
+    const day = store.days?.[isoDate];
+    if(!day) return null;
+    return (day.trips || []).find(t => t.id === tripId) || null;
+  }
+  function upsertTrip(store, isoDate, trip){
+    const day = ensureDay(store, isoDate);
+    const idx = day.trips.findIndex(t => t.id === trip.id);
+    if(idx === -1) day.trips.push(trip);
+    else day.trips[idx] = trip;
+    day.updatedAt = new Date().toISOString();
+  }
+  function deleteTrip(store, isoDate, tripId){
+    const day = store.days?.[isoDate];
+    if(!day) return;
+    day.trips = (day.trips || []).filter(t => t.id !== tripId);
+    day.updatedAt = new Date().toISOString();
+    if(day.trips.length === 0) delete store.days[isoDate];
   }
 
   // ===== Catalog =====
-  const DEFAULT_CATALOG = [
-    { id:"adulto", label:"Adulto", category:"visitor", defaultPrice:10, enabled:true },
-    { id:"nino", label:"Niño", category:"visitor", defaultPrice:5, enabled:true },
-    { id:"adulto_mayor", label:"Adulto mayor", category:"visitor", defaultPrice:2, enabled:true },
-    { id:"alimento", label:"Alimento para animales", category:"extra", defaultPrice:10, enabled:true },
-    { id:"paseo_pony", label:"Paseo pony", category:"extra", defaultPrice:10, enabled:true }
-  ];
-
+  function seedBaseCatalog(){
+    const now = new Date().toISOString();
+    const seeded = BASE_CATALOG.map(x => ({
+      id: x.id,
+      label: x.label,
+      category: x.category,
+      defaultPrice: safeMoney(x.defaultPrice),
+      isEnabled: x.isEnabled !== false,
+      createdAt: now,
+      updatedAt: now
+    }));
+    localStorage.setItem(CATALOG_KEY, JSON.stringify(seeded));
+    return seeded;
+  }
   function loadCatalog(){
     try{
       const raw = localStorage.getItem(CATALOG_KEY);
-      if(!raw) return DEFAULT_CATALOG.slice();
-      const list = JSON.parse(raw);
-      if(!Array.isArray(list)) return DEFAULT_CATALOG.slice();
-      return list;
+      if(!raw) return seedBaseCatalog();
+      const arr = JSON.parse(raw);
+      if(!Array.isArray(arr) || arr.length === 0) return seedBaseCatalog();
+      const normalized = arr.map(x => ({
+        id: String(x.id || uid()),
+        label: String(x.label || "Ítem"),
+        category: (String(x.category || "extra") === "visitor" ? "visitor" : "extra"),
+        defaultPrice: safeMoney(x.defaultPrice),
+        isEnabled: (x.isEnabled !== false),
+        createdAt: x.createdAt || new Date().toISOString(),
+        updatedAt: x.updatedAt || new Date().toISOString()
+      }));
+      localStorage.setItem(CATALOG_KEY, JSON.stringify(normalized));
+      return normalized;
     }catch{
-      return DEFAULT_CATALOG.slice();
+      return seedBaseCatalog();
     }
   }
 
-  function saveCatalog(list){
-    localStorage.setItem(CATALOG_KEY, JSON.stringify(list));
-  }
-
-  function enabledCatalog(){
-    return loadCatalog().filter(x=>x.enabled !== false);
-  }
-
+  let CATALOG = [];
+  let CAT_BY_ID = {};
   function refreshCatalogCache(){
-    // No-op placeholder for future enhancements
+    CATALOG = loadCatalog();
+    CAT_BY_ID = Object.fromEntries(CATALOG.map(x => [x.id, x]));
+    $("tariffCount").textContent = String(CATALOG.length);
+  }
+  function enabledCatalog(){ return CATALOG.filter(x => x.isEnabled); }
+  function saveCatalog(cat){
+    localStorage.setItem(CATALOG_KEY, JSON.stringify(cat));
+    refreshCatalogCache();
+    rebuildItemTypeSelect();
+    rebuildChartMetricOptions();
+    renderTariff();
+    renderDailyList();
+    renderMonthly();
   }
 
-  // ===== Calc =====
-  function calcTrip(tr){
-    const items = tr.items || [];
-    let qtyVisitors = 0;
-    let incomeTotal = 0;
-
-    for(const it of items){
-      const qty = Number(it.qty || 0);
-      const price = Number(it.unitPrice || 0);
-      const sub = qty * price;
-
-      incomeTotal += sub;
-      if(it.category === "visitor"){
-        qtyVisitors += qty;
+  function isTypeUsedInTrips(typeId){
+    const store = loadStore();
+    for(const date of Object.keys(store.days || {})){
+      const trips = store.days[date]?.trips || [];
+      for(const t of trips){
+        const items = t.items || [];
+        for(const it of items){
+          if(it.typeId === typeId) return true;
+        }
       }
     }
+    return false;
+  }
 
-    return { qtyVisitors, incomeTotal };
+  // ===== Calculations =====
+  function normalizeItem(typeId, qty, unitPrice){
+    const def = CAT_BY_ID[typeId];
+    const category = (def?.category === "visitor") ? "visitor" : "extra";
+    return {
+      typeId,
+      label: def?.label || "Ítem",
+      category,
+      qty: safeInt(qty),
+      unitPrice: safeMoney(unitPrice)
+    };
+  }
+
+  function calcItems(items){
+    const acc = {
+      qtyByType: {},
+      incomeByType: {},
+      qtyVisitors: 0,
+      incomeTotal: 0
+    };
+    for(const it of (items || [])){
+      const qty = safeInt(it.qty);
+      const price = safeMoney(it.unitPrice);
+      const sub = qty * price;
+      const typeId = String(it.typeId || "");
+      const cat = (String(it.category || "extra") === "visitor") ? "visitor" : "extra";
+
+      acc.qtyByType[typeId] = (acc.qtyByType[typeId] || 0) + qty;
+      acc.incomeByType[typeId] = (acc.incomeByType[typeId] || 0) + sub;
+      acc.incomeTotal += sub;
+
+      if(cat === "visitor") acc.qtyVisitors += qty;
+    }
+    return acc;
+  }
+  function calcTrip(trip){ return calcItems(trip?.items || []); }
+
+  function listDaysForMonth(store, monthKey){
+    return Object.keys(store.days)
+      .filter(d => d.startsWith(monthKey + "-"))
+      .sort((a,b)=>a.localeCompare(b));
+  }
+
+  function monthTotals(store, monthKey){
+    const days = listDaysForMonth(store, monthKey);
+    const totals = {
+      adults:0,minors:0,seniors:0,
+      entries:0, pony:0, horse:0, cups:0,
+      revenue:0, daysCount:0, tripsCount:0,
+      incomeByType: {}
+    };
+    for(const d of days){
+      const trips = store.days[d]?.trips || [];
+      totals.daysCount++;
+      totals.tripsCount += trips.length;
+
+      for(const t of trips){
+        const c = calcTrip(t);
+
+        totals.adults  += (c.qtyByType["adult"]  || 0);
+        totals.minors  += (c.qtyByType["minor"]  || 0);
+        totals.seniors += (c.qtyByType["senior"] || 0);
+        totals.entries += (c.qtyByType["adult"]  || 0) + (c.qtyByType["minor"] || 0) + (c.qtyByType["senior"] || 0);
+
+        totals.pony  += (c.qtyByType["pony"]  || 0);
+        totals.horse += (c.qtyByType["horse"] || 0);
+        totals.cups  += (c.qtyByType["cups"]  || 0);
+
+        totals.revenue += c.incomeTotal;
+
+        for(const [typeId, inc] of Object.entries(c.incomeByType || {})){
+          totals.incomeByType[typeId] = (totals.incomeByType[typeId] || 0) + inc;
+        }
+      }
+    }
+    return totals;
   }
 
   // ===== Tabs =====
   function setActiveTab(tab){
-    const newBtn = $("tabNew");
     const dailyBtn = $("tabDaily");
     const monthBtn = $("tabMonthly");
     const tariffBtn = $("tabTariff");
-
-    const newPanel = $("panelNew");
     const dailyPanel = $("panelDaily");
     const monthPanel = $("panelMonthly");
     const tariffPanel = $("panelTariff");
 
-    const newActive = tab === "new";
     const dailyActive = tab === "daily";
     const monthActive = tab === "monthly";
     const tariffActive = tab === "tariff";
 
-    newBtn.classList.toggle("active", newActive);
     dailyBtn.classList.toggle("active", dailyActive);
     monthBtn.classList.toggle("active", monthActive);
     tariffBtn.classList.toggle("active", tariffActive);
 
-    newBtn.setAttribute("aria-selected", newActive ? "true" : "false");
     dailyBtn.setAttribute("aria-selected", dailyActive ? "true" : "false");
     monthBtn.setAttribute("aria-selected", monthActive ? "true" : "false");
     tariffBtn.setAttribute("aria-selected", tariffActive ? "true" : "false");
 
-    newPanel.classList.toggle("active", newActive);
     dailyPanel.classList.toggle("active", dailyActive);
     monthPanel.classList.toggle("active", monthActive);
     tariffPanel.classList.toggle("active", tariffActive);
 
-    if(newActive){
-      renderNew();
-      if(!getActiveTrip()) openNewTripModal();
-    }
     if(dailyActive) renderDaily();
     if(monthActive) renderMonthly();
     if(tariffActive) renderTariff();
   }
-
-  $("tabNew").addEventListener("click", ()=> setActiveTab("new"));
   $("tabDaily").addEventListener("click", ()=> setActiveTab("daily"));
   $("tabMonthly").addEventListener("click", ()=> setActiveTab("monthly"));
   $("tabTariff").addEventListener("click", ()=> setActiveTab("tariff"));
 
-  // ===== Estado de recorrido activo =====
+  // ===== Daily state =====
   let activeTripDate = null;
   let activeTripId = null;
 
@@ -1180,14 +1220,6 @@
     localStorage.setItem("kalomai_active_trip_date", activeTripDate || "");
     localStorage.setItem("kalomai_active_trip_id", activeTripId || "");
   }
-
-  function clearActiveTrip(){
-    activeTripDate = null;
-    activeTripId = null;
-    localStorage.setItem("kalomai_active_trip_date", "");
-    localStorage.setItem("kalomai_active_trip_id", "");
-  }
-
   function loadActiveTripFromStorage(){
     const d = String(localStorage.getItem("kalomai_active_trip_date") || "").trim();
     const id = String(localStorage.getItem("kalomai_active_trip_id") || "").trim();
@@ -1196,97 +1228,26 @@
       const t = findTrip(store, d, id);
       if(t){ activeTripDate = d; activeTripId = id; return; }
     }
-    activeTripDate = null;
-    activeTripId = null;
+    activeTripDate = null; activeTripId = null;
   }
-
   function getActiveTrip(){
     if(!activeTripDate || !activeTripId) return null;
     const store = loadStore();
     return findTrip(store, activeTripDate, activeTripId);
   }
 
-  // ===== Modales =====
-  const overlay = $("modalOverlay");
-  const newTripModal = $("newTripModal");
-
-  function openNewTripModal(){
-    overlay.classList.add("open");
-    newTripModal.classList.add("open");
-    newTripModal.setAttribute("aria-hidden","false");
-
-    const today = toISODate(new Date());
-    const baseDate = String(($("listDate")?.value) || "").trim() || today;
-
-    $("newTripDate").value = baseDate;
-    $("newTripShift").value = "manana";
-    $("newTripHour").value = "";
-    $("newTripHour").focus();
-  }
-
-  function closeAllModals(){
-    overlay.classList.remove("open");
-    newTripModal.classList.remove("open");
-    newTripModal.setAttribute("aria-hidden","true");
-  }
-
-  if($("openNewTripModalBtn")) $("openNewTripModalBtn").addEventListener("click", openNewTripModal);
-  $("closeModalBtn").addEventListener("click", closeAllModals);
-  $("cancelModalBtn").addEventListener("click", closeAllModals);
-  overlay.addEventListener("click", closeAllModals);
-
-  $("acceptNewTripBtn").addEventListener("click", ()=>{
-    const date = String($("newTripDate").value || "").trim();
-    const shift = String($("newTripShift").value || "").trim();
-    const hour = String($("newTripHour").value || "").trim();
-
-    if(!date){ toast("Selecciona una fecha."); return; }
-    if(shift !== "manana" && shift !== "tarde"){ toast("Selecciona un turno."); return; }
-
-    const store = loadStore();
-    ensureDay(store, date);
-
-    const trip = {
-      id: uuid(),
-      shift,
-      tripHour: hour,
-      notes: "",
-      items: []
-    };
-
-    store.days[date].trips.push(trip);
-    saveStore(store);
-
-    setActiveTrip(date, trip.id);
-
-    // También fija la fecha de listado para que el Diario muestre el mismo día.
-    if($("listDate")) $("listDate").value = date;
-
-    closeAllModals();
-    toast("Recorrido creado.");
-    renderNew();
-    renderDaily();
-    renderMonthly();
-  });
-
-  // ===== UI: Recorrido activo (pestaña Nuevo) =====
   function showActiveTripUI(trip){
     $("newTripTopArea").style.display = trip ? "none" : "flex";
     $("activeTripHeader").style.display = trip ? "block" : "none";
 
-    if(!trip){
-      $("tripNotes").value = "";
-      resetAddLine();
-      $("activeTripItems").innerHTML = "";
-      return;
-    }
+    if(!trip) return;
 
     const shiftText = (trip.shift === "manana" ? "Mañana" : "Tarde");
     $("activeTripInfo").innerHTML =
       `Fecha <strong>${esc(formatDateDDMMYY(activeTripDate))}</strong> · Turno <strong>${esc(shiftText)}</strong> · Hora <strong>${esc(trip.tripHour || "—")}</strong>`;
   }
 
-  // ===== Combo de ítems =====
+  // ===== Daily: combo with placeholder =====
   function resetAddLine(){
     const sel = $("itemType");
     sel.value = "";
@@ -1297,6 +1258,17 @@
   function rebuildItemTypeSelect(){
     const sel = $("itemType");
     const enabled = enabledCatalog();
+
+    if(enabled.length === 0){
+      sel.innerHTML = `<option value="">(No hay ítems habilitados)</option>`;
+      sel.disabled = true;
+      $("addItemBtn").disabled = true;
+      resetAddLine();
+      return;
+    }
+
+    sel.disabled = false;
+    $("addItemBtn").disabled = false;
 
     sel.innerHTML =
       `<option value="">Seleccionar ítem</option>` +
@@ -1315,141 +1287,243 @@
       resetAddLine();
       return;
     }
-    const it = enabledCatalog().find(x=>x.id===id);
-    if(!it) return;
+    const def = CAT_BY_ID[id];
     $("itemQty").value = "1";
-    $("itemPrice").value = String(it.defaultPrice ?? 0);
+    $("itemPrice").value = String(safeMoney(def?.defaultPrice ?? 0));
   });
 
-  // ===== Ítems del recorrido =====
-  function renderActiveTripItems(trip){
-    const wrap = $("activeTripItems");
+  // ===== Modales =====
+  const overlay = $("modalOverlay");
+  const newTripModal = $("newTripModal");
+  const summaryModal = $("summaryModal");
+  const daySummaryModal = $("daySummaryModal");
+
+  function openNewTripModal(){
+    overlay.classList.add("open");
+    newTripModal.classList.add("open");
+    newTripModal.setAttribute("aria-hidden","false");
+    summaryModal.classList.remove("open");
+    daySummaryModal.classList.remove("open");
+    summaryModal.setAttribute("aria-hidden","true");
+    daySummaryModal.setAttribute("aria-hidden","true");
+
+    const today = toISODate(new Date());
+    $("newTripDate").value = $("listDate").value || today;
+    $("newTripShift").value = "manana";
+    $("newTripHour").value = "";
+    $("newTripHour").focus();
+  }
+
+  function closeAllModals(){
+    overlay.classList.remove("open");
+    newTripModal.classList.remove("open");
+    summaryModal.classList.remove("open");
+    daySummaryModal.classList.remove("open");
+    newTripModal.setAttribute("aria-hidden","true");
+    summaryModal.setAttribute("aria-hidden","true");
+    daySummaryModal.setAttribute("aria-hidden","true");
+  }
+
+  $("openNewTripModalBtn").addEventListener("click", openNewTripModal);
+  $("openNewTripModalBtn2").addEventListener("click", openNewTripModal);
+  $("closeModalBtn").addEventListener("click", closeAllModals);
+  $("cancelModalBtn").addEventListener("click", closeAllModals);
+  $("closeSummaryBtn").addEventListener("click", closeAllModals);
+  $("closeSummaryBtn2").addEventListener("click", closeAllModals);
+  $("closeDaySummaryBtn").addEventListener("click", closeAllModals);
+  $("closeDaySummaryBtn2").addEventListener("click", closeAllModals);
+  overlay.addEventListener("click", closeAllModals);
+
+  $("acceptNewTripBtn").addEventListener("click", ()=>{
+    const date = String($("newTripDate").value || "").trim();
+    const shift = String($("newTripShift").value || "").trim();
+    const hour = String($("newTripHour").value || "").trim();
+
+    if(!date){ toast("Selecciona una fecha."); return; }
+    if(!hour){ toast("La hora es obligatoria."); $("newTripHour").focus(); return; }
+    if(shift !== "manana" && shift !== "tarde"){ toast("Turno inválido."); return; }
+
+    const store = loadStore();
+    const trip = {
+      id: uid(),
+      shift,
+      tripHour: hour,
+      notes: "",
+      items: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    upsertTrip(store, date, trip);
+    saveStore(store);
+
+    setActiveTrip(date, trip.id);
+    closeAllModals();
+    toast("Recorrido habilitado.");
+
+    $("listDate").value = date;
+    renderDaily();
+  });
+
+  $("closeActiveTripBtn").addEventListener("click", ()=>{
+    setActiveTrip(null, null);
+    toast("Edición cerrada.");
+    renderDaily();
+  });
+
+  // ===== Observaciones (autosave con debounce) =====
+  let notesTimer = null;
+  function saveActiveNotesDebounced(){
+    clearTimeout(notesTimer);
+    notesTimer = setTimeout(()=> {
+      const trip = getActiveTrip();
+      if(!trip) return;
+
+      const store = loadStore();
+      const current = findTrip(store, activeTripDate, activeTripId);
+      if(!current) return;
+
+      current.notes = String($("tripNotes").value || "");
+      current.updatedAt = new Date().toISOString();
+      upsertTrip(store, activeTripDate, current);
+      saveStore(store);
+    }, 300);
+  }
+  $("tripNotes").addEventListener("input", saveActiveNotesDebounced);
+
+  // ===== Agregar ítem (guardado automático) =====
+  $("addItemBtn").addEventListener("click", ()=>{
+    const trip = getActiveTrip();
     if(!trip){
-      wrap.innerHTML = "";
+      toast("Primero habilita o carga un recorrido.");
+      return;
+    }
+    const typeId = $("itemType").value;
+    const qty = safeInt($("itemQty").value);
+    const price = safeMoney($("itemPrice").value);
+
+    if(!typeId){
+      toast("Selecciona un ítem.");
+      return;
+    }
+    if(qty <= 0){
+      toast("La cantidad debe ser mayor a 0.");
       return;
     }
 
-    const c = calcTrip(trip);
-    $("activeTripVisitors").textContent = String(c.qtyVisitors);
-    $("activeTripTotal").textContent = fmtMoney(c.incomeTotal);
-
-    $("tripNotes").value = String(trip.notes || "");
-
-    if(!trip.items?.length){
-      wrap.innerHTML = `<div class="muted2" style="padding:10px 0;">Aún no hay ítems.</div>`;
+    const store = loadStore();
+    const current = findTrip(store, activeTripDate, activeTripId);
+    if(!current){
+      toast("No se encontró el recorrido activo.");
+      setActiveTrip(null,null);
+      renderDaily();
       return;
     }
 
-    wrap.innerHTML = trip.items.map((it, idx)=>{
-      const subtotal = (Number(it.qty||0) * Number(it.unitPrice||0));
+    current.items = Array.isArray(current.items) ? current.items : [];
+    current.items.push(normalizeItem(typeId, qty, price));
+    current.updatedAt = new Date().toISOString();
+
+    upsertTrip(store, activeTripDate, current);
+    saveStore(store);
+
+    resetAddLine();
+    toast("Ítem agregado y guardado.");
+    renderDaily();
+  });
+
+  // ===== Items del recorrido: NO editable (solo quitar) =====
+  function renderActiveTripItems(trip){
+    const host = $("activeTripItems");
+    if(!trip){ host.innerHTML = ""; return; }
+
+    const items = Array.isArray(trip.items) ? trip.items : [];
+    if(items.length === 0){
+      host.innerHTML = `<div class="itemsRow"><div class="muted">Este recorrido está vacío.</div></div>`;
+      return;
+    }
+
+    host.innerHTML = items.map((it, idx) => {
+      const qty = safeInt(it.qty);
+      const up = safeMoney(it.unitPrice);
+      const sub = qty * up;
+
       return `
-        <div class="itemRow">
-          <div>
-            <strong>${esc(it.label)}</strong>
-            <div class="muted2">${esc(catLabel(it.category))} · ${fmtMoney(it.unitPrice)} c/u</div>
+        <div class="itemsRow">
+          <div class="cellLabel">
+            <span><strong>${esc(it.label || "Ítem")}</strong></span>
+            <span class="muted">${esc(catLabel(it.category || "extra"))}</span>
           </div>
-          <div class="right"><strong>${Number(it.qty||0)}</strong></div>
-          <div class="right"><strong>${fmtMoney(subtotal)}</strong></div>
+
+          <div class="right cellLabel">
+            <span class="muted">Cantidad</span>
+            <strong>${qty}</strong>
+          </div>
+
+          <div class="right cellLabel">
+            <span class="muted">Total</span>
+            <strong>${fmtMoney(sub)}</strong>
+          </div>
+
           <div class="right">
-            <button class="danger" data-del="${idx}" title="Quitar ítem">Quitar</button>
+            <button class="danger" data-act="remove" data-idx="${idx}">Quitar</button>
           </div>
         </div>
       `;
     }).join("");
 
-    wrap.querySelectorAll("button[data-del]").forEach(btn=>{
+    host.querySelectorAll("button[data-act='remove']").forEach(btn => {
       btn.addEventListener("click", ()=>{
-        const idx = Number(btn.getAttribute("data-del"));
+        const idx = Number(btn.getAttribute("data-idx"));
+        if(!Number.isFinite(idx)) return;
+        if(!confirmDanger("¿Quitar este ítem del recorrido?")) return;
         removeActiveItem(idx);
       });
     });
   }
 
   function removeActiveItem(idx){
-    const trip = getActiveTrip();
-    if(!trip) return;
     const store = loadStore();
-    const t = findTrip(store, activeTripDate, activeTripId);
-    if(!t) return;
-    t.items.splice(idx, 1);
+    const trip = findTrip(store, activeTripDate, activeTripId);
+    if(!trip){ toast("No se encontró el recorrido activo."); return; }
+
+    const items = Array.isArray(trip.items) ? trip.items : [];
+    if(idx < 0 || idx >= items.length) return;
+
+    items.splice(idx, 1);
+    trip.items = items;
+    trip.updatedAt = new Date().toISOString();
+    upsertTrip(store, activeTripDate, trip);
     saveStore(store);
-    renderNew();
+
+    toast("Ítem eliminado.");
     renderDaily();
-    renderMonthly();
   }
 
-  $("addItemBtn").addEventListener("click", ()=>{
-    const trip = getActiveTrip();
-    if(!trip){ toast("Primero crea un recorrido."); return; }
-
-    const typeId = String($("itemType").value || "").trim();
-    const qty = Number($("itemQty").value || 0);
-    const price = Number($("itemPrice").value || 0);
-
-    if(!typeId){ toast("Selecciona un ítem."); return; }
-    if(!Number.isFinite(qty) || qty <= 0){ toast("Cantidad inválida."); return; }
-    if(!Number.isFinite(price) || price < 0){ toast("Precio inválido."); return; }
-
-    const it = enabledCatalog().find(x=>x.id===typeId);
-    if(!it){ toast("Ítem no disponible."); return; }
-
-    const store = loadStore();
-    const t = findTrip(store, activeTripDate, activeTripId);
-    if(!t){ toast("Recorrido no encontrado."); return; }
-
-    t.items.push({
-      typeId,
-      label: it.label,
-      category: it.category,
-      qty,
-      unitPrice: price
-    });
-
-    saveStore(store);
-    resetAddLine();
-    renderNew();
-    renderDaily();
-    renderMonthly();
-  });
-
-  // ===== Observaciones (auto-guardado) =====
-  const saveActiveNotesDebounced = debounce(()=>{
-    const trip = getActiveTrip();
-    if(!trip) return;
-    const store = loadStore();
-    const t = findTrip(store, activeTripDate, activeTripId);
-    if(!t) return;
-    t.notes = String($("tripNotes").value || "");
-    saveStore(store);
-    renderNew();
-    renderDaily();
-    renderMonthly();
-  }, 350);
-
-  $("tripNotes").addEventListener("input", saveActiveNotesDebounced);
-
-  $("closeActiveTripBtn").addEventListener("click", ()=>{
-    clearActiveTrip();
-    toast("Edición cerrada.");
-    renderNew();
-  });
-
-  // ===== Resumen del recorrido (inline) =====
+  // ===== Resumen: consolidación + impresión =====
   function buildTripSummary(trip){
-    const rowsByType = new Map();
+    const items = Array.isArray(trip.items) ? trip.items : [];
+    const byType = new Map();
 
-    for(const it of (trip.items || [])){
-      const key = `${it.category}::${it.label}::${it.unitPrice}`;
-      const prev = rowsByType.get(key) || { label: it.label, category: it.category, qty: 0, subtotal: 0 };
-      prev.qty += Number(it.qty||0);
-      prev.subtotal += Number(it.qty||0) * Number(it.unitPrice||0);
-      rowsByType.set(key, prev);
+    for(const it of items){
+      const typeId = String(it.typeId || "");
+      const qty = safeInt(it.qty);
+      const sub = safeMoney(it.unitPrice) * qty;
+      const label = String(it.label || CAT_BY_ID[typeId]?.label || "Ítem");
+      const category = (String(it.category || "extra") === "visitor") ? "visitor" : "extra";
+
+      const prev = byType.get(typeId);
+      if(!prev){
+        byType.set(typeId, { typeId, label, category, qty, subtotal: sub });
+      } else {
+        prev.qty += qty;
+        prev.subtotal += sub;
+      }
     }
 
-    const rows = Array.from(rowsByType.values())
-      .sort((a,b)=> (a.category+b.label).localeCompare(b.category+a.label));
+    const rows = Array.from(byType.values())
+      .sort((a,b)=>a.category.localeCompare(b.category) || a.label.localeCompare(b.label));
 
-    const total = rows.reduce((s,r)=>s+r.subtotal,0);
+    const total = rows.reduce((s,r)=>s + r.subtotal, 0);
     return { rows, total };
   }
 
@@ -1460,119 +1534,88 @@
 
     const rowsHtml = summary.rows.map(r => `
       <tr>
-        <td>
+        <td style="padding:8px;border:1px solid #ddd;">
           <strong>${esc(r.label)}</strong>
-          <div class="muted2">${esc(catLabel(r.category))}</div>
+          <div style="font-size:11px;color:#444;margin-top:2px;">${esc(catLabel(r.category))}</div>
         </td>
-        <td class="right"><strong>${r.qty}</strong></td>
-        <td class="right"><strong>${fmtMoney(r.subtotal)}</strong></td>
+        <td style="padding:8px;border:1px solid #ddd;text-align:right;"><strong>${r.qty}</strong></td>
+        <td style="padding:8px;border:1px solid #ddd;text-align:right;"><strong>${fmtMoney(r.subtotal)}</strong></td>
       </tr>
     `).join("");
 
-    const notes = String(trip.notes || "").trim() || "—";
+    const notes = String(trip.notes || "").trim();
 
     return `
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Resumen de recorrido</title>
-  <style>
-    :root{
-      --bg:#ffffff;
-      --text:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-    }
-    body{ margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    .wrap{ padding:18px; max-width:900px; margin:0 auto; }
-    h1{ margin:0 0 10px 0; font-size:20px; }
-    .meta{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:8px; margin:10px 0 14px; }
-    .meta div{ border:1px solid var(--border); border-radius:10px; padding:10px; font-size:13px; }
-    .meta strong{ display:block; font-size:12px; color:var(--muted); margin-bottom:2px; }
-    table{ width:100%; border-collapse:collapse; }
-    th, td{ border-bottom:1px solid var(--border); padding:10px; font-size:13px; vertical-align:top; }
-    th{ text-align:left; font-size:12px; color:var(--muted); }
-    .right{ text-align:right; }
-    tfoot td{ border-bottom:none; padding-top:12px; }
-    .obs{ margin-top:14px; border:1px solid var(--border); border-radius:12px; padding:12px; }
-    .obs strong{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
-    .muted2{ color:var(--muted); font-size:12px; }
-    @media print{ .noPrint{ display:none; } }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recorrido ${esc(formatDateDDMMYY(dateIso))} ${esc(shiftText)} ${esc(trip.tripHour||"")}</title>
+<style>
+  body{font-family: Arial, Helvetica, sans-serif; margin:24px; color:#111;}
+  h1{margin:0 0 8px; font-size:18px;}
+  .meta{font-size:12px; color:#444; margin-bottom:14px; line-height:1.45;}
+  table{width:100%; border-collapse:collapse; font-size:12px;}
+  th{background:#f4f6f8; text-align:left;}
+  th, td{border:1px solid #ddd; padding:8px; vertical-align:top;}
+  .right{text-align:right;}
+  .box{margin-top:14px; border:1px solid #ddd; border-radius:10px; padding:10px;}
+  .label{font-size:11px; color:#444; margin-bottom:6px;}
+  tr{page-break-inside:avoid;}
+  @media print{ body{margin:14mm;} }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Resumen de recorrido</h1>
+  <h1>Resumen de recorrido</h1>
+  <div class="meta">
+    <div><strong>Fecha:</strong> ${esc(formatDateDDMMYY(dateIso))}</div>
+    <div><strong>Turno:</strong> ${esc(shiftText)}</div>
+    <div><strong>Hora:</strong> ${esc(trip.tripHour || "—")}</div>
+    <div><strong>Visitantes:</strong> ${c.qtyVisitors}</div>
+    <div><strong>Total:</strong> ${fmtMoney(summary.total)}</div>
+  </div>
 
-    <div class="meta">
-      <div><strong>Fecha</strong>${esc(formatDateDDMMYY(dateIso))}</div>
-      <div><strong>Turno</strong>${esc(shiftText)}</div>
-      <div><strong>Hora</strong>${esc(trip.tripHour || "—")}</div>
-      <div><strong>Visitantes</strong>${c.qtyVisitors}</div>
-      <div><strong>Total</strong>${fmtMoney(summary.total)}</div>
-      <div><strong>Recorrido ID</strong>${esc(trip.id)}</div>
-    </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Ítem</th>
+        <th class="right" style="width:120px;">Cantidad</th>
+        <th class="right" style="width:160px;">Subtotal (Bs)</th>
+      </tr>
+    </thead>
+    <tbody>${rowsHtml || ""}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2" class="right"><strong>Total</strong></td>
+        <td class="right"><strong>${fmtMoney(summary.total)}</strong></td>
+      </tr>
+    </tfoot>
+  </table>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Ítem</th>
-          <th class="right" style="width:120px;">Cantidad</th>
-          <th class="right" style="width:160px;">Subtotal (Bs)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rowsHtml || `<tr><td colspan="3" class="muted2">No hay ítems.</td></tr>`}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="2" class="right"><strong>Total</strong></td>
-          <td class="right"><strong>${fmtMoney(summary.total)}</strong></td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <div class="obs">
-      <strong>Observaciones</strong>
-      <div>${esc(notes)}</div>
-    </div>
-
-    <div class="noPrint" style="margin-top:14px; color:var(--muted); font-size:12px;">
-      Consejo: En el diálogo de impresión, selecciona “Guardar como PDF”.
-    </div>
+  <div class="box">
+    <div class="label"><strong>Observaciones</strong></div>
+    <div style="white-space:pre-wrap;">${notes ? esc(notes) : "—"}</div>
   </div>
 
   <script>
-    window.onload = () => window.print();
-  </script>
+    window.addEventListener("load", () => { try { window.focus(); } catch(e) {} window.print(); });
+  <\/script>
 </body>
-</html>
-    `.trim();
+</html>`;
   }
 
   function printTrip(dateIso, trip){
     const html = buildTripPrintHTML(dateIso, trip);
     const w = window.open("", "_blank");
-    if(!w){ toast("No se pudo abrir la impresión. Revisa bloqueador de popups."); return; }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    if(!w){ toast("No se pudo abrir la impresión (bloqueo de popups)."); return; }
+    w.document.open(); w.document.write(html); w.document.close();
   }
 
-  function renderTripSummaryInline(){
+  function openSummary(){
     const trip = getActiveTrip();
-
-    if(!trip || !activeTripDate){
-      $("summaryDate").textContent = "—";
-      $("summaryShift").textContent = "—";
-      $("summaryHour").textContent = "—";
-      $("summaryVisitors").textContent = "0";
-      $("summaryTotalTop").textContent = "Bs 0";
-      $("summaryTotalFoot").textContent = "Bs 0";
-      $("summaryNotes").textContent = "—";
-      $("summaryTbody").innerHTML = `<tr><td colspan="3" style="color:#444;">No hay un recorrido activo.</td></tr>`;
+    if(!trip){
+      toast("No hay un recorrido activo.");
       return;
     }
 
@@ -1600,717 +1643,690 @@
           </tr>
         `).join("")
       : `<tr><td colspan="3" style="color:#444;">No hay ítems en este recorrido.</td></tr>`;
+
+    overlay.classList.add("open");
+    summaryModal.classList.add("open");
+    summaryModal.setAttribute("aria-hidden","false");
+    newTripModal.classList.remove("open");
+    daySummaryModal.classList.remove("open");
+    newTripModal.setAttribute("aria-hidden","true");
+    daySummaryModal.setAttribute("aria-hidden","true");
   }
 
-  if($("exportTripInlineBtn")){
-    $("exportTripInlineBtn").addEventListener("click", ()=>{
-      const trip = getActiveTrip();
-      if(!trip){ toast("No hay un recorrido activo."); return; }
-      printTrip(activeTripDate, trip);
-    });
+  $("openSummaryBtn").addEventListener("click", openSummary);
+
+  $("exportTripPdfBtn").addEventListener("click", ()=>{
+    const trip = getActiveTrip();
+    if(!trip){ toast("No hay un recorrido activo."); return; }
+    printTrip(activeTripDate, trip);
+  });
+
+  // ===== Resumen del día (una tarjeta por recorrido) =====
+  function openDaySummary(){
+    const iso = String($("listDate").value || "").trim();
+    if(!iso){ toast("Selecciona una fecha."); return; }
+
+    const store = loadStore();
+    const tripsRaw = store.days?.[iso]?.trips || [];
+    const trips = Array.isArray(tripsRaw) ? tripsRaw.slice() : [];
+
+    $("daySummaryDateLabel").textContent = formatDateDDMMYY(iso);
+
+    const grid = $("daySummaryGrid");
+    const empty = $("daySummaryEmpty");
+    grid.innerHTML = "";
+
+    if(trips.length === 0){
+      empty.style.display = "block";
+    } else {
+      empty.style.display = "none";
+
+      trips.sort((a,b)=>{
+        const sa = a.shift === "manana" ? 0 : 1;
+        const sb = b.shift === "manana" ? 0 : 1;
+        if(sa !== sb) return sa - sb;
+        const ha = (a.tripHour || "99:99");
+        const hb = (b.tripHour || "99:99");
+        if(ha !== hb) return ha.localeCompare(hb);
+        return (a.createdAt || "").localeCompare(b.createdAt || "");
+      });
+
+      grid.innerHTML = trips.map(t=>{
+        const shiftText = (t.shift === "manana" ? "Mañana" : "Tarde");
+        const c = calcTrip(t);
+        const summary = buildTripSummary(t);
+
+        const rows = summary.rows.length
+          ? summary.rows.map(r => `
+              <tr>
+                <td>
+                  <strong>${esc(r.label)}</strong>
+                  <div class="muted2">${esc(catLabel(r.category))}</div>
+                </td>
+                <td class="right"><strong>${r.qty}</strong></td>
+                <td class="right"><strong>${fmtMoney(r.subtotal)}</strong></td>
+              </tr>
+            `).join("")
+          : `<tr><td colspan="3" style="color:#444;">No hay ítems.</td></tr>`;
+
+        const notes = String(t.notes || "").trim() || "—";
+
+        return `
+          <div class="dayCard">
+            <div class="printLike">
+              <div class="pHd">
+                <h1>Resumen de recorrido</h1>
+              </div>
+
+              <div class="pMeta">
+                <div><strong>Fecha:</strong> ${esc(formatDateDDMMYY(iso))}</div>
+                <div><strong>Turno:</strong> ${esc(shiftText)}</div>
+                <div><strong>Hora:</strong> ${esc(t.tripHour || "—")}</div>
+                <div><strong>Visitantes:</strong> ${c.qtyVisitors}</div>
+                <div><strong>Total:</strong> ${fmtMoney(summary.total)}</div>
+              </div>
+
+              <div class="pTableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Ítem</th>
+                      <th class="right" style="width:110px;">Cantidad</th>
+                      <th class="right" style="width:150px;">Subtotal (Bs)</th>
+                    </tr>
+                  </thead>
+                  <tbody>${rows}</tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="2" class="right"><strong>Total</strong></td>
+                      <td class="right"><strong>${fmtMoney(summary.total)}</strong></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div class="pObs">
+                <div class="pObsTitle">Observaciones</div>
+                <div class="pObsBody">${esc(notes)}</div>
+              </div>
+            </div>
+
+            <div class="btnRow">
+              <button class="ok" data-act="dayExport" data-id="${esc(t.id)}">Exportar</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      grid.querySelectorAll("button[data-act='dayExport']").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const tripId = btn.getAttribute("data-id");
+          const store2 = loadStore();
+          const trip = findTrip(store2, iso, tripId);
+          if(!trip){ toast("No se encontró el recorrido."); return; }
+          printTrip(iso, trip);
+        });
+      });
+    }
+
+    overlay.classList.add("open");
+    daySummaryModal.classList.add("open");
+    daySummaryModal.setAttribute("aria-hidden","false");
+    newTripModal.classList.remove("open");
+    summaryModal.classList.remove("open");
+    newTripModal.setAttribute("aria-hidden","true");
+    summaryModal.setAttribute("aria-hidden","true");
   }
 
-  if($("scrollTripSummaryBtn")){
-    $("scrollTripSummaryBtn").addEventListener("click", ()=>{
-      $("tripSummarySection")?.scrollIntoView({ behavior:"smooth", block:"start" });
-    });
-  }
+  $("openDaySummaryBtn").addEventListener("click", openDaySummary);
 
-  // ===== Diario: listado =====
+  // ===== Listado diario (mini tarjetas) =====
+  $("listTodayBtn").addEventListener("click", ()=>{
+    $("listDate").value = toISODate(new Date());
+    renderDailyList();
+    toast("Fecha actual seleccionada.");
+  });
+  $("listDate").addEventListener("change", renderDailyList);
+
   function renderDailyList(){
     const iso = String($("listDate").value || "").trim();
     const store = loadStore();
-    const trips = store.days?.[iso]?.trips || [];
 
-    $("storageHint").textContent = `Guardado local: ${fmtBytes(JSON.stringify(store).length)}.`;
+    const host = $("tripCards");
+    host.innerHTML = "";
 
-    const wrap = $("tripCards");
     if(!iso){
-      wrap.innerHTML = `<div class="note">Selecciona una fecha para listar.</div>`;
-      return;
-    }
-    if(!trips.length){
-      wrap.innerHTML = `<div class="note">No hay recorridos para esta fecha.</div>`;
+      host.innerHTML = `<div class="note">Selecciona una fecha.</div>`;
+      $("storageHint").textContent = `Registros guardados: ${Object.keys(store.days).length}.`;
       return;
     }
 
-    wrap.innerHTML = trips.slice().reverse().map(tr=>{
-      const shiftText = tr.shift === "manana" ? "Mañana" : "Tarde";
-      const c = calcTrip(tr);
+    const tripsRaw = store.days?.[iso]?.trips || [];
+    const trips = Array.isArray(tripsRaw) ? tripsRaw.slice() : [];
 
+    trips.sort((a,b)=>{
+      const sa = a.shift === "manana" ? 0 : 1;
+      const sb = b.shift === "manana" ? 0 : 1;
+      if(sa !== sb) return sa - sb;
+      const ha = (a.tripHour || "99:99");
+      const hb = (b.tripHour || "99:99");
+      if(ha !== hb) return ha.localeCompare(hb);
+      return (a.createdAt || "").localeCompare(b.createdAt || "");
+    });
+
+    if(trips.length === 0){
+      host.innerHTML = `<div class="note">No hay recorridos para este día.</div>`;
+      $("storageHint").textContent = `Registros guardados (días): ${Object.keys(store.days).length}.`;
+      return;
+    }
+
+    host.innerHTML = trips.map(t=>{
+      const c = calcTrip(t);
+      const shift = t.shift === "manana" ? "Mañana" : "Tarde";
       return `
         <div class="tripCard">
-          <div class="tripTop">
-            <div>
-              <div class="tripTitle">${esc(shiftText)} <span class="muted2">· ${esc(tr.tripHour || "—")}</span></div>
-              <div class="tripSub">
-                <span class="pill">Visitantes: <strong>${c.qtyVisitors}</strong></span>
-                <span class="pill">Total: <strong>${fmtMoney(c.incomeTotal)}</strong></span>
-                <span class="pill mutedPill">ID: ${esc(tr.id)}</span>
+          <div class="tripCardTop">
+            <div class="tripMeta">
+              <div class="t">${esc(t.tripHour || "—")}</div>
+              <div class="s">
+                Turno: <strong>${esc(shift)}</strong><br>
+                Visitantes: <strong>${c.qtyVisitors}</strong>
               </div>
             </div>
-            <div class="tripBtns">
-              <button class="ghost" data-edit="${esc(tr.id)}">Editar</button>
-              <button class="danger" data-del="${esc(tr.id)}">Borrar</button>
-            </div>
           </div>
-          ${tr.notes ? `<div class="tripNotes">${esc(tr.notes)}</div>` : ``}
+          <div class="tripCardBtns">
+            <button class="ghost" data-act="view" data-id="${esc(t.id)}">Ver</button>
+            <button class="danger" data-act="del" data-id="${esc(t.id)}">Borrar</button>
+          </div>
         </div>
       `;
     }).join("");
 
-    wrap.querySelectorAll("button[data-edit]").forEach(btn=>{
+    host.querySelectorAll("button[data-act='view']").forEach(btn=>{
       btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-edit");
-        if(!id) return;
+        const id = btn.getAttribute("data-id");
         setActiveTrip(iso, id);
-        setActiveTab("new");
-        renderNew();
+        toast("Recorrido cargado para edición.");
+        renderDaily();
+        window.scrollTo({ top: 0, behavior: "smooth" });
       });
     });
 
-    wrap.querySelectorAll("button[data-del]").forEach(btn=>{
+    host.querySelectorAll("button[data-act='del']").forEach(btn=>{
       btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-del");
-        if(!id) return;
-        if(!confirm("¿Borrar este recorrido? Esta acción no se puede deshacer.")) return;
+        const id = btn.getAttribute("data-id");
+        if(!confirmDanger("¿Borrar este recorrido?")) return;
 
         const store2 = loadStore();
-        const day = store2.days?.[iso];
-        if(!day) return;
+        deleteTrip(store2, iso, id);
+        saveStore(store2);
 
-        const idx = (day.trips || []).findIndex(x=>x.id===id);
-        if(idx>=0){
-          day.trips.splice(idx, 1);
-          saveStore(store2);
-
-          if(activeTripDate===iso && activeTripId===id){
-            clearActiveTrip();
-            renderNew();
-          }
-
-          toast("Recorrido borrado.");
-          renderDaily();
-          renderMonthly();
+        if(activeTripDate === iso && activeTripId === id){
+          setActiveTrip(null,null);
         }
+
+        toast("Recorrido eliminado.");
+        renderDaily();
+      });
+    });
+
+    $("storageHint").textContent = `Día ${iso}: ${trips.length} recorridos. Registros guardados (días): ${Object.keys(store.days).length}.`;
+  }
+
+  // ===== Daily render principal =====
+  function renderDaily(){
+    refreshCatalogCache();
+    rebuildItemTypeSelect();
+
+    const trip = getActiveTrip();
+    showActiveTripUI(trip);
+
+    if(trip){
+      const c = calcTrip(trip);
+      $("activeTripVisitors").textContent = String(c.qtyVisitors);
+      $("activeTripTotal").textContent = fmtMoney(c.incomeTotal);
+      $("tripNotes").value = String(trip.notes || "");
+      renderActiveTripItems(trip);
+    } else {
+      $("activeTripVisitors").textContent = "0";
+      $("activeTripTotal").textContent = "Bs 0";
+      $("tripNotes").value = "";
+      $("activeTripItems").innerHTML = "";
+    }
+
+    renderDailyList();
+  }
+
+  // ===== Monthly: chart metric selector dinámico =====
+  function rebuildChartMetricOptions(){
+    const sel = $("chartMetric");
+    const all = CATALOG.slice().sort((a,b)=>a.label.localeCompare(b.label));
+
+    const general = [
+      { value:"visitors_qty", label:"Visitantes (cantidad)" },
+      { value:"revenue_total", label:"Ingresos (Bs)" },
+    ];
+    const qtyItems = all.map(it => ({ value:`qty:${it.id}`, label:`${it.label} — Cantidad` }));
+    const revItems = all.map(it => ({ value:`rev:${it.id}`, label:`${it.label} — Ingresos (Bs)` }));
+
+    sel.innerHTML = `
+      <optgroup label="General">
+        ${general.map(x => `<option value="${esc(x.value)}">${esc(x.label)}</option>`).join("")}
+      </optgroup>
+      <optgroup label="Ítems (Cantidad)">
+        ${qtyItems.map(x => `<option value="${esc(x.value)}">${esc(x.label)}</option>`).join("")}
+      </optgroup>
+      <optgroup label="Ítems (Ingresos)">
+        ${revItems.map(x => `<option value="${esc(x.value)}">${esc(x.label)}</option>`).join("")}
+      </optgroup>
+    `;
+
+    const current = sel.getAttribute("data-current") || "visitors_qty";
+    const has = Array.from(sel.options).some(o => o.value === current);
+    sel.value = has ? current : "visitors_qty";
+  }
+
+  const weekdayLabels = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+  const mapGetDayToMonFirstIndex = (getDay) => (getDay === 0 ? 6 : getDay - 1);
+
+  function buildWeekdayAgg(store, monthKey){
+    const days = Object.keys(store.days)
+      .filter(d => d.startsWith(monthKey + "-"))
+      .sort((a,b)=>a.localeCompare(b));
+
+    const agg = Array.from({length:7}, () => ({
+      visitorsQty:0,
+      revenueTotal:0,
+      qtyByType:{},
+      revByType:{}
+    }));
+
+    for(const date of days){
+      const dtDate = new Date(date + "T00:00:00");
+      const idx = mapGetDayToMonFirstIndex(dtDate.getDay());
+      const trips = store.days[date]?.trips || [];
+      for(const t of trips){
+        const c = calcTrip(t);
+        agg[idx].visitorsQty += c.qtyVisitors;
+        agg[idx].revenueTotal += c.incomeTotal;
+
+        for(const [typeId, q] of Object.entries(c.qtyByType || {})){
+          agg[idx].qtyByType[typeId] = (agg[idx].qtyByType[typeId] || 0) + q;
+        }
+        for(const [typeId, r] of Object.entries(c.incomeByType || {})){
+          agg[idx].revByType[typeId] = (agg[idx].revByType[typeId] || 0) + r;
+        }
+      }
+    }
+    return agg;
+  }
+
+  function drawBarChart(values, options){
+    const canvas = $("chart");
+    const ctx = canvas.getContext("2d");
+
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(240 * dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    const w = rect.width;
+    const h = 240;
+    ctx.clearRect(0,0,w,h);
+
+    const gridColor = "rgba(255,255,255,0.08)";
+    const textColor = "rgba(230,238,252,0.92)";
+    const mutedColor = "rgba(167,182,214,0.85)";
+    const barColor = "rgba(103,232,249,0.60)";
+
+    const padding = {l:44, r:14, t:18, b:34};
+    const plotW = w - padding.l - padding.r;
+    const plotH = h - padding.t - padding.b;
+
+    const maxVal = Math.max(1, ...values.map(v => v.value));
+    const yTicks = 4;
+
+    ctx.font = "12px system-ui";
+    ctx.fillStyle = mutedColor;
+    ctx.strokeStyle = gridColor;
+    ctx.lineWidth = 1;
+
+    for(let i=0;i<=yTicks;i++){
+      const y = padding.t + (plotH * (i / yTicks));
+      ctx.beginPath();
+      ctx.moveTo(padding.l, y);
+      ctx.lineTo(padding.l + plotW, y);
+      ctx.stroke();
+
+      const val = maxVal * (1 - i / yTicks);
+      ctx.textAlign = "left";
+      ctx.fillText(options.formatY(val), 6, y + 4);
+    }
+
+    const gap = 10;
+    const barW = (plotW - gap * (values.length - 1)) / values.length;
+
+    values.forEach((v, i) => {
+      const x = padding.l + i * (barW + gap);
+      const barH = (v.value / maxVal) * plotH;
+      const y = padding.t + (plotH - barH);
+
+      ctx.fillStyle = barColor;
+      ctx.fillRect(x, y, barW, barH);
+
+      ctx.fillStyle = mutedColor;
+      ctx.textAlign = "center";
+      ctx.fillText(v.label, x + barW/2, padding.t + plotH + 20);
+
+      ctx.fillStyle = textColor;
+      ctx.font = "12px system-ui";
+      ctx.fillText(options.formatTop(v.value), x + barW/2, Math.max(14, y - 6));
+    });
+
+    ctx.textAlign = "left";
+    ctx.font = "13px system-ui";
+    ctx.fillStyle = textColor;
+    ctx.fillText(options.title, padding.l, 14);
+  }
+
+  function renderChart(store, monthKey){
+    const agg = buildWeekdayAgg(store, monthKey);
+    const metric = $("chartMetric").value || "visitors_qty";
+    $("chartMetric").setAttribute("data-current", metric);
+
+    let title = "—";
+    let isMoney = false;
+
+    const values = agg.map((a, i) => {
+      let value = 0;
+
+      if(metric === "visitors_qty"){
+        title = "Visitantes por día de semana";
+        value = a.visitorsQty;
+      } else if(metric === "revenue_total"){
+        title = "Ingresos (Bs) por día de semana";
+        value = a.revenueTotal;
+        isMoney = true;
+      } else if(metric.startsWith("qty:")){
+        const typeId = metric.slice(4);
+        const label = CAT_BY_ID[typeId]?.label || typeId;
+        title = `${label} — Cantidad por día de semana`;
+        value = a.qtyByType[typeId] || 0;
+      } else if(metric.startsWith("rev:")){
+        const typeId = metric.slice(4);
+        const label = CAT_BY_ID[typeId]?.label || typeId;
+        title = `${label} — Ingresos (Bs) por día de semana`;
+        value = a.revByType[typeId] || 0;
+        isMoney = true;
+      }
+
+      return { label: weekdayLabels[i], value };
+    });
+
+    const formatY = (val) => isMoney ? `Bs ${Math.round(val)}` : String(Math.round(val));
+    const formatTop = (val) => isMoney ? `Bs ${Math.round(val)}` : String(Math.round(val));
+    drawBarChart(values, { title, formatY, formatTop });
+  }
+
+  function renderKpis(totals){
+    const avgEntries = totals.daysCount ? (totals.entries / totals.daysCount) : 0;
+    const avgRevenue = totals.daysCount ? (totals.revenue / totals.daysCount) : 0;
+
+    const top = Object.entries(totals.incomeByType || {})
+      .map(([typeId, income]) => ({
+        typeId, income,
+        label: (CAT_BY_ID[typeId]?.label || typeId)
+      }))
+      .sort((a,b)=>b.income - a.income)
+      .slice(0,3);
+
+    const topText = top.length
+      ? top.map(t => `• ${esc(t.label)}: ${fmtMoney(t.income)}`).join("<br>")
+      : "Sin datos.";
+
+    $("kpis").innerHTML = `
+      <div class="kpi">
+        <div class="t">Entradas (mes)</div>
+        <div class="v">${totals.entries}</div>
+        <div class="s">Adultos ${totals.adults} · Menores ${totals.minors} · Adulto mayor ${totals.seniors}</div>
+      </div>
+      <div class="kpi">
+        <div class="t">Ingresos (mes)</div>
+        <div class="v">${fmtMoney(totals.revenue)}</div>
+        <div class="s">Incluye visitantes y extras.</div>
+      </div>
+      <div class="kpi">
+        <div class="t">Promedio por día (registrado)</div>
+        <div class="v">${avgEntries.toFixed(1)} entradas</div>
+        <div class="s">${fmtMoney(avgRevenue)} ingresos/día</div>
+      </div>
+      <div class="kpi">
+        <div class="t">Top ítems por ingresos</div>
+        <div class="v">${top.length ? fmtMoney(top[0].income) : "—"}</div>
+        <div class="s">${topText}</div>
+      </div>
+    `;
+  }
+
+  function renderMonthlyTable(store, monthKey){
+    const days = listDaysForMonth(store, monthKey);
+    const tbody = $("monthTbody");
+
+    if(days.length === 0){
+      tbody.innerHTML = `<tr><td colspan="10" class="muted">No hay registros para este mes.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = days.map(date=>{
+      const trips = store.days[date]?.trips || [];
+      let adults=0,minors=0,seniors=0,entries=0,revenue=0, pony=0, horse=0, cups=0;
+
+      for(const t of trips){
+        const c = calcTrip(t);
+        adults += (c.qtyByType["adult"]||0);
+        minors += (c.qtyByType["minor"]||0);
+        seniors += (c.qtyByType["senior"]||0);
+        entries += (c.qtyByType["adult"]||0) + (c.qtyByType["minor"]||0) + (c.qtyByType["senior"]||0);
+        revenue += c.incomeTotal;
+        pony += (c.qtyByType["pony"]||0);
+        horse += (c.qtyByType["horse"]||0);
+        cups += (c.qtyByType["cups"]||0);
+      }
+
+      return `
+        <tr>
+          <td><strong>${date}</strong><div class="muted" style="font-size:11px;margin-top:2px">Recorridos: ${trips.length}</div></td>
+          <td class="right">${adults}</td>
+          <td class="right">${minors}</td>
+          <td class="right">${seniors}</td>
+          <td class="right"><strong>${entries}</strong></td>
+          <td class="right">${pony}</td>
+          <td class="right">${horse}</td>
+          <td class="right">${cups}</td>
+          <td class="right"><strong>${fmtMoney(revenue)}</strong></td>
+          <td class="right"><div class="actions"><button class="ghost" data-act="goDay" data-date="${date}">Ver día</button></div></td>
+        </tr>
+      `;
+    }).join("");
+
+    document.querySelectorAll("button[data-act='goDay']").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const date = btn.getAttribute("data-date");
+        $("listDate").value = date;
+        $("month").value = toMonthKeyFromISODate(date);
+        setActiveTab("daily");
+        renderDaily();
+        toast("Día cargado.");
       });
     });
   }
 
-  // ===== Diario: resumen del día (inline) =====
-  function buildDaySummaryData(iso){
+  function renderMonthly(){
+    if(!$("panelMonthly").classList.contains("active")) return;
+
+    refreshCatalogCache();
+    rebuildChartMetricOptions();
+
     const store = loadStore();
-    const trips = store.days?.[iso]?.trips || [];
+    const monthKey = String($("month").value || "").trim();
+    $("monthBadge").textContent = monthKey || "—";
 
-    const base = {
-      iso,
-      tripsRaw: trips,
-      shifts: {
-        manana: { trips: 0, visitors: 0, revenue: 0 },
-        tarde:  { trips: 0, visitors: 0, revenue: 0 }
-      },
-      extrasByType: new Map(), // typeId -> { label, qty, revenue }
-      totalTrips: trips.length,
-      totalVisitors: 0,
-      totalRevenue: 0,
-      totalExtrasRevenue: 0,
-      totalExtrasQty: 0
-    };
-
-    for(const tr of trips){
-      const k = tr.shift === "tarde" ? "tarde" : "manana";
-      base.shifts[k].trips += 1;
-
-      const c = calcTrip(tr);
-      base.shifts[k].visitors += c.qtyVisitors;
-      base.shifts[k].revenue += c.incomeTotal;
-
-      for(const it of (tr.items || [])){
-        if(it.category === "visitor") continue;
-        const typeId = String(it.typeId || "");
-        if(!typeId) continue;
-
-        const qty = Number(it.qty || 0);
-        const sub = qty * Number(it.unitPrice || 0);
-
-        const prev = base.extrasByType.get(typeId) || { label: it.label || typeId, qty: 0, revenue: 0 };
-        prev.qty += qty;
-        prev.revenue += sub;
-        base.extrasByType.set(typeId, prev);
-
-        base.totalExtrasQty += qty;
-        base.totalExtrasRevenue += sub;
-      }
-    }
-
-    base.totalVisitors = base.shifts.manana.visitors + base.shifts.tarde.visitors;
-    base.totalRevenue = base.shifts.manana.revenue + base.shifts.tarde.revenue;
-
-    return base;
-  }
-
-  function renderDaySummary(){
-    const iso = String($("listDate").value || "").trim();
-    $("dayInlineDateLabel").textContent = iso ? formatDateDDMMYY(iso) : "—";
-
-    const exportBtn = $("exportDayBtn");
-    const kpiWrap = $("dayInlineKpis");
-    const tbody = $("dayExtrasTbody");
-
-    if(!iso){
-      $("daySummaryEmpty").style.display = "block";
-      $("daySummaryEmpty").textContent = "Selecciona una fecha para ver el resumen.";
-      kpiWrap.innerHTML = "";
-      tbody.innerHTML = "";
-      exportBtn.disabled = true;
+    if(!monthKey){
+      $("kpis").innerHTML = "";
+      $("monthTbody").innerHTML = `<tr><td colspan="10" class="muted">Selecciona un mes.</td></tr>`;
+      $("monthInfo").innerHTML = "";
       return;
     }
 
-    const s = buildDaySummaryData(iso);
+    const totals = monthTotals(store, monthKey);
+    renderKpis(totals);
+    renderMonthlyTable(store, monthKey);
 
-    if(!s.totalTrips){
-      $("daySummaryEmpty").style.display = "block";
-      $("daySummaryEmpty").textContent = "No hay recorridos para esta fecha.";
-      kpiWrap.innerHTML = "";
-      tbody.innerHTML = "";
-      exportBtn.disabled = true;
-      return;
-    }
-
-    $("daySummaryEmpty").style.display = "none";
-    exportBtn.disabled = false;
-
-    kpiWrap.innerHTML = `
-      <div class="kpi">
-        <div class="muted2">Recorridos</div>
-        <div class="val">${s.totalTrips}</div>
-        <div class="muted2">Mañana ${s.shifts.manana.trips} · Tarde ${s.shifts.tarde.trips}</div>
-      </div>
-      <div class="kpi">
-        <div class="muted2">Visitantes</div>
-        <div class="val">${s.totalVisitors}</div>
-        <div class="muted2">Mañana ${s.shifts.manana.visitors} · Tarde ${s.shifts.tarde.visitors}</div>
-      </div>
-      <div class="kpi">
-        <div class="muted2">Ingresos (Bs)</div>
-        <div class="val">${fmtMoney(s.totalRevenue)}</div>
-        <div class="muted2">Mañana ${fmtMoney(s.shifts.manana.revenue)} · Tarde ${fmtMoney(s.shifts.tarde.revenue)}</div>
-      </div>
-      <div class="kpi">
-        <div class="muted2">Extras (Bs)</div>
-        <div class="val">${fmtMoney(s.totalExtrasRevenue)}</div>
-        <div class="muted2">Cantidad ${s.totalExtrasQty}</div>
-      </div>
+    $("monthInfo").innerHTML = `
+      <span class="pill">Mes ${esc(monthKey)}</span>
+      <strong>${totals.daysCount}</strong> días con registros · <strong>${totals.tripsCount}</strong> recorridos ·
+      <strong>${totals.entries}</strong> entradas · <strong>${fmtMoney(totals.revenue)}</strong> ingresos.
     `;
 
-    const extras = Array.from(s.extrasByType.entries())
-      .map(([typeId, v]) => ({ typeId, ...v }))
-      .sort((a,b)=> String(a.label).localeCompare(String(b.label)));
-
-    tbody.innerHTML = extras.length
-      ? extras.map(x => `
-          <tr>
-            <td><strong>${esc(x.label)}</strong></td>
-            <td class="right"><strong>${x.qty}</strong></td>
-            <td class="right"><strong>${fmtMoney(x.revenue)}</strong></td>
-          </tr>
-        `).join("")
-      : `<tr><td colspan="3" class="muted2">No hay extras.</td></tr>`;
+    renderChart(store, monthKey);
   }
 
-  function buildDayPrintHTML(iso){
-    const s = buildDaySummaryData(iso);
+  // ===== Report / Export / Import =====
+  function download(filename, text){
+    const blob = new Blob([text], {type:"application/json;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
 
-    const extrasRows = Array.from(s.extrasByType.entries())
-      .map(([typeId, v]) => ({ typeId, ...v }))
-      .sort((a,b)=> String(a.label).localeCompare(String(b.label)))
-      .map(x => `
+  function buildReportHTML(store, monthKey){
+    const totals = monthTotals(store, monthKey);
+    const days = listDaysForMonth(store, monthKey);
+
+    const tr = days.map(date=>{
+      const trips = store.days[date]?.trips || [];
+      let adults=0,minors=0,seniors=0, entries=0, revenue=0;
+      for(const t of trips){
+        const c = calcTrip(t);
+        adults += (c.qtyByType["adult"]||0);
+        minors += (c.qtyByType["minor"]||0);
+        seniors += (c.qtyByType["senior"]||0);
+        entries += (c.qtyByType["adult"]||0) + (c.qtyByType["minor"]||0) + (c.qtyByType["senior"]||0);
+        revenue += c.incomeTotal;
+      }
+      return `
         <tr>
-          <td><strong>${esc(x.label)}</strong></td>
-          <td class="right"><strong>${x.qty}</strong></td>
-          <td class="right"><strong>${fmtMoney(x.revenue)}</strong></td>
+          <td>${date}</td>
+          <td style="text-align:right">${adults}</td>
+          <td style="text-align:right">${minors}</td>
+          <td style="text-align:right">${seniors}</td>
+          <td style="text-align:right"><strong>${entries}</strong></td>
+          <td style="text-align:right"><strong>${fmtMoney(revenue)}</strong></td>
+          <td style="text-align:right">${trips.length}</td>
         </tr>
-      `).join("");
+      `;
+    }).join("");
+
+    const avgEntries = totals.daysCount ? (totals.entries / totals.daysCount) : 0;
+    const avgRevenue = totals.daysCount ? (totals.revenue / totals.daysCount) : 0;
+    const stamp = new Date().toLocaleString();
 
     return `
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Resumen del día</title>
-  <style>
-    :root{
-      --bg:#ffffff;
-      --text:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-    }
-    body{ margin:0; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    .wrap{ padding:18px; max-width:980px; margin:0 auto; }
-    h1{ margin:0 0 10px 0; font-size:20px; }
-    .kpis{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:10px; margin:12px 0 14px; }
-    .kpi{ border:1px solid var(--border); border-radius:12px; padding:12px; }
-    .kpi .t{ color:var(--muted); font-size:12px; }
-    .kpi .v{ font-size:18px; font-weight:800; margin-top:4px; }
-    .kpi .s{ color:var(--muted); font-size:12px; margin-top:6px; }
-    table{ width:100%; border-collapse:collapse; margin-top:8px; }
-    th, td{ border-bottom:1px solid var(--border); padding:10px; font-size:13px; vertical-align:top; }
-    th{ text-align:left; font-size:12px; color:var(--muted); }
-    .right{ text-align:right; }
-    .muted2{ color:var(--muted); font-size:12px; }
-    @media print{ .noPrint{ display:none; } }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reporte mensual - ${monthKey}</title>
+<style>
+  body{font-family: Arial, Helvetica, sans-serif; margin:24px; color:#111;}
+  h1{margin:0 0 8px; font-size:18px;}
+  .meta{font-size:12px; color:#444; margin-bottom:14px; line-height:1.45;}
+  .kpis{display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin: 10px 0 16px;}
+  .kpi{border:1px solid #ddd; border-radius:10px; padding:10px;}
+  .kpi .t{font-size:11px; color:#444; margin-bottom:6px;}
+  .kpi .v{font-size:16px; font-weight:800;}
+  .kpi .s{font-size:11px; color:#444; margin-top:6px; line-height:1.35;}
+  table{width:100%; border-collapse:collapse; font-size:11px;}
+  th, td{border:1px solid #ddd; padding:6px; vertical-align:top;}
+  th{background:#f4f6f8; text-align:left;}
+  @media print{
+    body{margin:14mm;}
+    .noprint{display:none;}
+    tr{page-break-inside:avoid;}
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Resumen del día — ${esc(formatDateDDMMYY(iso))}</h1>
+  <div class="noprint" style="margin-bottom:12px;">
+    <button onclick="window.print()">Imprimir / Guardar como PDF</button>
+    <button onclick="window.close()" style="margin-left:8px;">Cerrar</button>
+  </div>
 
-    <div class="kpis">
-      <div class="kpi">
-        <div class="t">Recorridos</div>
-        <div class="v">${s.totalTrips}</div>
-        <div class="s">Mañana ${s.shifts.manana.trips} · Tarde ${s.shifts.tarde.trips}</div>
-      </div>
-      <div class="kpi">
-        <div class="t">Visitantes</div>
-        <div class="v">${s.totalVisitors}</div>
-        <div class="s">Mañana ${s.shifts.manana.visitors} · Tarde ${s.shifts.tarde.visitors}</div>
-      </div>
-      <div class="kpi">
-        <div class="t">Ingresos (Bs)</div>
-        <div class="v">${fmtMoney(s.totalRevenue)}</div>
-        <div class="s">Mañana ${fmtMoney(s.shifts.manana.revenue)} · Tarde ${fmtMoney(s.shifts.tarde.revenue)}</div>
-      </div>
-      <div class="kpi">
-        <div class="t">Extras (Bs)</div>
-        <div class="v">${fmtMoney(s.totalExtrasRevenue)}</div>
-        <div class="s">Cantidad ${s.totalExtrasQty}</div>
-      </div>
+  <h1>Reporte mensual — Granja (Mes ${monthKey})</h1>
+  <div class="meta">Generado: ${stamp}</div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="t">Entradas (Total)</div>
+      <div class="v">${totals.entries}</div>
+      <div class="s">Adultos ${totals.adults} · Menores ${totals.minors} · Adulto mayor ${totals.seniors}</div>
     </div>
-
-    <h2 style="margin:0 0 8px 0; font-size:16px;">Extras</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Extra</th>
-          <th class="right" style="width:130px;">Cantidad</th>
-          <th class="right" style="width:160px;">Ingresos (Bs)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${extrasRows || `<tr><td colspan="3" class="muted2">No hay extras.</td></tr>`}
-      </tbody>
-    </table>
-
-    <div class="noPrint" style="margin-top:14px; color:var(--muted); font-size:12px;">
-      Consejo: En el diálogo de impresión, selecciona “Guardar como PDF”.
+    <div class="kpi">
+      <div class="t">Ingresos (Total)</div>
+      <div class="v">${fmtMoney(totals.revenue)}</div>
+      <div class="s">Incluye visitantes y extras.</div>
+    </div>
+    <div class="kpi">
+      <div class="t">Promedio por día (registrado)</div>
+      <div class="v">${avgEntries.toFixed(1)} entradas</div>
+      <div class="s">${fmtMoney(avgRevenue)} ingresos/día</div>
     </div>
   </div>
 
-  <script>
-    window.onload = () => window.print();
-  </script>
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th style="text-align:right">Adultos</th>
+        <th style="text-align:right">Menores</th>
+        <th style="text-align:right">Adulto mayor</th>
+        <th style="text-align:right">Entradas</th>
+        <th style="text-align:right">Ingresos</th>
+        <th style="text-align:right">Recorridos</th>
+      </tr>
+    </thead>
+    <tbody>${tr}</tbody>
+  </table>
 </body>
-</html>
-    `.trim();
+</html>`;
   }
 
-  function printDay(iso){
-    const html = buildDayPrintHTML(iso);
-    const w = window.open("", "_blank");
-    if(!w){ toast("No se pudo abrir la impresión. Revisa bloqueador de popups."); return; }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-  }
-
-  $("exportDayBtn").addEventListener("click", ()=>{
-    const iso = String($("listDate").value || "").trim();
-    if(!iso){ toast("Selecciona una fecha."); return; }
-    const s = buildDaySummaryData(iso);
-    if(!s.totalTrips){ toast("No hay recorridos para exportar."); return; }
-    printDay(iso);
-  });
-
-  // ===== Nuevo: render =====
-  function renderNew(){
-    rebuildItemTypeSelect();
-
-    const trip = getActiveTrip();
-    showActiveTripUI(trip);
-    renderActiveTripItems(trip);
-    renderTripSummaryInline();
-  }
-
-  // ===== Diario: render =====
-  function renderDaily(){
-    renderDailyList();
-    renderDaySummary();
-  }
-
-  // ===== Diario: fecha a listar =====
-  $("listDate").addEventListener("change", ()=>{
-    renderDaily();
-    renderMonthly();
-  });
-
-  $("listTodayBtn").addEventListener("click", ()=>{
-    $("listDate").value = toISODate(new Date());
-    renderDaily();
-    renderMonthly();
-  });
-
-  // ===== Monthly: chart metric selector dinámico =====
-  function rebuildChartMetricOptions(){
-    const sel = $("chartMetric");
-    const all = [
-      { id:"rec_total", label:"Recorridos (Total)" },
-      { id:"rec_manana", label:"Recorridos (Mañana)" },
-      { id:"rec_tarde", label:"Recorridos (Tarde)" },
-      { id:"vis_total", label:"Visitantes (Total)" },
-      { id:"vis_manana", label:"Visitantes (Mañana)" },
-      { id:"vis_tarde", label:"Visitantes (Tarde)" },
-      { id:"ing_total", label:"Ingresos (Total)" },
-      { id:"ing_extras", label:"Ingresos (Extras)" }
-    ];
-    sel.innerHTML = all.map(x=>`<option value="${x.id}">${x.label}</option>`).join("");
-    sel.value = "ing_total";
-  }
-
-  // ===== Monthly summary =====
-  function monthDays(ym){
-    // ym = YYYY-MM
-    const [y, m] = ym.split("-").map(Number);
-    const d = new Date(y, m-1, 1);
-    const out = [];
-    while(d.getMonth() === (m-1)){
-      out.push(toISODate(d));
-      d.setDate(d.getDate()+1);
-    }
-    return out;
-  }
-
-  function summarizeDay(trips){
-    const s = {
-      rec_manana:0, rec_tarde:0, rec_total:0,
-      vis_manana:0, vis_tarde:0, vis_total:0,
-      ing_total:0, ing_extras:0
-    };
-
-    for(const t of trips){
-      const c = calcTrip(t);
-      s.rec_total += 1;
-      if(t.shift === "manana") s.rec_manana += 1;
-      else s.rec_tarde += 1;
-
-      s.vis_total += c.qtyVisitors;
-      if(t.shift === "manana") s.vis_manana += c.qtyVisitors;
-      else s.vis_tarde += c.qtyVisitors;
-
-      s.ing_total += c.incomeTotal;
-
-      // extras income:
-      let extras = 0;
-      for(const it of (t.items||[])){
-        if(it.category !== "visitor"){
-          extras += Number(it.qty||0) * Number(it.unitPrice||0);
-        }
-      }
-      s.ing_extras += extras;
-    }
-    return s;
-  }
-
-  function renderMonthly(){
-    const ym = $("month").value;
-    $("monthBadge").textContent = ym || "—";
-
+  $("exportBtn").addEventListener("click", ()=>{
     const store = loadStore();
-    const days = ym ? monthDays(ym) : [];
-    const daily = days.map(iso=>{
-      const trips = store.days?.[iso]?.trips || [];
-      return { iso, trips, sum: summarizeDay(trips) };
-    });
-
-    // KPIs (month totals)
-    const total = daily.reduce((acc, d)=>{
-      for(const k of Object.keys(d.sum)){
-        acc[k] = (acc[k]||0) + d.sum[k];
-      }
-      return acc;
-    }, {});
-
-    $("kpis").innerHTML = `
-      <div class="kpi">
-        <div class="muted2">Recorridos</div>
-        <div class="val">${total.rec_total||0}</div>
-        <div class="muted2">Mañana ${total.rec_manana||0} · Tarde ${total.rec_tarde||0}</div>
-      </div>
-      <div class="kpi">
-        <div class="muted2">Visitantes</div>
-        <div class="val">${total.vis_total||0}</div>
-        <div class="muted2">Mañana ${total.vis_manana||0} · Tarde ${total.vis_tarde||0}</div>
-      </div>
-      <div class="kpi">
-        <div class="muted2">Ingresos (Bs)</div>
-        <div class="val">${fmtMoney(total.ing_total||0)}</div>
-        <div class="muted2">Total del mes</div>
-      </div>
-      <div class="kpi">
-        <div class="muted2">Extras (Bs)</div>
-        <div class="val">${fmtMoney(total.ing_extras||0)}</div>
-        <div class="muted2">Incluido en ingresos</div>
-      </div>
-    `;
-
-    // table
-    $("monthTbody").innerHTML = daily.map(d=>{
-      const s = d.sum;
-      return `
-        <tr>
-          <td><strong>${esc(d.iso)}</strong><div class="muted2">${esc(formatDateDDMMYY(d.iso))}</div></td>
-          <td class="right">${s.rec_manana}</td>
-          <td class="right">${s.rec_tarde}</td>
-          <td class="right"><strong>${s.rec_total}</strong></td>
-          <td class="right">${s.vis_manana}</td>
-          <td class="right">${s.vis_tarde}</td>
-          <td class="right"><strong>${s.vis_total}</strong></td>
-          <td class="right"><strong>${fmtMoney(s.ing_total)}</strong></td>
-          <td class="right">${fmtMoney(s.ing_extras)}</td>
-          <td>
-            <button class="ghost" data-viewday="${esc(d.iso)}">Ver día</button>
-          </td>
-        </tr>
-      `;
-    }).join("");
-
-    $("monthTbody").querySelectorAll("button[data-viewday]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const iso = btn.getAttribute("data-viewday");
-        if(!iso) return;
-        $("listDate").value = iso;
-        setActiveTab("daily");
-        renderDaily();
-      });
-    });
-
-    renderChart(daily);
-  }
-
-  // ===== Simple chart (canvas) =====
-  let _chart = null;
-  function renderChart(daily){
-    const canvas = $("chart");
-    const ctx = canvas.getContext("2d");
-
-    const metric = $("chartMetric").value;
-    const labels = daily.map(d=>d.iso.slice(8,10));
-    const values = daily.map(d=>d.sum[metric] || 0);
-
-    // draw minimal chart (no external libs)
-    const w = canvas.width = canvas.parentElement.clientWidth;
-    const h = canvas.height = 220;
-
-    ctx.clearRect(0,0,w,h);
-
-    // frame
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = "rgba(255,255,255,0.03)";
-    ctx.fillRect(0,0,w,h);
-
-    const pad = 36;
-    const x0 = pad, y0 = pad, x1 = w-pad, y1 = h-pad;
-    const maxV = Math.max(1, ...values);
-    const stepX = (x1-x0) / Math.max(1, (values.length-1));
-
-    // axes
-    ctx.strokeStyle = "rgba(255,255,255,0.14)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x0, y1);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
-
-    // line
-    ctx.strokeStyle = "rgba(110,231,255,0.85)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    values.forEach((v,i)=>{
-      const x = x0 + i*stepX;
-      const y = y1 - ((v/maxV) * (y1-y0));
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    });
-    ctx.stroke();
-
-    // points
-    ctx.fillStyle = "rgba(167,139,250,0.95)";
-    values.forEach((v,i)=>{
-      const x = x0 + i*stepX;
-      const y = y1 - ((v/maxV) * (y1-y0));
-      ctx.beginPath();
-      ctx.arc(x,y,3,0,Math.PI*2);
-      ctx.fill();
-    });
-
-    // labels bottom (sparse)
-    ctx.fillStyle = "rgba(255,255,255,0.55)";
-    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-    labels.forEach((lb,i)=>{
-      if(values.length > 16 && i % 2 === 1) return;
-      const x = x0 + i*stepX;
-      ctx.fillText(lb, x-6, y1+18);
-    });
-
-    // max label
-    ctx.fillStyle = "rgba(255,255,255,0.65)";
-    ctx.fillText(String(maxV), 6, y0+4);
-    ctx.fillText("0", 12, y1+4);
-  }
-
-  $("chartMetric").addEventListener("change", ()=>{
-    renderMonthly();
+    const monthKey = String($("month").value || "").trim() || toMonthKeyFromISODate(toISODate(new Date()));
+    const filename = `kalomai_granja_${monthKey}_export.json`;
+    download(filename, JSON.stringify(store, null, 2));
+    toast("Exportación generada.");
   });
 
-  $("month").addEventListener("change", ()=>{
-    renderMonthly();
-  });
-
-  // ===== Tarifario =====
-  function resetTariffForm(){
-    $("catLabel").value = "";
-    $("catCategory").value = "visitor";
-    $("catPrice").value = "0";
-  }
-
-  function renderTariff(){
-    const list = loadCatalog().slice().sort((a,b)=>a.label.localeCompare(b.label));
-
-    $("catalogTbody").innerHTML = list.map(it=>{
-      const st = (it.enabled !== false) ? "Activo" : "Inactivo";
-      return `
-        <tr>
-          <td><strong>${esc(it.label)}</strong><div class="muted2">${esc(it.id)}</div></td>
-          <td>${esc(catLabel(it.category))}</td>
-          <td class="right"><strong>${fmtMoney(it.defaultPrice || 0)}</strong></td>
-          <td class="right">${st}</td>
-          <td>
-            <button class="ghost" data-edit="${esc(it.id)}">Editar</button>
-            <button class="ghost" data-toggle="${esc(it.id)}">${(it.enabled !== false) ? "Deshabilitar" : "Habilitar"}</button>
-            <button class="danger" data-delcat="${esc(it.id)}">Eliminar</button>
-          </td>
-        </tr>
-      `;
-    }).join("");
-
-    $("catalogTbody").querySelectorAll("button[data-edit]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-edit");
-        const it = loadCatalog().find(x=>x.id===id);
-        if(!it) return;
-        $("catLabel").value = it.label;
-        $("catCategory").value = it.category;
-        $("catPrice").value = String(it.defaultPrice ?? 0);
-        toast("Editando ítem (se actualizará al guardar).");
-      });
-    });
-
-    $("catalogTbody").querySelectorAll("button[data-toggle]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-toggle");
-        const list = loadCatalog();
-        const it = list.find(x=>x.id===id);
-        if(!it) return;
-        it.enabled = (it.enabled === false) ? true : false;
-        saveCatalog(list);
-        rebuildItemTypeSelect();
-        renderTariff();
-        toast("Actualizado.");
-      });
-    });
-
-    $("catalogTbody").querySelectorAll("button[data-delcat]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const id = btn.getAttribute("data-delcat");
-        if(!confirm("¿Eliminar del catálogo? No borra datos históricos, pero deja de aparecer para nuevos ítems.")) return;
-        const list = loadCatalog().filter(x=>x.id!==id);
-        saveCatalog(list);
-        rebuildItemTypeSelect();
-        renderTariff();
-        toast("Eliminado.");
-      });
-    });
-  }
-
-  $("addCatalogBtn").addEventListener("click", ()=>{
-    const label = String($("catLabel").value || "").trim();
-    const category = String($("catCategory").value || "").trim();
-    const price = Number($("catPrice").value || 0);
-
-    if(!label){ toast("Ingresa un nombre."); return; }
-    if(category !== "visitor" && category !== "extra"){ toast("Categoría inválida."); return; }
-    if(!Number.isFinite(price) || price < 0){ toast("Precio inválido."); return; }
-
-    const id = label.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"")
-      .slice(0, 28) || uuid().slice(0,8);
-
-    const list = loadCatalog();
-    const existing = list.find(x=>x.id===id) || list.find(x=>x.label.toLowerCase()===label.toLowerCase());
-
-    if(existing){
-      existing.label = label;
-      existing.category = category;
-      existing.defaultPrice = price;
-      existing.enabled = true;
-      toast("Ítem actualizado.");
-    }else{
-      list.push({ id, label, category, defaultPrice: price, enabled: true });
-      toast("Ítem agregado.");
-    }
-
-    saveCatalog(list);
-    resetTariffForm();
-    rebuildItemTypeSelect();
-    renderTariff();
-  });
-
-  $("resetCatalogBtn").addEventListener("click", ()=>{
-    if(!confirm("¿Restaurar tarifario base? Esto sobrescribirá el catálogo actual.")) return;
-    saveCatalog(DEFAULT_CATALOG.slice());
-    rebuildItemTypeSelect();
-    renderTariff();
-    toast("Tarifario restaurado.");
-  });
-
-  // ===== Export/Import JSON =====
-  $("exportJsonBtn").addEventListener("click", ()=>{
-    const store = loadStore();
-    const blob = new Blob([JSON.stringify(store, null, 2)], { type:"application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `kalomai_${toISODate(new Date())}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  });
-
-  $("importJsonBtn").addEventListener("click", ()=>{
+  $("importBtn").addEventListener("click", ()=>{
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "application/json";
     input.addEventListener("change", async ()=>{
       const file = input.files?.[0];
       if(!file) return;
-
       try{
-        const txt = await file.text();
-        const obj = JSON.parse(txt);
-        if(!obj || typeof obj !== "object" || !obj.days || typeof obj.days !== "object"){
+        const text = await file.text();
+        const obj = JSON.parse(text);
+        if(!obj || typeof obj !== "object" || typeof obj.days !== "object"){
           toast("Archivo inválido (estructura).");
           return;
         }
@@ -2319,7 +2335,6 @@
         }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
         loadActiveTripFromStorage();
-        renderNew();
         renderDaily();
         renderMonthly();
         toast("Importación completada.");
@@ -2330,13 +2345,192 @@
     input.click();
   });
 
-  // ===== PWA bootstrap (sin UI) =====
-  if("serviceWorker" in navigator){
-    window.addEventListener("load", ()=>{
-      navigator.serviceWorker.register("./sw.js").catch(()=>{});
-    });
+  $("reportBtn").addEventListener("click", ()=>{
+    const store = loadStore();
+    const monthKey = String($("month").value || "").trim();
+    if(!monthKey){
+      toast("Selecciona un mes.");
+      return;
+    }
+    const html = buildReportHTML(store, monthKey);
+    const w = window.open("", "_blank");
+    if(!w){ toast("No se pudo abrir el reporte (bloqueo de popups)."); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+  });
+
+  $("month").addEventListener("change", renderMonthly);
+  $("chartMetric").addEventListener("change", ()=>{
+    const store = loadStore();
+    const monthKey = String($("month").value || "").trim();
+    if(monthKey) renderChart(store, monthKey);
+  });
+
+  // ===== Tarifario UI =====
+  let editingTariffId = null;
+  const tariffLabelEl = $("tariffLabel");
+  const tariffCategoryEl = $("tariffCategory");
+  const tariffPriceEl = $("tariffPrice");
+  const tariffEnabledEl = $("tariffEnabled");
+  const tariffSaveBtn = $("tariffSaveBtn");
+  const tariffCancelBtn = $("tariffCancelBtn");
+  const tariffFormTitle = $("tariffFormTitle");
+
+  function resetTariffForm(){
+    editingTariffId = null;
+    tariffFormTitle.textContent = "Nuevo ítem";
+    tariffLabelEl.value = "";
+    tariffCategoryEl.value = "extra";
+    tariffPriceEl.value = "0";
+    tariffEnabledEl.value = "true";
+    tariffCancelBtn.disabled = true;
   }
 
+  function loadTariffIntoForm(item){
+    editingTariffId = item.id;
+    tariffFormTitle.textContent = "Editar ítem";
+    tariffLabelEl.value = item.label;
+    tariffCategoryEl.value = (item.category === "visitor") ? "visitor" : "extra";
+    tariffPriceEl.value = String(safeMoney(item.defaultPrice));
+    tariffEnabledEl.value = item.isEnabled ? "true" : "false";
+    tariffCancelBtn.disabled = false;
+  }
+
+  tariffCancelBtn.addEventListener("click", ()=>{
+    resetTariffForm();
+    toast("Edición cancelada.");
+  });
+
+  tariffSaveBtn.addEventListener("click", ()=>{
+    const label = String(tariffLabelEl.value || "").trim();
+    const category = (tariffCategoryEl.value === "visitor") ? "visitor" : "extra";
+    const defaultPrice = safeMoney(tariffPriceEl.value);
+    const isEnabled = tariffEnabledEl.value === "true";
+
+    if(label.length < 2){
+      toast("El nombre debe tener al menos 2 caracteres.");
+      tariffLabelEl.focus();
+      return;
+    }
+
+    const cat = loadCatalog();
+    const now = new Date().toISOString();
+
+    if(editingTariffId){
+      const idx = cat.findIndex(x => x.id === editingTariffId);
+      if(idx === -1){
+        toast("No se encontró el ítem a editar.");
+        resetTariffForm();
+        return;
+      }
+      cat[idx] = { ...cat[idx], label, category, defaultPrice, isEnabled, updatedAt: now };
+      saveCatalog(cat);
+      toast("Ítem actualizado.");
+      resetTariffForm();
+    } else {
+      const newItem = { id: uid(), label, category, defaultPrice, isEnabled, createdAt: now, updatedAt: now };
+      cat.push(newItem);
+      saveCatalog(cat);
+      toast("Ítem creado.");
+      resetTariffForm();
+    }
+  });
+
+  $("tariffResetBtn").addEventListener("click", ()=>{
+    if(!confirmDanger("¿Restaurar el tarifario base? Esto reemplaza el tarifario actual (no borra recorridos).")) return;
+    seedBaseCatalog();
+    refreshCatalogCache();
+    rebuildItemTypeSelect();
+    rebuildChartMetricOptions();
+    renderTariff();
+    renderDaily();
+    renderMonthly();
+    toast("Tarifario base restaurado.");
+  });
+
+  function renderTariff(){
+    if(!$("panelTariff").classList.contains("active")) return;
+
+    refreshCatalogCache();
+    const tbody = $("tariffTbody");
+    const sorted = CATALOG.slice().sort((a,b)=>a.label.localeCompare(b.label));
+
+    if(sorted.length === 0){
+      tbody.innerHTML = `<tr><td colspan="5" class="muted">No hay ítems en el tarifario.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = sorted.map(it=>{
+      const used = isTypeUsedInTrips(it.id);
+      const state = it.isEnabled ? "Habilitado" : "Deshabilitado";
+      const stateDot = it.isEnabled ? "var(--ok)" : "var(--danger)";
+      const delDisabled = used ? "disabled" : "";
+      const delTitle = used ? "title='No se puede borrar: ya fue usado. Deshabilítalo.'" : "title='Borrar (solo si nunca se usó)'";
+      return `
+        <tr>
+          <td><strong>${esc(it.label)}</strong><div class="muted" style="font-size:11px;margin-top:2px">ID: ${esc(it.id)}</div></td>
+          <td>${esc(catLabel(it.category))}</td>
+          <td class="right">${fmtMoney(safeMoney(it.defaultPrice))}</td>
+          <td>
+            <span class="badge" style="border-color:rgba(255,255,255,.10)"><span class="dot" style="background:${stateDot}"></span>${state}</span>
+          </td>
+          <td class="right">
+            <div class="actions">
+              <button class="ghost" data-act="tEdit" data-id="${esc(it.id)}">Editar</button>
+              <button class="${it.isEnabled ? "danger" : "ok"}" data-act="tToggle" data-id="${esc(it.id)}">
+                ${it.isEnabled ? "Deshabilitar" : "Habilitar"}
+              </button>
+              <button class="danger" data-act="tDelete" data-id="${esc(it.id)}" ${delDisabled} ${delTitle}>Borrar</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    document.querySelectorAll("button[data-act='tEdit']").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-id");
+        const item = CATALOG.find(x => x.id === id);
+        if(!item){ toast("No se encontró el ítem."); return; }
+        loadTariffIntoForm(item);
+        toast("Modo edición.");
+      });
+    });
+
+    document.querySelectorAll("button[data-act='tToggle']").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-id");
+        const cat = loadCatalog();
+        const idx = cat.findIndex(x => x.id === id);
+        if(idx === -1){ toast("No se encontró el ítem."); return; }
+        cat[idx].isEnabled = !cat[idx].isEnabled;
+        cat[idx].updatedAt = new Date().toISOString();
+        saveCatalog(cat);
+        toast(cat[idx].isEnabled ? "Ítem habilitado." : "Ítem deshabilitado.");
+      });
+    });
+
+    document.querySelectorAll("button[data-act='tDelete']").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-id");
+        if(isTypeUsedInTrips(id)){
+          toast("No se puede borrar: ya fue usado. Deshabilítalo.");
+          return;
+        }
+        if(!confirmDanger("¿Borrar este ítem del tarifario?")) return;
+
+        let cat = loadCatalog();
+        cat = cat.filter(x => x.id !== id);
+        saveCatalog(cat);
+
+        if(editingTariffId === id) resetTariffForm();
+        toast("Ítem borrado.");
+      });
+    });
+
+    $("tariffCount").textContent = String(CATALOG.length);
+  }
+
+  // ===== Boot =====
   function initDefaults(){
     const today = toISODate(new Date());
     $("listDate").value = today;
@@ -2353,7 +2547,6 @@
     resetTariffForm();
 
     loadActiveTripFromStorage();
-    renderNew();
     renderDaily();
     renderMonthly();
   }
