@@ -1718,8 +1718,9 @@
     return { rows, total, qtyVisitors };
   }
 
-  function buildDayShiftBlock(shiftLabel, trips){
+  function buildDayShiftBlock(shiftLabel, trips, options = {}){
     const summary = buildSummaryFromTrips(trips);
+    const titleText = options.title ? esc(options.title) : `Turno: ${esc(shiftLabel)}`;
     const rows = summary.rows.length
       ? summary.rows.map(r => `
           <tr>
@@ -1736,7 +1737,7 @@
     return `
       <div class="printLike">
         <div class="pHd">
-          <h1>Turno: ${esc(shiftLabel)}</h1>
+          <h1>${titleText}</h1>
         </div>
 
         <div class="pMeta">
@@ -1800,7 +1801,8 @@
 
     grid.innerHTML = [
       buildDayShiftBlock("Mañana", morningTrips),
-      buildDayShiftBlock("Tarde", afternoonTrips)
+      buildDayShiftBlock("Tarde", afternoonTrips),
+      buildDayShiftBlock("Total del día", trips, { title: "Total del día" })
     ].join("");
 
     $("exportDayPdfBtn").disabled = false;
