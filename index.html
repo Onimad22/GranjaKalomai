@@ -382,7 +382,7 @@
     /* Monthly */
     .kpis{
       display:grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap:10px;
       margin-top:12px;
     }
@@ -757,14 +757,8 @@
           <table>
             <thead>
               <tr>
-                <th style="width:120px">Fecha</th>
-                <th class="right">Adultos</th>
-                <th class="right">Menores</th>
-                <th class="right">Adulto mayor</th>
-                <th class="right">Entradas</th>
-                <th class="right">Pony</th>
-                <th class="right">Caballo</th>
-                <th class="right">Tazas</th>
+                <th style="width:140px">Fecha</th>
+                <th class="right">Visitantes</th>
                 <th class="right">Total día</th>
                 <th class="right" style="width:140px">Acciones</th>
               </tr>
@@ -2163,7 +2157,6 @@
     ctx.textAlign = "left";
     ctx.font = "13px system-ui";
     ctx.fillStyle = textColor;
-    ctx.fillText(options.title, padding.l, 14);
   }
 
   function renderChart(store, monthKey){
@@ -2171,28 +2164,21 @@
     const metric = $("chartMetric").value || "visitors_qty";
     $("chartMetric").setAttribute("data-current", metric);
 
-    let title = "—";
     let isMoney = false;
 
     const values = agg.map((a, i) => {
       let value = 0;
 
       if(metric === "visitors_qty"){
-        title = "Visitantes por día de semana";
         value = a.visitorsQty;
       } else if(metric === "revenue_total"){
-        title = "Ingresos (Bs) por día de semana";
         value = a.revenueTotal;
         isMoney = true;
       } else if(metric.startsWith("qty:")){
         const typeId = metric.slice(4);
-        const label = CAT_BY_ID[typeId]?.label || typeId;
-        title = `${label} — Cantidad por día de semana`;
         value = a.qtyByType[typeId] || 0;
       } else if(metric.startsWith("rev:")){
         const typeId = metric.slice(4);
-        const label = CAT_BY_ID[typeId]?.label || typeId;
-        title = `${label} — Ingresos (Bs) por día de semana`;
         value = a.revByType[typeId] || 0;
         isMoney = true;
       }
@@ -2202,24 +2188,12 @@
 
     const formatY = (val) => isMoney ? `Bs ${Math.round(val)}` : String(Math.round(val));
     const formatTop = (val) => isMoney ? `Bs ${Math.round(val)}` : String(Math.round(val));
-    drawBarChart(values, { title, formatY, formatTop });
+    drawBarChart(values, { formatY, formatTop });
   }
 
   function renderKpis(totals){
     const avgEntries = totals.daysCount ? (totals.entries / totals.daysCount) : 0;
     const avgRevenue = totals.daysCount ? (totals.revenue / totals.daysCount) : 0;
-
-    const top = Object.entries(totals.incomeByType || {})
-      .map(([typeId, income]) => ({
-        typeId, income,
-        label: (CAT_BY_ID[typeId]?.label || typeId)
-      }))
-      .sort((a,b)=>b.income - a.income)
-      .slice(0,3);
-
-    const topText = top.length
-      ? top.map(t => `• ${esc(t.label)}: ${fmtMoney(t.income)}`).join("<br>")
-      : "Sin datos.";
 
     $("kpis").innerHTML = `
       <div class="kpi">
@@ -2237,11 +2211,6 @@
         <div class="v">${avgEntries.toFixed(1)} entradas</div>
         <div class="s">${fmtMoney(avgRevenue)} ingresos/día</div>
       </div>
-      <div class="kpi">
-        <div class="t">Top ítems por ingresos</div>
-        <div class="v">${top.length ? fmtMoney(top[0].income) : "—"}</div>
-        <div class="s">${topText}</div>
-      </div>
     `;
   }
 
@@ -2250,36 +2219,24 @@
     const tbody = $("monthTbody");
 
     if(days.length === 0){
-      tbody.innerHTML = `<tr><td colspan="10" class="muted">No hay registros para este mes.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="muted">No hay registros para este mes.</td></tr>`;
       return;
     }
 
     tbody.innerHTML = days.map(date=>{
       const trips = store.days[date]?.trips || [];
-      let adults=0,minors=0,seniors=0,entries=0,revenue=0, pony=0, horse=0, cups=0;
+      let entries=0,revenue=0;
 
       for(const t of trips){
         const c = calcTrip(t);
-        adults += (c.qtyByType["adult"]||0);
-        minors += (c.qtyByType["minor"]||0);
-        seniors += (c.qtyByType["senior"]||0);
         entries += (c.qtyByType["adult"]||0) + (c.qtyByType["minor"]||0) + (c.qtyByType["senior"]||0);
         revenue += c.incomeTotal;
-        pony += (c.qtyByType["pony"]||0);
-        horse += (c.qtyByType["horse"]||0);
-        cups += (c.qtyByType["cups"]||0);
       }
 
       return `
         <tr>
           <td><strong>${date}</strong><div class="muted" style="font-size:11px;margin-top:2px">Recorridos: ${trips.length}</div></td>
-          <td class="right">${adults}</td>
-          <td class="right">${minors}</td>
-          <td class="right">${seniors}</td>
           <td class="right"><strong>${entries}</strong></td>
-          <td class="right">${pony}</td>
-          <td class="right">${horse}</td>
-          <td class="right">${cups}</td>
           <td class="right"><strong>${fmtMoney(revenue)}</strong></td>
           <td class="right"><div class="actions"><button class="ghost" data-act="goDay" data-date="${date}">Ver día</button></div></td>
         </tr>
@@ -2310,7 +2267,7 @@
 
     if(!monthKey){
       $("kpis").innerHTML = "";
-      $("monthTbody").innerHTML = `<tr><td colspan="10" class="muted">Selecciona un mes.</td></tr>`;
+      $("monthTbody").innerHTML = `<tr><td colspan="4" class="muted">Selecciona un mes.</td></tr>`;
       $("monthInfo").innerHTML = "";
       return;
     }
@@ -2347,21 +2304,15 @@
 
     const tr = days.map(date=>{
       const trips = store.days[date]?.trips || [];
-      let adults=0,minors=0,seniors=0, entries=0, revenue=0;
+      let entries=0, revenue=0;
       for(const t of trips){
         const c = calcTrip(t);
-        adults += (c.qtyByType["adult"]||0);
-        minors += (c.qtyByType["minor"]||0);
-        seniors += (c.qtyByType["senior"]||0);
         entries += (c.qtyByType["adult"]||0) + (c.qtyByType["minor"]||0) + (c.qtyByType["senior"]||0);
         revenue += c.incomeTotal;
       }
       return `
         <tr>
           <td>${date}</td>
-          <td style="text-align:right">${adults}</td>
-          <td style="text-align:right">${minors}</td>
-          <td style="text-align:right">${seniors}</td>
           <td style="text-align:right"><strong>${entries}</strong></td>
           <td style="text-align:right"><strong>${fmtMoney(revenue)}</strong></td>
           <td style="text-align:right">${trips.length}</td>
@@ -2382,29 +2333,24 @@
 <title>Reporte mensual - ${monthKey}</title>
 <style>
   body{font-family: Arial, Helvetica, sans-serif; margin:24px; color:#111;}
-  h1{margin:0 0 8px; font-size:18px;}
+  h1{margin:0 0 6px; font-size:18px;}
+  h2{margin:0 0 6px; font-size:14px;}
   .meta{font-size:12px; color:#444; margin-bottom:14px; line-height:1.45;}
   .kpis{display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin: 10px 0 16px;}
   .kpi{border:1px solid #ddd; border-radius:10px; padding:10px;}
   .kpi .t{font-size:11px; color:#444; margin-bottom:6px;}
   .kpi .v{font-size:16px; font-weight:800;}
   .kpi .s{font-size:11px; color:#444; margin-top:6px; line-height:1.35;}
-  table{width:100%; border-collapse:collapse; font-size:11px;}
-  th, td{border:1px solid #ddd; padding:6px; vertical-align:top;}
+  .box{margin-top:14px; border:1px solid #ddd; border-radius:10px; padding:10px;}
+  .label{font-size:11px; color:#444; margin-bottom:6px;}
+  table{width:100%; border-collapse:collapse; font-size:12px;}
+  th, td{border:1px solid #ddd; padding:8px; vertical-align:top;}
   th{background:#f4f6f8; text-align:left;}
-  @media print{
-    body{margin:14mm;}
-    .noprint{display:none;}
-    tr{page-break-inside:avoid;}
-  }
+  tr{page-break-inside:avoid;}
+  @media print{ body{margin:14mm;} }
 </style>
 </head>
 <body>
-  <div class="noprint" style="margin-bottom:12px;">
-    <button onclick="window.print()">Imprimir / Guardar como PDF</button>
-    <button onclick="window.close()" style="margin-left:8px;">Cerrar</button>
-  </div>
-
   <h1>Reporte mensual — Granja (Mes ${monthKey})</h1>
   <div class="meta">Generado: ${stamp}</div>
 
@@ -2426,20 +2372,32 @@
     </div>
   </div>
 
+  <div class="box">
+    <div class="label"><strong>Resumen de gestión</strong></div>
+    <div class="meta" style="margin:0;">
+      <div><strong>Días con registros:</strong> ${totals.daysCount}</div>
+      <div><strong>Recorridos:</strong> ${totals.tripsCount}</div>
+      <div><strong>Entradas:</strong> ${totals.entries}</div>
+      <div><strong>Ingresos:</strong> ${fmtMoney(totals.revenue)}</div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:16px;">Detalle por día</h2>
   <table>
     <thead>
       <tr>
         <th>Fecha</th>
-        <th style="text-align:right">Adultos</th>
-        <th style="text-align:right">Menores</th>
-        <th style="text-align:right">Adulto mayor</th>
-        <th style="text-align:right">Entradas</th>
-        <th style="text-align:right">Ingresos</th>
+        <th style="text-align:right">Visitantes</th>
+        <th style="text-align:right">Total día</th>
         <th style="text-align:right">Recorridos</th>
       </tr>
     </thead>
     <tbody>${tr}</tbody>
   </table>
+
+  <script>
+    window.addEventListener("load", () => { try { window.focus(); } catch(e) {} window.print(); });
+  </scr` + `ipt>
 </body>
 </html>`;
   }
