@@ -980,6 +980,8 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://unpkg.com/dexie@latest/dist/dexie.min.js"></script>
+<script src="./db.js"></script>
 <script>
 (() => {
   "use strict";
@@ -1026,10 +1028,6 @@
       });
     }).catch(()=>{});
   })();
-
-  // ===== Keys =====
-  const STORAGE_KEY = "kalomai_granja_monthly_v8";
-  const CATALOG_KEY = "kalomai_granja_tarifario_v2";
 
   // ===== Base tarifario =====
   const BASE_CATALOG = [
@@ -1090,23 +1088,55 @@
   }
 
   // ===== Store =====
-  function loadStore(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return { days:{} };
-      const obj = JSON.parse(raw);
-      if(!obj || typeof obj !== "object") return { days:{} };
-      if(!obj.days || typeof obj.days !== "object") obj.days = {};
-      for(const k of Object.keys(obj.days)){
-        if(!Array.isArray(obj.days[k].trips)) obj.days[k].trips = [];
-      }
-      return obj;
-    }catch{
-      return { days:{} };
+  let STORE = { days:{} };
+  let CATALOG = [];
+  let CAT_BY_ID = {};
+
+  function normalizeStore(raw){
+    const obj = (raw && typeof raw === "object") ? raw : { days:{} };
+    if(!obj.days || typeof obj.days !== "object") obj.days = {};
+    for(const k of Object.keys(obj.days)){
+      if(!Array.isArray(obj.days[k].trips)) obj.days[k].trips = [];
     }
+    return obj;
   }
-  function saveStore(store){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+  function normalizeCatalog(arr){
+    if(!Array.isArray(arr) || arr.length === 0) return [];
+    return arr.map(x => ({
+      id: String(x.id || uid()),
+      label: String(x.label || "Ítem"),
+      category: (String(x.category || "extra") === "visitor" ? "visitor" : "extra"),
+      defaultPrice: safeMoney(x.defaultPrice),
+      isEnabled: (x.isEnabled !== false),
+      createdAt: x.createdAt || new Date().toISOString(),
+      updatedAt: x.updatedAt || new Date().toISOString()
+    }));
+  }
+
+  function buildAppState(){
+    return {
+      store: STORE,
+      catalog: CATALOG,
+      activeTrip: {
+        date: activeTripDate,
+        id: activeTripId
+      }
+    };
+  }
+
+  function applyAppState(state){
+    const store = state?.store ?? (state?.days ? state : null);
+    STORE = normalizeStore(store || { days:{} });
+    CATALOG = normalizeCatalog(state?.catalog || []);
+    activeTripDate = String(state?.activeTrip?.date || "").trim() || null;
+    activeTripId = String(state?.activeTrip?.id || "").trim() || null;
+  }
+
+  function loadStore(){ return STORE; }
+  async function saveStore(store){
+    STORE = normalizeStore(store);
+    await saveAppState(buildAppState());
   }
   function ensureDay(store, isoDate){
     if(!store.days[isoDate]) store.days[isoDate] = { trips:[], updatedAt: new Date().toISOString() };
@@ -1136,7 +1166,7 @@
   // ===== Catalog =====
   function seedBaseCatalog(){
     const now = new Date().toISOString();
-    const seeded = BASE_CATALOG.map(x => ({
+    return BASE_CATALOG.map(x => ({
       id: x.id,
       label: x.label,
       category: x.category,
@@ -1145,41 +1175,24 @@
       createdAt: now,
       updatedAt: now
     }));
-    localStorage.setItem(CATALOG_KEY, JSON.stringify(seeded));
-    return seeded;
   }
   function loadCatalog(){
-    try{
-      const raw = localStorage.getItem(CATALOG_KEY);
-      if(!raw) return seedBaseCatalog();
-      const arr = JSON.parse(raw);
-      if(!Array.isArray(arr) || arr.length === 0) return seedBaseCatalog();
-      const normalized = arr.map(x => ({
-        id: String(x.id || uid()),
-        label: String(x.label || "Ítem"),
-        category: (String(x.category || "extra") === "visitor" ? "visitor" : "extra"),
-        defaultPrice: safeMoney(x.defaultPrice),
-        isEnabled: (x.isEnabled !== false),
-        createdAt: x.createdAt || new Date().toISOString(),
-        updatedAt: x.updatedAt || new Date().toISOString()
-      }));
-      localStorage.setItem(CATALOG_KEY, JSON.stringify(normalized));
-      return normalized;
-    }catch{
-      return seedBaseCatalog();
+    if(CATALOG.length === 0){
+      CATALOG = seedBaseCatalog();
+      void saveAppState(buildAppState());
     }
+    return CATALOG;
   }
 
-  let CATALOG = [];
-  let CAT_BY_ID = {};
   function refreshCatalogCache(){
     CATALOG = loadCatalog();
     CAT_BY_ID = Object.fromEntries(CATALOG.map(x => [x.id, x]));
     $("tariffCount").textContent = String(CATALOG.length);
   }
   function enabledCatalog(){ return CATALOG.filter(x => x.isEnabled); }
-  function saveCatalog(cat){
-    localStorage.setItem(CATALOG_KEY, JSON.stringify(cat));
+  async function saveCatalog(cat){
+    CATALOG = normalizeCatalog(cat);
+    await saveAppState(buildAppState());
     refreshCatalogCache();
     rebuildItemTypeSelect();
     rebuildChartMetricOptions();
@@ -1378,21 +1391,20 @@
   let activeTripDate = null;
   let activeTripId = null;
 
-  function setActiveTrip(date, id){
+  async function setActiveTrip(date, id){
     activeTripDate = date;
     activeTripId = id;
-    localStorage.setItem("kalomai_active_trip_date", activeTripDate || "");
-    localStorage.setItem("kalomai_active_trip_id", activeTripId || "");
+    await saveAppState(buildAppState());
   }
-  function loadActiveTripFromStorage(){
-    const d = String(localStorage.getItem("kalomai_active_trip_date") || "").trim();
-    const id = String(localStorage.getItem("kalomai_active_trip_id") || "").trim();
-    if(d && id){
+  async function loadActiveTripFromStorage(){
+    if(activeTripDate && activeTripId){
       const store = loadStore();
-      const t = findTrip(store, d, id);
-      if(t){ activeTripDate = d; activeTripId = id; return; }
+      const t = findTrip(store, activeTripDate, activeTripId);
+      if(t) return;
     }
-    activeTripDate = null; activeTripId = null;
+    activeTripDate = null;
+    activeTripId = null;
+    await saveAppState(buildAppState());
   }
   function getActiveTrip(){
     if(!activeTripDate || !activeTripId) return null;
@@ -1484,7 +1496,7 @@
   $("cancelModalBtn").addEventListener("click", closeAllModals);
   overlay.addEventListener("click", closeAllModals);
 
-  $("acceptNewTripBtn").addEventListener("click", ()=>{
+  $("acceptNewTripBtn").addEventListener("click", async ()=>{
     const date = String($("newTripDate").value || "").trim();
     const shift = String($("newTripShift").value || "").trim();
     const hour = String($("newTripHour").value || "").trim();
@@ -1504,9 +1516,8 @@
       updatedAt: new Date().toISOString()
     };
     upsertTrip(store, date, trip);
-    saveStore(store);
-
-    setActiveTrip(date, trip.id);
+    await saveStore(store);
+    await setActiveTrip(date, trip.id);
     closeAllModals();
     toast("Recorrido habilitado.");
 
@@ -1514,8 +1525,8 @@
     renderDaily();
   });
 
-  $("closeActiveTripBtn").addEventListener("click", ()=>{
-    setActiveTrip(null, null);
+  $("closeActiveTripBtn").addEventListener("click", async ()=>{
+    await setActiveTrip(null, null);
     toast("Edición cerrada.");
     renderDaily();
   });
@@ -1535,14 +1546,14 @@
       current.notes = String($("tripNotes").value || "");
       current.updatedAt = new Date().toISOString();
       upsertTrip(store, activeTripDate, current);
-      saveStore(store);
+      void saveStore(store);
       renderTripSummaryInline(current);
     }, 300);
   }
   $("tripNotes").addEventListener("input", saveActiveNotesDebounced);
 
   // ===== Agregar ítem (guardado automático) =====
-  $("addItemBtn").addEventListener("click", ()=>{
+  $("addItemBtn").addEventListener("click", async ()=>{
     const trip = getActiveTrip();
     if(!trip){
       toast("Primero habilita o carga un recorrido.");
@@ -1565,7 +1576,7 @@
     const current = findTrip(store, activeTripDate, activeTripId);
     if(!current){
       toast("No se encontró el recorrido activo.");
-      setActiveTrip(null,null);
+      await setActiveTrip(null,null);
       renderDaily();
       return;
     }
@@ -1575,7 +1586,7 @@
     current.updatedAt = new Date().toISOString();
 
     upsertTrip(store, activeTripDate, current);
-    saveStore(store);
+    await saveStore(store);
 
     resetAddLine();
     toast("Ítem agregado y guardado.");
@@ -1623,16 +1634,16 @@
     }).join("");
 
     host.querySelectorAll("button[data-act='remove']").forEach(btn => {
-      btn.addEventListener("click", ()=>{
+      btn.addEventListener("click", async ()=>{
         const idx = Number(btn.getAttribute("data-idx"));
         if(!Number.isFinite(idx)) return;
         if(!confirmDanger("¿Quitar este ítem del recorrido?")) return;
-        removeActiveItem(idx);
+        await removeActiveItem(idx);
       });
     });
   }
 
-  function removeActiveItem(idx){
+  async function removeActiveItem(idx){
     const store = loadStore();
     const trip = findTrip(store, activeTripDate, activeTripId);
     if(!trip){ toast("No se encontró el recorrido activo."); return; }
@@ -1644,7 +1655,7 @@
     trip.items = items;
     trip.updatedAt = new Date().toISOString();
     upsertTrip(store, activeTripDate, trip);
-    saveStore(store);
+    await saveStore(store);
 
     toast("Ítem eliminado.");
     renderDaily();
@@ -2102,9 +2113,9 @@
     }).join("");
 
     host.querySelectorAll("button[data-act='view']").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
+      btn.addEventListener("click", async ()=>{
         const id = btn.getAttribute("data-id");
-        setActiveTrip(iso, id);
+        await setActiveTrip(iso, id);
         toast("Recorrido cargado para edición.");
         setActiveTab("new");
         renderDaily();
@@ -2113,16 +2124,16 @@
     });
 
     host.querySelectorAll("button[data-act='del']").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
+      btn.addEventListener("click", async ()=>{
         const id = btn.getAttribute("data-id");
         if(!confirmDanger("¿Borrar este recorrido?")) return;
 
         const store2 = loadStore();
         deleteTrip(store2, iso, id);
-        saveStore(store2);
+        await saveStore(store2);
 
         if(activeTripDate === iso && activeTripId === id){
-          setActiveTrip(null,null);
+          await setActiveTrip(null,null);
         }
 
         toast("Recorrido eliminado.");
@@ -2604,8 +2615,8 @@
         for(const d of Object.keys(obj.days)){
           if(!Array.isArray(obj.days[d].trips)) obj.days[d].trips = [];
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-        loadActiveTripFromStorage();
+        await saveStore(obj);
+        await loadActiveTripFromStorage();
         renderDaily();
         renderMonthly();
         toast("Importación completada.");
@@ -2678,7 +2689,7 @@
     toast("Edición cancelada.");
   });
 
-  tariffSaveBtn.addEventListener("click", ()=>{
+  tariffSaveBtn.addEventListener("click", async ()=>{
     const label = String(tariffLabelEl.value || "").trim();
     const category = (tariffCategoryEl.value === "visitor") ? "visitor" : "extra";
     const defaultPrice = safeMoney(tariffPriceEl.value);
@@ -2701,21 +2712,22 @@
         return;
       }
       cat[idx] = { ...cat[idx], label, category, defaultPrice, isEnabled, updatedAt: now };
-      saveCatalog(cat);
+      await saveCatalog(cat);
       toast("Ítem actualizado.");
       resetTariffForm();
     } else {
       const newItem = { id: uid(), label, category, defaultPrice, isEnabled, createdAt: now, updatedAt: now };
       cat.push(newItem);
-      saveCatalog(cat);
+      await saveCatalog(cat);
       toast("Ítem creado.");
       resetTariffForm();
     }
   });
 
-  $("tariffResetBtn").addEventListener("click", ()=>{
+  $("tariffResetBtn").addEventListener("click", async ()=>{
     if(!confirmDanger("¿Restaurar el tarifario base? Esto reemplaza el tarifario actual (no borra recorridos).")) return;
-    seedBaseCatalog();
+    CATALOG = seedBaseCatalog();
+    await saveAppState(buildAppState());
     refreshCatalogCache();
     rebuildItemTypeSelect();
     rebuildChartMetricOptions();
@@ -2775,20 +2787,20 @@
     });
 
     document.querySelectorAll("button[data-act='tToggle']").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
+      btn.addEventListener("click", async ()=>{
         const id = btn.getAttribute("data-id");
         const cat = loadCatalog();
         const idx = cat.findIndex(x => x.id === id);
         if(idx === -1){ toast("No se encontró el ítem."); return; }
         cat[idx].isEnabled = !cat[idx].isEnabled;
         cat[idx].updatedAt = new Date().toISOString();
-        saveCatalog(cat);
+        await saveCatalog(cat);
         toast(cat[idx].isEnabled ? "Ítem habilitado." : "Ítem deshabilitado.");
       });
     });
 
     document.querySelectorAll("button[data-act='tDelete']").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
+      btn.addEventListener("click", async ()=>{
         const id = btn.getAttribute("data-id");
         if(isTypeUsedInTrips(id)){
           toast("No se puede borrar: ya fue usado. Deshabilítalo.");
@@ -2798,7 +2810,7 @@
 
         let cat = loadCatalog();
         cat = cat.filter(x => x.id !== id);
-        saveCatalog(cat);
+        await saveCatalog(cat);
 
         if(editingTariffId === id) resetTariffForm();
         toast("Ítem borrado.");
@@ -2817,19 +2829,25 @@
     $("monthBadge").textContent = $("month").value;
   }
 
-  function boot(){
+  async function init(){
     initDefaults();
+    const state = await loadAppState();
+    applyAppState(state);
+    if(CATALOG.length === 0){
+      CATALOG = seedBaseCatalog();
+      await saveAppState(buildAppState());
+    }
     refreshCatalogCache();
     rebuildItemTypeSelect();
     rebuildChartMetricOptions();
     resetTariffForm();
 
-    loadActiveTripFromStorage();
+    await loadActiveTripFromStorage();
     renderDaily();
     renderMonthly();
   }
 
-  boot();
+  void init();
 })();
 </script>
 </body>
