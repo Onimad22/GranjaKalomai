@@ -395,15 +395,70 @@
     .summaryGrid{display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px;}
     .summaryBox{
       padding:14px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.03);
+      border-radius:18px;
+      border:1px solid rgba(103,232,249,.22);
+      background: linear-gradient(180deg, rgba(103,232,249,.08), rgba(15,23,42,.35));
+      position:relative;
+      overflow:hidden;
     }
-    .summaryTitle{font-size:13px; font-weight:900; margin-bottom:8px; color:#dbeafe;}
-    .summaryTableWrap{overflow:auto; border:1px solid rgba(255,255,255,.06); border-radius:12px;}
+    .summaryBox::before{
+      content:"";
+      position:absolute;
+      inset:0 0 auto 0;
+      height:4px;
+      background: linear-gradient(90deg, rgba(103,232,249,.65), rgba(167,139,250,.55));
+    }
+    .summaryTitle{font-size:13px; font-weight:900; margin-bottom:10px; color:#e0f2fe; text-transform:uppercase; letter-spacing:.35px;}
+    .summaryTableWrap{
+      overflow:auto;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      background: rgba(11,18,32,.55);
+    }
+    .summaryTableWrap table{min-width:0; width:100%;}
+    .summaryTableWrap th{background: rgba(11,18,32,.85);}
+    .summaryTableWrap td{font-size:12.5px;}
     .sectionTitle{margin-top:6px; font-size:13px; font-weight:900; color:#dbeafe;}
     @media (max-width: 1020px){
       .summaryTop,.summaryGrid{grid-template-columns: 1fr;}
+    }
+    @media (max-width: 720px){
+      .summaryTableWrap{border:none;background: transparent;}
+      .summaryTableWrap table{width:100%;}
+      .summaryTableWrap thead{display:none;}
+      .summaryTableWrap tbody{display:flex;flex-direction:column;gap:10px;}
+      .summaryTableWrap tr{
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        padding:12px;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.10);
+        background: rgba(15,23,42,.55);
+      }
+      .summaryTableWrap tr.summaryEmpty{
+        text-align:center;
+        align-items:center;
+      }
+      .summaryTableWrap td{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:0;
+        border:none;
+        font-size:13px;
+      }
+      .summaryTableWrap td::before{
+        content:attr(data-label);
+        font-size:11px;
+        color:var(--muted);
+        font-weight:700;
+        text-transform:uppercase;
+        letter-spacing:.3px;
+      }
+      .summaryTableWrap tr.summaryEmpty td::before{
+        content:"";
+      }
     }
 
     .tableWrap{
@@ -749,7 +804,7 @@
             <div class="summaryBox">
               <div class="summaryTitle">Detalle de visitantes</div>
               <div class="summaryTableWrap">
-                <table>
+                <table class="summaryTable">
                   <thead>
                     <tr>
                       <th>Tipo</th>
@@ -765,7 +820,7 @@
             <div class="summaryBox">
               <div class="summaryTitle">Detalle de extras</div>
               <div class="summaryTableWrap">
-                <table>
+                <table class="summaryTable">
                   <thead>
                     <tr>
                       <th>Extra</th>
@@ -2283,22 +2338,22 @@
     $("monthVisitorsTbody").innerHTML = summary.visitorTypes.length
       ? summary.visitorTypes.map(row => `
           <tr>
-            <td><strong>${esc(row.label)}</strong></td>
-            <td class="right"><strong>${row.qty}</strong></td>
-            <td class="right"><strong>${fmtMoney(row.subtotal)}</strong></td>
+            <td data-label="Tipo"><strong>${esc(row.label)}</strong></td>
+            <td class="right" data-label="Cantidad"><strong>${row.qty}</strong></td>
+            <td class="right" data-label="Total"><strong>${fmtMoney(row.subtotal)}</strong></td>
           </tr>
         `).join("")
-      : `<tr><td colspan="3" class="muted">Sin visitantes registrados.</td></tr>`;
+      : `<tr class="summaryEmpty"><td colspan="3" class="muted" data-label="">Sin visitantes registrados.</td></tr>`;
 
     $("monthExtrasTbody").innerHTML = summary.extraTypes.length
       ? summary.extraTypes.map(row => `
           <tr>
-            <td><strong>${esc(row.label)}</strong></td>
-            <td class="right"><strong>${row.qty}</strong></td>
-            <td class="right"><strong>${fmtMoney(row.subtotal)}</strong></td>
+            <td data-label="Extra"><strong>${esc(row.label)}</strong></td>
+            <td class="right" data-label="Cantidad"><strong>${row.qty}</strong></td>
+            <td class="right" data-label="Total"><strong>${fmtMoney(row.subtotal)}</strong></td>
           </tr>
         `).join("")
-      : `<tr><td colspan="3" class="muted">Sin extras registrados.</td></tr>`;
+      : `<tr class="summaryEmpty"><td colspan="3" class="muted" data-label="">Sin extras registrados.</td></tr>`;
   }
 
   function renderMonthlyTable(store, monthKey){
