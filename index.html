@@ -956,13 +956,13 @@
 
   // ===== Base tarifario =====
   const BASE_CATALOG = [
-    { id:"adult",  label:"Entrada — Adulto",        category:"visitor", defaultPrice: 10, isEnabled:true },
-    { id:"minor",  label:"Entrada — Menor",         category:"visitor", defaultPrice: 5,  isEnabled:true },
-    { id:"senior", label:"Entrada — Adulto mayor",  category:"visitor", defaultPrice: 2,  isEnabled:true },
+    { id:"resort",  label:"Resort",  category:"visitor", defaultPrice: 0,  isEnabled:true },
+    { id:"school",  label:"Colegio", category:"visitor", defaultPrice: 0,  isEnabled:true },
+    { id:"park",    label:"Parque",  category:"visitor", defaultPrice: 0,  isEnabled:true },
 
-    { id:"pony",   label:"Vuelta — Pony",           category:"extra",   defaultPrice: 0,  isEnabled:true },
-    { id:"horse",  label:"Vuelta — Caballo",        category:"extra",   defaultPrice: 0,  isEnabled:true },
-    { id:"cups",   label:"Consumo — Taza comida",   category:"extra",   defaultPrice: 0,  isEnabled:true },
+    { id:"horse",   label:"Caballo", category:"extra",   defaultPrice: 10, isEnabled:true },
+    { id:"pony",    label:"Pony",    category:"extra",   defaultPrice: 10, isEnabled:true },
+    { id:"cup",     label:"Taza",    category:"extra",   defaultPrice: 10, isEnabled:true },
   ];
 
   const $ = (id) => document.getElementById(id);
