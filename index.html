@@ -1313,7 +1313,7 @@
       enabled
         .slice()
         .sort((a,b)=>a.label.localeCompare(b.label))
-        .map(x => `<option value="${esc(x.id)}">${esc(x.label)} (${esc(catLabel(x.category))})</option>`)
+        .map(x => `<option value="${esc(x.id)}">${esc(x.label)}</option>`)
         .join("");
 
     resetAddLine();
@@ -2607,7 +2607,7 @@
       const delTitle = used ? "title='No se puede borrar: ya fue usado. Deshabilítalo.'" : "title='Borrar (solo si nunca se usó)'";
       return `
         <tr>
-          <td><strong>${esc(it.label)}</strong><div class="muted" style="font-size:11px;margin-top:2px">ID: ${esc(it.id)}</div></td>
+          <td><strong>${esc(it.label)}</strong></td>
           <td>${esc(catLabel(it.category))}</td>
           <td class="right">${fmtMoney(safeMoney(it.defaultPrice))}</td>
           <td>
