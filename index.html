@@ -380,32 +380,31 @@
     }
 
     /* Monthly */
-    .kpis{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap:10px;
-      margin-top:12px;
-    }
-    @media (max-width: 1020px){ .kpis{grid-template-columns: 1fr 1fr;} }
-    @media (max-width: 520px){ .kpis{grid-template-columns: 1fr;} }
-    .kpi{
-      padding:12px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.08);
-      background: rgba(15,23,42,.25);
-    }
-    .kpi .t{font-size:12px;color:var(--muted);margin-bottom:6px;}
-    .kpi .v{font-size:22px;font-weight:900;line-height:1.05;}
-    .kpi .s{font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.35;}
-
-    .chartwrap{
-      margin-top:12px;
-      border:1px solid rgba(255,255,255,.08);
+    .monthSummary{margin: 8px 0 16px; display:flex; flex-direction:column; gap:12px;}
+    .summaryTop{display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px;}
+    .summaryStat{
+      padding:14px;
       border-radius:16px;
-      background: rgba(15,23,42,.22);
-      padding:12px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      box-shadow: var(--shadow);
     }
-    canvas{display:block;width:100%;height:240px;}
+    .summaryStat .label{font-size:12px; color:var(--muted); margin-bottom:6px;}
+    .summaryStat .value{font-size:22px; font-weight:900; line-height:1.1;}
+    .summaryStat .meta{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.35;}
+    .summaryGrid{display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px;}
+    .summaryBox{
+      padding:14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .summaryTitle{font-size:13px; font-weight:900; margin-bottom:8px; color:#dbeafe;}
+    .summaryTableWrap{overflow:auto; border:1px solid rgba(255,255,255,.06); border-radius:12px;}
+    .sectionTitle{margin-top:6px; font-size:13px; font-weight:900; color:#dbeafe;}
+    @media (max-width: 1020px){
+      .summaryTop,.summaryGrid{grid-template-columns: 1fr;}
+    }
 
     .tableWrap{
       margin-top:12px;
@@ -732,27 +731,56 @@
           </div>
         </div>
 
-        <div class="kpis" id="kpis"></div>
-
-        <div class="chartwrap">
-          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-            <div style="min-width:320px">
-              <label>Gráfico por día de semana</label>
-              <select id="chartMetric"></select>
-              <div class="muted" style="font-size:11.5px;margin-top:6px;line-height:1.35">
-                Métricas generales o cualquier ítem del Tarifario (cantidad o ingresos).
-              </div>
+        <div class="monthSummary">
+          <div class="summaryTop">
+            <div class="summaryStat">
+              <div class="label">Total $ del mes</div>
+              <div class="value" id="monthSummaryRevenue">Bs 0</div>
+              <div class="meta" id="monthSummaryMeta">—</div>
+            </div>
+            <div class="summaryStat">
+              <div class="label">Total visitantes del mes</div>
+              <div class="value" id="monthSummaryVisitors">0</div>
+              <div class="meta" id="monthSummaryVisitorsMeta">—</div>
             </div>
           </div>
 
-          <div style="margin-top:10px;">
-            <canvas id="chart" width="900" height="300"></canvas>
-            <div class="muted" style="font-size:12px;margin-top:8px;">
-              Consolidado por día de semana (Lun–Dom). Suma de todos los recorridos del mes.
+          <div class="summaryGrid">
+            <div class="summaryBox">
+              <div class="summaryTitle">Detalle de visitantes</div>
+              <div class="summaryTableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Tipo</th>
+                      <th class="right" style="width:120px;">Cantidad</th>
+                      <th class="right" style="width:160px;">Total (Bs)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monthVisitorsTbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="summaryBox">
+              <div class="summaryTitle">Detalle de extras</div>
+              <div class="summaryTableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Extra</th>
+                      <th class="right" style="width:120px;">Cantidad</th>
+                      <th class="right" style="width:160px;">Total (Bs)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monthExtrasTbody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
 
+        <div class="sectionTitle">Detalle por día</div>
         <div class="tableWrap" style="max-height:520px;">
           <table>
             <thead>
@@ -1195,6 +1223,55 @@
       }
     }
     return totals;
+  }
+
+  function buildMonthlySummary(store, monthKey){
+    const days = listDaysForMonth(store, monthKey);
+    const byType = new Map();
+    let totalRevenue = 0;
+    let visitorsQty = 0;
+    let tripsCount = 0;
+
+    for(const d of days){
+      const trips = store.days[d]?.trips || [];
+      tripsCount += trips.length;
+
+      for(const t of trips){
+        const items = Array.isArray(t.items) ? t.items : [];
+        for(const it of items){
+          const qty = safeInt(it.qty);
+          const unitPrice = safeMoney(it.unitPrice);
+          const subtotal = qty * unitPrice;
+          const typeId = String(it.typeId || "");
+          const def = CAT_BY_ID[typeId];
+          const label = String(it.label || def?.label || "Ítem");
+          const category = (String(it.category || def?.category || "extra") === "visitor") ? "visitor" : "extra";
+
+          totalRevenue += subtotal;
+          if(category === "visitor") visitorsQty += qty;
+
+          const prev = byType.get(typeId);
+          if(!prev){
+            byType.set(typeId, { typeId, label, category, qty, subtotal });
+          } else {
+            prev.qty += qty;
+            prev.subtotal += subtotal;
+          }
+        }
+      }
+    }
+
+    const allRows = Array.from(byType.values());
+    const sortRows = (a,b)=>a.label.localeCompare(b.label);
+
+    return {
+      daysCount: days.length,
+      tripsCount,
+      totalRevenue,
+      visitorsQty,
+      visitorTypes: allRows.filter(r => r.category === "visitor").sort(sortRows),
+      extraTypes: allRows.filter(r => r.category !== "visitor").sort(sortRows)
+    };
   }
 
   // ===== Tabs =====
@@ -1875,6 +1952,7 @@
   <div class="meta">Totales diferenciados por turno.</div>
   ${buildShiftSection("Mañana", morningTrips)}
   ${buildShiftSection("Tarde", afternoonTrips)}
+  ${buildShiftSection("Total del día", trips)}
 
   <script>
     window.addEventListener("load", () => { try { window.focus(); } catch(e) {} window.print(); });
@@ -2030,6 +2108,7 @@
   // ===== Monthly: chart metric selector dinámico =====
   function rebuildChartMetricOptions(){
     const sel = $("chartMetric");
+    if(!sel) return;
     const all = CATALOG.slice().sort((a,b)=>a.label.localeCompare(b.label));
 
     const general = [
@@ -2191,27 +2270,35 @@
     drawBarChart(values, { formatY, formatTop });
   }
 
-  function renderKpis(totals){
-    const avgEntries = totals.daysCount ? (totals.entries / totals.daysCount) : 0;
-    const avgRevenue = totals.daysCount ? (totals.revenue / totals.daysCount) : 0;
+  function renderMonthlySummary(summary){
+    $("monthSummaryRevenue").textContent = fmtMoney(summary.totalRevenue);
+    $("monthSummaryVisitors").textContent = String(summary.visitorsQty);
+    $("monthSummaryMeta").textContent = summary.daysCount
+      ? `Días con registros: ${summary.daysCount} · Recorridos: ${summary.tripsCount}`
+      : "Sin registros en el mes.";
+    $("monthSummaryVisitorsMeta").textContent = summary.visitorsQty
+      ? "Incluye todos los tipos de visitantes."
+      : "Sin visitantes registrados.";
 
-    $("kpis").innerHTML = `
-      <div class="kpi">
-        <div class="t">Entradas (mes)</div>
-        <div class="v">${totals.entries}</div>
-        <div class="s">Adultos ${totals.adults} · Menores ${totals.minors} · Adulto mayor ${totals.seniors}</div>
-      </div>
-      <div class="kpi">
-        <div class="t">Ingresos (mes)</div>
-        <div class="v">${fmtMoney(totals.revenue)}</div>
-        <div class="s">Incluye visitantes y extras.</div>
-      </div>
-      <div class="kpi">
-        <div class="t">Promedio por día (registrado)</div>
-        <div class="v">${avgEntries.toFixed(1)} entradas</div>
-        <div class="s">${fmtMoney(avgRevenue)} ingresos/día</div>
-      </div>
-    `;
+    $("monthVisitorsTbody").innerHTML = summary.visitorTypes.length
+      ? summary.visitorTypes.map(row => `
+          <tr>
+            <td><strong>${esc(row.label)}</strong></td>
+            <td class="right"><strong>${row.qty}</strong></td>
+            <td class="right"><strong>${fmtMoney(row.subtotal)}</strong></td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="3" class="muted">Sin visitantes registrados.</td></tr>`;
+
+    $("monthExtrasTbody").innerHTML = summary.extraTypes.length
+      ? summary.extraTypes.map(row => `
+          <tr>
+            <td><strong>${esc(row.label)}</strong></td>
+            <td class="right"><strong>${row.qty}</strong></td>
+            <td class="right"><strong>${fmtMoney(row.subtotal)}</strong></td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="3" class="muted">Sin extras registrados.</td></tr>`;
   }
 
   function renderMonthlyTable(store, monthKey){
@@ -2229,7 +2316,7 @@
 
       for(const t of trips){
         const c = calcTrip(t);
-        entries += (c.qtyByType["adult"]||0) + (c.qtyByType["minor"]||0) + (c.qtyByType["senior"]||0);
+        entries += c.qtyVisitors || 0;
         revenue += c.incomeTotal;
       }
 
@@ -2259,30 +2346,32 @@
     if(!$("panelMonthly").classList.contains("active")) return;
 
     refreshCatalogCache();
-    rebuildChartMetricOptions();
 
     const store = loadStore();
     const monthKey = String($("month").value || "").trim();
     $("monthBadge").textContent = monthKey || "—";
 
     if(!monthKey){
-      $("kpis").innerHTML = "";
+      $("monthSummaryRevenue").textContent = "Bs 0";
+      $("monthSummaryVisitors").textContent = "0";
+      $("monthSummaryMeta").textContent = "—";
+      $("monthSummaryVisitorsMeta").textContent = "—";
+      $("monthVisitorsTbody").innerHTML = "";
+      $("monthExtrasTbody").innerHTML = "";
       $("monthTbody").innerHTML = `<tr><td colspan="4" class="muted">Selecciona un mes.</td></tr>`;
       $("monthInfo").innerHTML = "";
       return;
     }
 
-    const totals = monthTotals(store, monthKey);
-    renderKpis(totals);
+    const summary = buildMonthlySummary(store, monthKey);
+    renderMonthlySummary(summary);
     renderMonthlyTable(store, monthKey);
 
     $("monthInfo").innerHTML = `
       <span class="pill">Mes ${esc(monthKey)}</span>
-      <strong>${totals.daysCount}</strong> días con registros · <strong>${totals.tripsCount}</strong> recorridos ·
-      <strong>${totals.entries}</strong> entradas · <strong>${fmtMoney(totals.revenue)}</strong> ingresos.
+      <strong>${summary.daysCount}</strong> días con registros · <strong>${summary.tripsCount}</strong> recorridos ·
+      <strong>${summary.visitorsQty}</strong> visitantes · <strong>${fmtMoney(summary.totalRevenue)}</strong> ingresos.
     `;
-
-    renderChart(store, monthKey);
   }
 
   // ===== Report / Export / Import =====
@@ -2299,7 +2388,7 @@
   }
 
   function buildReportHTML(store, monthKey){
-    const totals = monthTotals(store, monthKey);
+    const summary = buildMonthlySummary(store, monthKey);
     const days = listDaysForMonth(store, monthKey);
 
     const tr = days.map(date=>{
@@ -2307,7 +2396,7 @@
       let entries=0, revenue=0;
       for(const t of trips){
         const c = calcTrip(t);
-        entries += (c.qtyByType["adult"]||0) + (c.qtyByType["minor"]||0) + (c.qtyByType["senior"]||0);
+        entries += c.qtyVisitors || 0;
         revenue += c.incomeTotal;
       }
       return `
@@ -2320,9 +2409,27 @@
       `;
     }).join("");
 
-    const avgEntries = totals.daysCount ? (totals.entries / totals.daysCount) : 0;
-    const avgRevenue = totals.daysCount ? (totals.revenue / totals.daysCount) : 0;
     const stamp = new Date().toLocaleString();
+
+    const visitorRows = summary.visitorTypes.length
+      ? summary.visitorTypes.map(row => `
+          <tr>
+            <td>${esc(row.label)}</td>
+            <td style="text-align:right"><strong>${row.qty}</strong></td>
+            <td style="text-align:right"><strong>${fmtMoney(row.subtotal)}</strong></td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="3" style="color:#444;">Sin visitantes registrados.</td></tr>`;
+
+    const extraRows = summary.extraTypes.length
+      ? summary.extraTypes.map(row => `
+          <tr>
+            <td>${esc(row.label)}</td>
+            <td style="text-align:right"><strong>${row.qty}</strong></td>
+            <td style="text-align:right"><strong>${fmtMoney(row.subtotal)}</strong></td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="3" style="color:#444;">Sin extras registrados.</td></tr>`;
 
     return `
 <!doctype html>
@@ -2336,13 +2443,14 @@
   h1{margin:0 0 6px; font-size:18px;}
   h2{margin:0 0 6px; font-size:14px;}
   .meta{font-size:12px; color:#444; margin-bottom:14px; line-height:1.45;}
-  .kpis{display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin: 10px 0 16px;}
-  .kpi{border:1px solid #ddd; border-radius:10px; padding:10px;}
-  .kpi .t{font-size:11px; color:#444; margin-bottom:6px;}
-  .kpi .v{font-size:16px; font-weight:800;}
-  .kpi .s{font-size:11px; color:#444; margin-top:6px; line-height:1.35;}
-  .box{margin-top:14px; border:1px solid #ddd; border-radius:10px; padding:10px;}
-  .label{font-size:11px; color:#444; margin-bottom:6px;}
+  .summaryTop{display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin: 10px 0 16px;}
+  .summaryStat{border:1px solid #ddd; border-radius:10px; padding:10px;}
+  .summaryStat .label{font-size:11px; color:#444; margin-bottom:6px;}
+  .summaryStat .value{font-size:16px; font-weight:800;}
+  .summaryStat .meta{font-size:11px; color:#444; margin-top:6px; line-height:1.35;}
+  .summaryGrid{display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin-bottom: 8px;}
+  .summaryBox{border:1px solid #ddd; border-radius:10px; padding:10px;}
+  .summaryBox h2{margin:0 0 6px; font-size:12px;}
   table{width:100%; border-collapse:collapse; font-size:12px;}
   th, td{border:1px solid #ddd; padding:8px; vertical-align:top;}
   th{background:#f4f6f8; text-align:left;}
@@ -2354,31 +2462,45 @@
   <h1>Reporte mensual — Granja (Mes ${monthKey})</h1>
   <div class="meta">Generado: ${stamp}</div>
 
-  <div class="kpis">
-    <div class="kpi">
-      <div class="t">Entradas (Total)</div>
-      <div class="v">${totals.entries}</div>
-      <div class="s">Adultos ${totals.adults} · Menores ${totals.minors} · Adulto mayor ${totals.seniors}</div>
+  <div class="summaryTop">
+    <div class="summaryStat">
+      <div class="label">Total $ del mes</div>
+      <div class="value">${fmtMoney(summary.totalRevenue)}</div>
+      <div class="meta">Días con registros: ${summary.daysCount} · Recorridos: ${summary.tripsCount}</div>
     </div>
-    <div class="kpi">
-      <div class="t">Ingresos (Total)</div>
-      <div class="v">${fmtMoney(totals.revenue)}</div>
-      <div class="s">Incluye visitantes y extras.</div>
-    </div>
-    <div class="kpi">
-      <div class="t">Promedio por día (registrado)</div>
-      <div class="v">${avgEntries.toFixed(1)} entradas</div>
-      <div class="s">${fmtMoney(avgRevenue)} ingresos/día</div>
+    <div class="summaryStat">
+      <div class="label">Total visitantes del mes</div>
+      <div class="value">${summary.visitorsQty}</div>
+      <div class="meta">Incluye todos los tipos de visitantes.</div>
     </div>
   </div>
 
-  <div class="box">
-    <div class="label"><strong>Resumen de gestión</strong></div>
-    <div class="meta" style="margin:0;">
-      <div><strong>Días con registros:</strong> ${totals.daysCount}</div>
-      <div><strong>Recorridos:</strong> ${totals.tripsCount}</div>
-      <div><strong>Entradas:</strong> ${totals.entries}</div>
-      <div><strong>Ingresos:</strong> ${fmtMoney(totals.revenue)}</div>
+  <div class="summaryGrid">
+    <div class="summaryBox">
+      <h2>Detalle de visitantes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th style="text-align:right">Cantidad</th>
+            <th style="text-align:right">Total (Bs)</th>
+          </tr>
+        </thead>
+        <tbody>${visitorRows}</tbody>
+      </table>
+    </div>
+    <div class="summaryBox">
+      <h2>Detalle de extras</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Extra</th>
+            <th style="text-align:right">Cantidad</th>
+            <th style="text-align:right">Total (Bs)</th>
+          </tr>
+        </thead>
+        <tbody>${extraRows}</tbody>
+      </table>
     </div>
   </div>
 
@@ -2457,11 +2579,14 @@
   });
 
   $("month").addEventListener("change", renderMonthly);
-  $("chartMetric").addEventListener("change", ()=>{
-    const store = loadStore();
-    const monthKey = String($("month").value || "").trim();
-    if(monthKey) renderChart(store, monthKey);
-  });
+  const chartMetricEl = $("chartMetric");
+  if(chartMetricEl){
+    chartMetricEl.addEventListener("change", ()=>{
+      const store = loadStore();
+      const monthKey = String($("month").value || "").trim();
+      if(monthKey) renderChart(store, monthKey);
+    });
+  }
 
   // ===== Tarifario UI =====
   let editingTariffId = null;
