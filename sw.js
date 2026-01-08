@@ -1,7 +1,7 @@
 /* sw.js - Kalomai PWA */
 "use strict";
 
-const CACHE_NAME = "kalomai-pwa-v3";
+const CACHE_NAME = "kalomai-pwa-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
