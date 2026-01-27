@@ -769,7 +769,7 @@
         <h2>Resumen mensual (Gerencia)</h2>
         <div class="btns" style="margin:0;">
           <button class="ok" id="reportBtn">Reporte (PDF/Imprimir)</button>
-          <button class="ok" id="protectStorageBtn">Proteger almacenamiento</button>
+          <button class="ok" id="shareReportBtn">Enviar reporte</button>
           <button class="ok" id="backupShareBtn">Backup (Compartir)</button>
           <button id="importBackupBtn">Importar backup</button>
           <button id="openTariffBtn">Tarifa</button>
@@ -1154,27 +1154,131 @@
     });
   }
 
-  async function ensurePersistentStorage(){
+  const LAST_PERSIST_PROMPT_KEY = "kalomai_last_persist_prompt_at";
+  const PERSIST_PROMPT_INTERVAL_DAYS = 7;
+
+  function getLastPersistPromptAt(){
+    const raw = localStorage.getItem(LAST_PERSIST_PROMPT_KEY);
+    if(!raw) return null;
+    const date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function shouldPromptForPersistence(){
+    const last = getLastPersistPromptAt();
+    if(!last) return true;
+    const days = (Date.now() - last.getTime()) / (1000 * 60 * 60 * 24);
+    return days >= PERSIST_PROMPT_INTERVAL_DAYS;
+  }
+
+  function markPersistPrompted(){
+    localStorage.setItem(LAST_PERSIST_PROMPT_KEY, new Date().toISOString());
+  }
+
+  async function getPersistenceStatus(){
     if(!navigator.storage?.persist || !navigator.storage?.persisted){
       return { supported:false, persisted:false };
     }
-    const isPersisted = await navigator.storage.persisted();
-    if(isPersisted){
-      return { supported:true, persisted:true, requested:false };
+    try{
+      const persisted = await navigator.storage.persisted();
+      return { supported:true, persisted };
+    }catch{
+      return { supported:true, persisted:false };
     }
-    const granted = await navigator.storage.persist();
-    return { supported:true, persisted:granted, requested:true };
+  }
+
+  async function requestPersistence(){
+    if(!navigator.storage?.persist){
+      return { supported:false, granted:false };
+    }
+    try{
+      const granted = await navigator.storage.persist();
+      return { supported:true, granted };
+    }catch{
+      return { supported:true, granted:false };
+    }
+  }
+
+  function ensurePersistenceModal(){
+    let modal = document.getElementById("persistModal");
+    if(modal) return modal;
+
+    modal = document.createElement("div");
+    modal.className = "modal";
+    modal.id = "persistModal";
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML = `
+      <div class="modalCard">
+        <div class="modalHd">
+          <div class="t">Proteger datos</div>
+        </div>
+        <div class="modalBd">
+          <div class="note" style="margin-top:0">
+            Activa la persistencia para reducir el riesgo de pérdida de datos si el sistema libera espacio.
+          </div>
+        </div>
+        <div class="modalFt">
+          <button class="ok" data-action="apply">Aplicar</button>
+          <button class="ghost" data-action="dismiss">Ahora no</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector("[data-action='apply']")?.addEventListener("click", async ()=>{
+      const result = await requestPersistence();
+      if(result.granted){
+        toast("Almacenamiento protegido.");
+      } else {
+        toast("No se pudo asegurar persistencia. Libera espacio e intenta de nuevo.");
+      }
+      closePersistenceModal();
+      await updatePersistenceHint();
+    });
+
+    modal.querySelector("[data-action='dismiss']")?.addEventListener("click", ()=>{
+      closePersistenceModal();
+    });
+
+    return modal;
+  }
+
+  function openPersistenceModal(){
+    const modal = ensurePersistenceModal();
+    overlay.classList.add("open");
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    markPersistPrompted();
+  }
+
+  function closePersistenceModal(){
+    const modal = document.getElementById("persistModal");
+    if(modal){
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+    if(!newTripModal.classList.contains("open")){
+      overlay.classList.remove("open");
+    }
+  }
+
+  async function maybePromptForPersistenceOnStart(){
+    const status = await getPersistenceStatus();
+    if(!status.supported || status.persisted) return;
+    if(!shouldPromptForPersistence()) return;
+    openPersistenceModal();
   }
 
   async function updatePersistenceHint(){
     const el = $("persistenceStatusNote");
     if(!el) return;
-    if(!navigator.storage?.persisted){
+    const status = await getPersistenceStatus();
+    if(!status.supported){
       el.textContent = "Persistencia: No disponible en este navegador.";
       return;
     }
-    const isPersisted = await navigator.storage.persisted();
-    el.textContent = `Persistencia: ${isPersisted ? "Activa" : "No activa"}.`;
+    el.textContent = `Persistencia: ${status.persisted ? "Activa" : "No activa"}.`;
   }
 
   // ===== Store =====
@@ -1578,6 +1682,11 @@
     overlay.classList.remove("open");
     newTripModal.classList.remove("open");
     newTripModal.setAttribute("aria-hidden","true");
+    const persistModal = document.getElementById("persistModal");
+    if(persistModal){
+      persistModal.classList.remove("open");
+      persistModal.setAttribute("aria-hidden", "true");
+    }
   }
 
   $("openNewTripModalBtn").addEventListener("click", openNewTripModal);
@@ -2543,11 +2652,20 @@
     URL.revokeObjectURL(url);
   }
 
-  function buildReportHTML(store, monthKey){
-    const summary = buildMonthlySummary(store, monthKey);
-    const days = listDaysForMonth(store, monthKey);
+  function downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
 
-    const tr = days.map(date=>{
+  function buildReportRows(store, monthKey){
+    const days = listDaysForMonth(store, monthKey);
+    return days.map(date=>{
       const trips = store.days[date]?.trips || [];
       let entries=0, revenue=0;
       for(const t of trips){
@@ -2555,15 +2673,22 @@
         entries += c.qtyVisitors || 0;
         revenue += c.incomeTotal;
       }
-      return `
-        <tr>
-          <td>${date}</td>
-          <td style="text-align:right"><strong>${entries}</strong></td>
-          <td style="text-align:right"><strong>${fmtMoney(revenue)}</strong></td>
-          <td style="text-align:right">${trips.length}</td>
-        </tr>
-      `;
-    }).join("");
+      return { date, entries, revenue, trips: trips.length };
+    });
+  }
+
+  function buildReportHTML(store, monthKey){
+    const summary = buildMonthlySummary(store, monthKey);
+    const rows = buildReportRows(store, monthKey);
+
+    const tr = rows.map(row => `
+      <tr>
+        <td>${row.date}</td>
+        <td style="text-align:right"><strong>${row.entries}</strong></td>
+        <td style="text-align:right"><strong>${fmtMoney(row.revenue)}</strong></td>
+        <td style="text-align:right">${row.trips}</td>
+      </tr>
+    `).join("");
 
     const stamp = new Date().toLocaleString();
 
@@ -2680,6 +2805,213 @@
 </html>`;
   }
 
+  function escapePdfText(text){
+    return String(text)
+      .replace(/\\/g, "\\\\")
+      .replace(/\(/g, "\\(")
+      .replace(/\)/g, "\\)");
+  }
+
+  function wrapText(text, width){
+    const words = String(text).split(" ");
+    const lines = [];
+    let line = "";
+    words.forEach(word => {
+      const next = line ? `${line} ${word}` : word;
+      if(next.length > width){
+        if(line) lines.push(line);
+        line = word;
+      } else {
+        line = next;
+      }
+    });
+    if(line) lines.push(line);
+    return lines.length ? lines : [""];
+  }
+
+  function padText(text, width){
+    const str = String(text ?? "");
+    return str.length >= width ? str.slice(0, width) : str.padEnd(width, " ");
+  }
+
+  function buildReportLines(summary, rows, monthKey, stamp){
+    const lines = [];
+    lines.push("Reporte mensual — Granja");
+    lines.push(`Mes ${monthKey}`);
+    lines.push(`Generado: ${stamp}`);
+    lines.push("");
+    lines.push("Resumen");
+    lines.push(`Total $ del mes: ${fmtMoney(summary.totalRevenue)}`);
+    lines.push(`Días con registros: ${summary.daysCount} · Recorridos: ${summary.tripsCount}`);
+    lines.push(`Total visitantes del mes: ${summary.visitorsQty}`);
+    lines.push("");
+
+    const buildTableLines = (title, headers, data, widths) => {
+      lines.push(title);
+      lines.push(headers.map((h, i) => padText(h, widths[i])).join(" | "));
+      lines.push(widths.map(w => "-".repeat(w)).join("-+-"));
+      if(!data.length){
+        lines.push("Sin datos.");
+        lines.push("");
+        return;
+      }
+      data.forEach(row => {
+        const wrapped = row.map((cell, i) => wrapText(cell, widths[i]));
+        const maxLines = Math.max(...wrapped.map(x => x.length));
+        for(let i=0; i<maxLines; i++){
+          const lineParts = wrapped.map((cellLines, idx) => padText(cellLines[i] || "", widths[idx]));
+          lines.push(lineParts.join(" | "));
+        }
+      });
+      lines.push("");
+    };
+
+    const visitorRows = summary.visitorTypes.map(row => [
+      row.label,
+      String(row.qty),
+      fmtMoney(row.subtotal)
+    ]);
+    const extraRows = summary.extraTypes.map(row => [
+      row.label,
+      String(row.qty),
+      fmtMoney(row.subtotal)
+    ]);
+
+    buildTableLines(
+      "Detalle de visitantes",
+      ["Tipo", "Cantidad", "Total (Bs)"],
+      visitorRows,
+      [28, 10, 14]
+    );
+    buildTableLines(
+      "Detalle de extras",
+      ["Extra", "Cantidad", "Total (Bs)"],
+      extraRows,
+      [28, 10, 14]
+    );
+
+    lines.push("Detalle por día");
+    lines.push(["Fecha", "Visitantes", "Total día (Bs)", "Recorridos"].map((h, i) => padText(h, [12, 11, 16, 10][i])).join(" | "));
+    lines.push([12, 11, 16, 10].map(w => "-".repeat(w)).join("-+-"));
+
+    if(rows.length === 0){
+      lines.push("Sin registros para este mes.");
+    } else {
+      rows.forEach(row => {
+        const values = [
+          row.date,
+          String(row.entries),
+          fmtMoney(row.revenue),
+          String(row.trips)
+        ];
+        const wrapped = values.map((val, idx) => wrapText(val, [12, 11, 16, 10][idx]));
+        const maxLines = Math.max(...wrapped.map(x => x.length));
+        for(let i=0; i<maxLines; i++){
+          const lineParts = wrapped.map((cellLines, idx) => padText(cellLines[i] || "", [12, 11, 16, 10][idx]));
+          lines.push(lineParts.join(" | "));
+        }
+      });
+    }
+
+    return lines;
+  }
+
+  function buildPdfBlobFromLines(lines){
+    const pageWidth = 595;
+    const pageHeight = 842;
+    const margin = 40;
+    const lineHeight = 14;
+    const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
+    const pages = [];
+    for(let i=0; i<lines.length; i+=maxLinesPerPage){
+      pages.push(lines.slice(i, i + maxLinesPerPage));
+    }
+
+    const objects = [];
+    const pageObjectIndexes = [];
+
+    const addObj = (content) => {
+      objects.push(content);
+      return objects.length;
+    };
+
+    const fontObjNum = addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>");
+
+    pages.forEach(pageLines => {
+      let y = pageHeight - margin;
+      let stream = "BT\n/F1 11 Tf\n";
+      pageLines.forEach(line => {
+        stream += `1 0 0 1 ${margin} ${y} Tm (${escapePdfText(line)}) Tj\n`;
+        y -= lineHeight;
+      });
+      stream += "ET";
+      const contentObjNum = addObj(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+      const pageObjNum = addObj(`<< /Type /Page /Parent PAGES_OBJ 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${contentObjNum} 0 R /Resources << /Font << /F1 ${fontObjNum} 0 R >> >> >>`);
+      pageObjectIndexes.push(pageObjNum);
+    });
+
+    const kids = pageObjectIndexes.map(num => `${num} 0 R`).join(" ");
+    const pagesObjNum = addObj(`<< /Type /Pages /Kids [${kids}] /Count ${pageObjectIndexes.length} >>`);
+    const catalogObjNum = addObj(`<< /Type /Catalog /Pages ${pagesObjNum} 0 R >>`);
+
+    pageObjectIndexes.forEach((num) => {
+      const idx = num - 1;
+      objects[idx] = objects[idx].replace("PAGES_OBJ 0 R", `${pagesObjNum} 0 R`);
+    });
+
+    let pdf = "%PDF-1.3\n";
+    const offsets = [0];
+    objects.forEach((obj, idx) => {
+      offsets[idx + 1] = pdf.length;
+      pdf += `${idx + 1} 0 obj\n${obj}\nendobj\n`;
+    });
+    const xrefOffset = pdf.length;
+    pdf += `xref\n0 ${objects.length + 1}\n`;
+    pdf += "0000000000 65535 f \n";
+    for(let i=1; i<=objects.length; i++){
+      const offset = String(offsets[i]).padStart(10, "0");
+      pdf += `${offset} 00000 n \n`;
+    }
+    pdf += `trailer\n<< /Size ${objects.length + 1} /Root ${catalogObjNum} 0 R >>\n`;
+    pdf += `startxref\n${xrefOffset}\n%%EOF`;
+
+    return new Blob([pdf], { type: "application/pdf" });
+  }
+
+  async function getReportPdfBlob(){
+    const store = loadStore();
+    const monthKey = String($("month").value || "").trim();
+    if(!monthKey){
+      toast("Selecciona un mes.");
+      return null;
+    }
+    const summary = buildMonthlySummary(store, monthKey);
+    const rows = buildReportRows(store, monthKey);
+    const stamp = new Date().toLocaleString();
+    const lines = buildReportLines(summary, rows, monthKey, stamp);
+    const blob = buildPdfBlobFromLines(lines);
+    const filename = `reporte_kalomai_${monthKey}.pdf`;
+    return { blob, filename };
+  }
+
+  async function sharePdf({ blob, filename }){
+    const file = new File([blob], filename, { type: "application/pdf" });
+    if(navigator.share && navigator.canShare?.({ files: [file] })){
+      try{
+        await navigator.share({
+          title: "Reporte Kalomai",
+          text: "Adjunto reporte en PDF.",
+          files: [file]
+        });
+        return "share";
+      }catch{
+        // fallback below
+      }
+    }
+    downloadBlob(blob, filename);
+    return "download";
+  }
+
   async function buildBackupPayload(){
     const data = await exportAll();
     return {
@@ -2702,6 +3034,7 @@
     renderMonthly();
     await updatePersistenceHint();
     updateBackupNudges();
+    await maybePromptForPersistenceOnStart();
   }
 
   async function doShareBackupAndMark(){
@@ -2759,16 +3092,6 @@
     input.click();
   }
 
-  $("protectStorageBtn").addEventListener("click", async ()=>{
-    const result = await ensurePersistentStorage();
-    if(result.persisted){
-      toast("Almacenamiento protegido (persistente).");
-    } else {
-      toast("No se pudo asegurar persistencia. Libera espacio e intenta de nuevo.");
-    }
-    await updatePersistenceHint();
-  });
-
   $("backupShareBtn").addEventListener("click", ()=>{
     void doShareBackupAndMark();
   });
@@ -2788,6 +3111,17 @@
     const w = window.open("", "_blank");
     if(!w){ toast("No se pudo abrir el reporte (bloqueo de popups)."); return; }
     w.document.open(); w.document.write(html); w.document.close();
+  });
+
+  $("shareReportBtn").addEventListener("click", async ()=>{
+    const result = await getReportPdfBlob();
+    if(!result) return;
+    const mode = await sharePdf(result);
+    if(mode === "share"){
+      toast("Selecciona WhatsApp y el contacto para enviar.");
+    } else {
+      toast("PDF descargado. Adjúntalo desde WhatsApp.");
+    }
   });
 
   $("openTariffBtn").addEventListener("click", ()=>{
@@ -2997,6 +3331,7 @@
     renderMonthly();
     await updatePersistenceHint();
     updateBackupNudges();
+    await maybePromptForPersistenceOnStart();
   }
 
   void init();
