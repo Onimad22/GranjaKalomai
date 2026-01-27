@@ -19,7 +19,25 @@
     await db.kv.delete("appState");
   }
 
+  async function exportAll(){
+    const kv = await db.kv.toArray();
+    return { kv };
+  }
+
+  async function importAll(data){
+    if(!data || typeof data !== "object") throw new Error("Invalid backup data");
+    const kv = Array.isArray(data.kv) ? data.kv : [];
+    await db.transaction("rw", db.kv, async ()=>{
+      await db.kv.clear();
+      if(kv.length){
+        await db.kv.bulkPut(kv);
+      }
+    });
+  }
+
   window.loadAppState = loadAppState;
   window.saveAppState = saveAppState;
   window.clearAppState = clearAppState;
+  window.exportAll = exportAll;
+  window.importAll = importAll;
 })();

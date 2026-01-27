@@ -743,6 +743,7 @@
 
         <div class="tripCards" id="tripCards"></div>
         <div class="note" id="storageHint"></div>
+        <div class="note" id="backupNudgeDaily" style="display:none;"></div>
 
         <div class="ticket" style="margin-top:12px;">
           <div class="ticketHd">
@@ -768,13 +769,16 @@
         <h2>Resumen mensual (Gerencia)</h2>
         <div class="btns" style="margin:0;">
           <button class="ok" id="reportBtn">Reporte (PDF/Imprimir)</button>
-          <button class="ok" id="exportBtn">Exportar (JSON)</button>
-          <button id="importBtn">Importar (JSON)</button>
+          <button class="ok" id="protectStorageBtn">Proteger almacenamiento</button>
+          <button class="ok" id="backupShareBtn">Backup (Compartir)</button>
+          <button id="importBackupBtn">Importar backup</button>
           <button id="openTariffBtn">Tarifa</button>
         </div>
       </div>
 
       <div class="bd">
+        <div class="note" id="persistenceStatusNote" style="margin-top:0"></div>
+        <div class="note" id="backupNudgeMonthly" style="display:none;"></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;justify-content:space-between;">
           <div style="min-width:190px">
             <label>Mes activo</label>
@@ -1085,6 +1089,92 @@
   }
   function catLabel(cat){
     return (cat === "visitor") ? "Visitante" : "Extra";
+  }
+  const BACKUP_SCHEMA_VERSION = 1;
+  const BACKUP_APP_ID = "kalomai";
+  const LAST_BACKUP_SHARED_KEY = "LAST_BACKUP_SHARED_AT";
+  const BACKUP_NUDGE_DAYS = 7;
+
+  function getLastBackupSharedAt(){
+    return localStorage.getItem(LAST_BACKUP_SHARED_KEY);
+  }
+
+  function formatBackupDate(iso){
+    if(!iso) return "nunca";
+    const date = new Date(iso);
+    if(Number.isNaN(date.getTime())) return "nunca";
+    return date.toLocaleDateString();
+  }
+
+  function daysSince(iso){
+    if(!iso) return Number.POSITIVE_INFINITY;
+    const date = new Date(iso);
+    if(Number.isNaN(date.getTime())) return Number.POSITIVE_INFINITY;
+    const diffMs = Date.now() - date.getTime();
+    return diffMs / (1000 * 60 * 60 * 24);
+  }
+
+  function shouldNudgeBackup(){
+    return daysSince(getLastBackupSharedAt()) >= BACKUP_NUDGE_DAYS;
+  }
+
+  function markBackupShared(){
+    localStorage.setItem(LAST_BACKUP_SHARED_KEY, new Date().toISOString());
+  }
+
+  function updateBackupNudges(){
+    const shouldNudge = shouldNudgeBackup();
+    const lastBackup = getLastBackupSharedAt();
+    const message = `Recomendación: realiza un backup. Último backup: ${formatBackupDate(lastBackup)}.`;
+    const targets = [
+      { el: $("backupNudgeDaily"), context: "daily" },
+      { el: $("backupNudgeMonthly"), context: "monthly" }
+    ];
+
+    targets.forEach(({ el, context }) => {
+      if(!el) return;
+      if(!shouldNudge){
+        el.style.display = "none";
+        el.innerHTML = "";
+        return;
+      }
+      el.style.display = "block";
+      el.innerHTML = `
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+          <span>${message}</span>
+          <button class="ok" data-act="backupNow" data-context="${context}">Hacer backup ahora</button>
+        </div>
+      `;
+    });
+
+    document.querySelectorAll("button[data-act='backupNow']").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        void doShareBackupAndMark();
+      });
+    });
+  }
+
+  async function ensurePersistentStorage(){
+    if(!navigator.storage?.persist || !navigator.storage?.persisted){
+      return { supported:false, persisted:false };
+    }
+    const isPersisted = await navigator.storage.persisted();
+    if(isPersisted){
+      return { supported:true, persisted:true, requested:false };
+    }
+    const granted = await navigator.storage.persist();
+    return { supported:true, persisted:granted, requested:true };
+  }
+
+  async function updatePersistenceHint(){
+    const el = $("persistenceStatusNote");
+    if(!el) return;
+    if(!navigator.storage?.persisted){
+      el.textContent = "Persistencia: No disponible en este navegador.";
+      return;
+    }
+    const isPersisted = await navigator.storage.persisted();
+    el.textContent = `Persistencia: ${isPersisted ? "Activa" : "No activa"}.`;
   }
 
   // ===== Store =====
@@ -2590,15 +2680,61 @@
 </html>`;
   }
 
-  $("exportBtn").addEventListener("click", ()=>{
-    const store = loadStore();
-    const monthKey = String($("month").value || "").trim() || toMonthKeyFromISODate(toISODate(new Date()));
-    const filename = `kalomai_granja_${monthKey}_export.json`;
-    download(filename, JSON.stringify(store, null, 2));
-    toast("Exportación generada.");
-  });
+  async function buildBackupPayload(){
+    const data = await exportAll();
+    return {
+      app: BACKUP_APP_ID,
+      schemaVersion: BACKUP_SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(),
+      data
+    };
+  }
 
-  $("importBtn").addEventListener("click", ()=>{
+  async function reloadFromDb(){
+    const state = await loadAppState();
+    applyAppState(state);
+    refreshCatalogCache();
+    rebuildItemTypeSelect();
+    rebuildChartMetricOptions();
+    resetTariffForm();
+    await loadActiveTripFromStorage();
+    renderDaily();
+    renderMonthly();
+    await updatePersistenceHint();
+    updateBackupNudges();
+  }
+
+  async function doShareBackupAndMark(){
+    try{
+      const payload = await buildBackupPayload();
+      const json = JSON.stringify(payload, null, 2);
+      const dateStamp = payload.exportedAt.slice(0, 10);
+      const filename = `kalomai_backup_${dateStamp}.json`;
+      const blob = new Blob([json], { type: "application/json" });
+      const file = new File([blob], filename, { type: "application/json" });
+
+      if(navigator.share && navigator.canShare?.({ files: [file] })){
+        try{
+          await navigator.share({ files: [file], title: "Backup Granja Kalomai" });
+          markBackupShared();
+          updateBackupNudges();
+          toast("Backup compartido.");
+          return;
+        }catch{
+          // fallback to download below
+        }
+      }
+
+      download(filename, json);
+      markBackupShared();
+      updateBackupNudges();
+      toast("Backup generado.");
+    }catch{
+      toast("No se pudo generar el backup.");
+    }
+  }
+
+  async function importFromFilePicker(){
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "application/json";
@@ -2608,23 +2744,37 @@
       try{
         const text = await file.text();
         const obj = JSON.parse(text);
-        if(!obj || typeof obj !== "object" || typeof obj.days !== "object"){
-          toast("Archivo inválido (estructura).");
+        if(!obj || obj.app !== BACKUP_APP_ID || obj.schemaVersion !== BACKUP_SCHEMA_VERSION){
+          toast("Backup inválido (formato).");
           return;
         }
-        for(const d of Object.keys(obj.days)){
-          if(!Array.isArray(obj.days[d].trips)) obj.days[d].trips = [];
-        }
-        await saveStore(obj);
-        await loadActiveTripFromStorage();
-        renderDaily();
-        renderMonthly();
-        toast("Importación completada.");
+        if(!confirmDanger("Esto reemplazará los datos actuales. ¿Continuar?")) return;
+        await importAll(obj.data);
+        await reloadFromDb();
+        toast("Backup importado.");
       }catch{
         toast("No se pudo importar (JSON inválido).");
       }
     });
     input.click();
+  }
+
+  $("protectStorageBtn").addEventListener("click", async ()=>{
+    const result = await ensurePersistentStorage();
+    if(result.persisted){
+      toast("Almacenamiento protegido (persistente).");
+    } else {
+      toast("No se pudo asegurar persistencia. Libera espacio e intenta de nuevo.");
+    }
+    await updatePersistenceHint();
+  });
+
+  $("backupShareBtn").addEventListener("click", ()=>{
+    void doShareBackupAndMark();
+  });
+
+  $("importBackupBtn").addEventListener("click", ()=>{
+    void importFromFilePicker();
   });
 
   $("reportBtn").addEventListener("click", ()=>{
@@ -2845,6 +2995,8 @@
     await loadActiveTripFromStorage();
     renderDaily();
     renderMonthly();
+    await updatePersistenceHint();
+    updateBackupNudges();
   }
 
   void init();
