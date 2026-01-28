@@ -1095,7 +1095,8 @@
   function catLabel(cat){
     return (cat === "visitor") ? "Visitante" : "Extra";
   }
-  const BACKUP_SCHEMA_VERSION = 1;
+  const BACKUP_SCHEMA_VERSION = 2;
+  const SUPPORTED_BACKUP_SCHEMA_VERSIONS = new Set([1, 2]);
   const BACKUP_APP_ID = "kalomai";
   const LAST_BACKUP_SHARED_KEY = "LAST_BACKUP_SHARED_AT";
   const BACKUP_NUDGE_DAYS = 7;
@@ -3141,7 +3142,7 @@
       try{
         const text = await file.text();
         const obj = JSON.parse(text);
-        if(!obj || obj.app !== BACKUP_APP_ID || obj.schemaVersion !== BACKUP_SCHEMA_VERSION){
+        if(!obj || obj.app !== BACKUP_APP_ID || !SUPPORTED_BACKUP_SCHEMA_VERSIONS.has(obj.schemaVersion)){
           toast("Backup inválido (formato).");
           return;
         }
