@@ -20,12 +20,20 @@
   }
 
   async function exportAll(){
-    const kv = await db.kv.toArray();
-    return { kv };
+    const record = await db.kv.get("appState");
+    const appState = record ? record.value : null;
+    return { appState };
   }
 
   async function importAll(data){
     if(!data || typeof data !== "object") throw new Error("Invalid backup data");
+    if(Object.prototype.hasOwnProperty.call(data, "appState")){
+      await db.transaction("rw", db.kv, async ()=>{
+        await db.kv.clear();
+        await db.kv.put({ key: "appState", value: data.appState });
+      });
+      return;
+    }
     const kv = Array.isArray(data.kv) ? data.kv : [];
     await db.transaction("rw", db.kv, async ()=>{
       await db.kv.clear();
