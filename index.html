@@ -2239,9 +2239,9 @@
     const afternoonTrips = trips.filter(t => t.shift === "tarde");
 
     grid.innerHTML = [
+      buildDayShiftBlock("Total del día", trips, { title: "Total del día" }),
       buildDayShiftBlock("Mañana", morningTrips),
-      buildDayShiftBlock("Tarde", afternoonTrips),
-      buildDayShiftBlock("Total del día", trips, { title: "Total del día" })
+      buildDayShiftBlock("Tarde", afternoonTrips)
     ].join("");
 
     $("exportDayPdfBtn").disabled = false;
