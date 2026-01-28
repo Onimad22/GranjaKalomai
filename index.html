@@ -3340,13 +3340,26 @@
   async function importFromFilePicker(){
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "application/json,text/plain,.json,.txt";
+    input.accept = "application/json,text/plain,.json,.txt,.kalbak,.bak";
     input.addEventListener("change", async ()=>{
       const file = input.files?.[0];
       if(!file) return;
       try{
-        const text = await file.text();
-        const obj = parseBackupText(text);
+        let obj = null;
+        if(file.name?.toLowerCase().endsWith(".kalbak") || file.name?.toLowerCase().endsWith(".bak")){
+          if(typeof DecompressionStream !== "function"){
+            toast("Tu navegador no soporta descompresión GZIP.");
+            return;
+          }
+          const buffer = await file.arrayBuffer();
+          const decompressedStream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
+          const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
+          const text = new TextDecoder().decode(decompressedBuffer);
+          obj = JSON.parse(text);
+        }else{
+          const text = await file.text();
+          obj = parseBackupText(text);
+        }
         if(!obj || obj.app !== BACKUP_APP_ID || !SUPPORTED_BACKUP_SCHEMA_VERSIONS.has(obj.schemaVersion)){
           toast("Backup inválido (formato).");
           return;
@@ -3386,17 +3399,49 @@
     e.stopPropagation();
     diagLog("testBackupTxt: click");
     try{
-      const textContent = "esto es una prueba";
-      const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
-      const filename = "prueba_backup.txt";
-      const file = new File([blob], filename, { type: "text/plain" });
+      if(typeof CompressionStream !== "function"){
+        const textContent = "esto es una prueba";
+        const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+        const filename = "prueba_backup.txt";
+        const file = new File([blob], filename, { type: "text/plain" });
+        const can = canShareFiles([file]);
+        diagLog("testBackupTxt: generated", { size: blob.size, filename, canShare: can });
+        if(can){
+          try{
+            await navigator.share({
+              title: "Backup Kalomai (prueba)",
+              text: "Adjunto backup en TXT.",
+              files: [file]
+            });
+            diagLog("testBackupTxt: shared", { filename });
+            toast("Selecciona WhatsApp y el contacto para enviar.");
+            return;
+          }catch(err){
+            diagLog("testBackupTxt: share failed", { name: err?.name, message: err?.message, stack: err?.stack });
+          }
+        }
+        downloadBlob(blob, filename);
+        diagLog("testBackupTxt: downloaded", { filename });
+        toast("TXT descargado. Adjúntalo desde WhatsApp.");
+        return;
+      }
+
+      const payload = await getBackupPayload();
+      const json = JSON.stringify(payload);
+      const bytes = new TextEncoder().encode(json);
+      const compressedStream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
+      const compressedBuffer = await new Response(compressedStream).arrayBuffer();
+      const blob = new Blob([compressedBuffer], { type: "application/octet-stream" });
+      const dateStamp = payload.exportedAt.slice(0, 10);
+      const filename = `kalomai_backup_${dateStamp}.kalbak`;
+      const file = new File([blob], filename, { type: blob.type });
       const can = canShareFiles([file]);
       diagLog("testBackupTxt: generated", { size: blob.size, filename, canShare: can });
       if(can){
         try{
           await navigator.share({
             title: "Backup Kalomai (prueba)",
-            text: "Adjunto backup en TXT.",
+            text: "Adjunto backup.",
             files: [file]
           });
           diagLog("testBackupTxt: shared", { filename });
@@ -3408,7 +3453,7 @@
       }
       downloadBlob(blob, filename);
       diagLog("testBackupTxt: downloaded", { filename });
-      toast("TXT descargado. Adjúntalo desde WhatsApp.");
+      toast("Backup descargado. Adjúntalo desde WhatsApp.");
     }catch(err){
       diagLog("testBackupTxt: error", { name: err?.name, message: err?.message, stack: err?.stack });
       diagLogError("testBackupTxt", err);
