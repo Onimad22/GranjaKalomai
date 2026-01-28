@@ -757,7 +757,7 @@
         <div class="ticket" style="margin-top:12px;">
           <div class="ticketHd">
             <div class="title">Resumen del día</div>
-            <button class="ok" id="exportDayPdfBtn">Exportar</button>
+            <button class="ok" id="exportDayPdfBtn">Enviar resumen</button>
           </div>
           <div class="ticketBd">
             <div class="note" style="margin-top:0">
@@ -2252,95 +2252,6 @@
     $("exportDayPdfBtn").disabled = false;
   }
 
-  function buildDayPrintHTML(dateIso, trips){
-    const morningTrips = trips.filter(t => t.shift === "manana");
-    const afternoonTrips = trips.filter(t => t.shift === "tarde");
-    const dateLabel = esc(formatDateDDMMYY(dateIso));
-
-    const buildShiftSection = (shiftLabel, shiftTrips) => {
-      const summary = buildSummaryFromTrips(shiftTrips);
-      const rows = summary.rows.length
-        ? summary.rows.map(r => `
-            <tr>
-              <td style="padding:8px;border:1px solid #ddd;">
-                <strong>${esc(r.label)}</strong>
-                <div style="font-size:11px;color:#444;margin-top:2px;">${esc(catLabel(r.category))}</div>
-              </td>
-              <td style="padding:8px;border:1px solid #ddd;text-align:right;"><strong>${r.qty}</strong></td>
-              <td style="padding:8px;border:1px solid #ddd;text-align:right;"><strong>${fmtMoney(r.subtotal)}</strong></td>
-            </tr>
-          `).join("")
-        : `<tr><td colspan="3" style="padding:8px;border:1px solid #ddd;color:#444;">Sin ítems registrados.</td></tr>`;
-
-      return `
-        <div class="block">
-          <h2>Turno: ${esc(shiftLabel)}</h2>
-          <div class="meta">
-            <div><strong>Recorridos:</strong> ${shiftTrips.length}</div>
-            <div><strong>Visitantes:</strong> ${summary.qtyVisitors}</div>
-            <div><strong>Total:</strong> ${fmtMoney(summary.total)}</div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Ítem</th>
-                <th style="text-align:right;width:120px;">Cantidad</th>
-                <th style="text-align:right;width:160px;">Subtotal (Bs)</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-            <tfoot>
-              <tr>
-                <td colspan="2" style="text-align:right;"><strong>Total</strong></td>
-                <td style="text-align:right;"><strong>${fmtMoney(summary.total)}</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      `;
-    };
-
-    return `
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Resumen del día ${dateLabel}</title>
-<style>
-  body{font-family: Arial, Helvetica, sans-serif; margin:24px; color:#111;}
-  h1{margin:0 0 6px; font-size:18px;}
-  h2{margin:0 0 6px; font-size:14px;}
-  .meta{font-size:12px; color:#444; margin-bottom:10px; line-height:1.45;}
-  .block{margin-top:16px;}
-  table{width:100%; border-collapse:collapse; font-size:12px;}
-  th, td{border:1px solid #ddd; padding:8px; vertical-align:top;}
-  th{background:#f4f6f8; text-align:left;}
-  @media print{ body{margin:14mm;} }
-</style>
-</head>
-<body>
-  <h1>Resumen del día — ${dateLabel}</h1>
-  <div class="meta">Totales diferenciados por turno.</div>
-  ${buildShiftSection("Mañana", morningTrips)}
-  ${buildShiftSection("Tarde", afternoonTrips)}
-  ${buildShiftSection("Total del día", trips)}
-
-  <script>
-    window.addEventListener("load", () => { try { window.focus(); } catch(e) {} window.print(); });
-  </scr` + `ipt>
-</body>
-</html>`;
-  }
-
-  function printDaySummary(dateIso, trips){
-    const html = buildDayPrintHTML(dateIso, trips);
-    const w = window.open("", "_blank");
-    if(!w){ toast("No se pudo abrir la impresión (bloqueo de popups)."); return; }
-    w.document.open(); w.document.write(html); w.document.close();
-  }
-
   // ===== Listado diario (mini tarjetas) =====
   $("listTodayBtn").addEventListener("click", ()=>{
     $("listDate").value = toISODate(new Date());
@@ -2350,17 +2261,15 @@
   $("listDate").addEventListener("change", renderDailyList);
 
   $("exportDayPdfBtn").addEventListener("click", ()=>{
-    const iso = String($("listDate").value || "").trim();
-    if(!iso){ toast("Selecciona una fecha."); return; }
-
-    const store = loadStore();
-    const tripsRaw = store.days?.[iso]?.trips || [];
-    const trips = Array.isArray(tripsRaw) ? tripsRaw.slice() : [];
-    if(trips.length === 0){
-      toast("No hay recorridos para exportar.");
-      return;
-    }
-    printDaySummary(iso, trips);
+    void (async ()=>{
+      const mode = await shareDaySummaryPdf();
+      if(!mode) return;
+      if(mode === "share"){
+        toast("Selecciona WhatsApp y el contacto para enviar.");
+      } else {
+        toast("PDF descargado. Adjúntalo desde WhatsApp.");
+      }
+    })();
   });
 
   function renderDailyList(){
@@ -3151,6 +3060,96 @@
     return lines;
   }
 
+  function buildDaySummaryLines(dateIso, trips, stamp){
+    const lines = [];
+    const pushLine = (text, options = {}) => {
+      lines.push({
+        type: "text",
+        text,
+        bold: Boolean(options.bold),
+        size: options.size ?? 11
+      });
+    };
+    const pushSpacer = (height = 8) => {
+      lines.push({
+        type: "spacer",
+        height
+      });
+    };
+    const summary = buildSummaryFromTrips(trips);
+    const dateLabel = formatDateDDMMYY(dateIso);
+
+    const pushSummaryBox = () => {
+      lines.push({
+        type: "box",
+        padding: 10,
+        fill: [0.94, 0.94, 0.94],
+        stroke: [0.82, 0.82, 0.82],
+        lines: [
+          { text: "RESUMEN DEL DIA", bold: true, size: 12 },
+          { text: `Total $: ${fmtMoney(summary.total)}`, size: 12 },
+          { text: `Recorridos: ${trips.length}`, size: 12 },
+          { text: `Total visitantes: ${summary.qtyVisitors}`, size: 12 }
+        ]
+      });
+    };
+
+    const buildShiftLines = (title, shiftTrips) => {
+      const shiftSummary = buildSummaryFromTrips(shiftTrips);
+      const rows = shiftSummary.rows.map(row => [
+        `${row.label} (${catLabel(row.category)})`,
+        String(row.qty),
+        fmtMoney(row.subtotal)
+      ]);
+      pushLine(title, { bold: true, size: 12 });
+      pushLine(
+        `Recorridos: ${shiftTrips.length} | Visitantes: ${shiftSummary.qtyVisitors} | Total: ${fmtMoney(shiftSummary.total)}`,
+        { size: 10 }
+      );
+      pushLine(
+        ["Ítem", "Cantidad", "Subtotal (Bs)"]
+          .map((h, i) => padText(h, [28, 10, 14][i]))
+          .join(" | "),
+        { bold: true, size: 10 }
+      );
+      pushLine([28, 10, 14].map(w => "-".repeat(w)).join("-+-"), { size: 10 });
+      if(!rows.length){
+        pushLine("Sin ítems registrados.");
+      } else {
+        rows.forEach(row => {
+          const wrapped = row.map((cell, i) => wrapText(cell, [28, 10, 14][i]));
+          const maxLines = Math.max(...wrapped.map(x => x.length));
+          for(let i=0; i<maxLines; i++){
+            const lineParts = wrapped.map((cellLines, idx) => padText(cellLines[i] || "", [28, 10, 14][idx]));
+            pushLine(lineParts.join(" | "), { size: 10 });
+          }
+        });
+      }
+      pushLine(
+        `Total turno: ${fmtMoney(shiftSummary.total)} | Visitantes turno: ${shiftSummary.qtyVisitors}`,
+        { size: 10 }
+      );
+      pushSpacer(8);
+    };
+
+    pushLine("RESUMEN DEL DIA - GRANJA KALOMAI", { bold: true, size: 16 });
+    pushLine(`Fecha ${dateLabel}`, { bold: true, size: 12 });
+    pushLine(`Generado: ${stamp}`, { size: 10 });
+    pushLine("==============================================", { size: 10 });
+    pushSpacer(6);
+    pushSummaryBox();
+    pushSpacer(10);
+
+    const morningTrips = trips.filter(t => t.shift === "manana");
+    const afternoonTrips = trips.filter(t => t.shift === "tarde");
+
+    buildShiftLines("Turno: Mañana", morningTrips);
+    buildShiftLines("Turno: Tarde", afternoonTrips);
+    buildShiftLines("Total del día", trips);
+
+    return lines;
+  }
+
   function buildPdfBlobFromLines(lines){
     const pageWidth = 595;
     const pageHeight = 842;
@@ -3321,6 +3320,26 @@
     return { blob, filename };
   }
 
+  async function getDaySummaryPdfBlob(dateIso){
+    const iso = String(dateIso || $("listDate").value || "").trim();
+    if(!iso){
+      toast("Selecciona una fecha.");
+      return null;
+    }
+    const store = loadStore();
+    const tripsRaw = store.days?.[iso]?.trips || [];
+    const trips = Array.isArray(tripsRaw) ? tripsRaw.slice() : [];
+    if(trips.length === 0){
+      toast("No hay recorridos para exportar.");
+      return null;
+    }
+    const stamp = new Date().toLocaleString();
+    const lines = buildDaySummaryLines(iso, trips, stamp);
+    const blob = buildPdfBlobFromLines(lines);
+    const filename = `resumen_dia_${iso}.pdf`;
+    return { blob, filename };
+  }
+
   async function sharePdf({ blob, filename }){
     const file = new File([blob], filename, { type: "application/pdf" });
     if(canShareFiles([file])){
@@ -3336,6 +3355,26 @@
       }
     }
     downloadBlob(blob, filename);
+    return "download";
+  }
+
+  async function shareDaySummaryPdf(){
+    const result = await getDaySummaryPdfBlob();
+    if(!result) return null;
+    const file = new File([result.blob], result.filename, { type: "application/pdf" });
+    if(canShareFiles([file])){
+      try{
+        await navigator.share({
+          title: "Resumen del día",
+          text: "Adjunto resumen del día en PDF.",
+          files: [file]
+        });
+        return "share";
+      }catch{
+        // fallback below
+      }
+    }
+    downloadBlob(result.blob, result.filename);
     return "download";
   }
 
