@@ -3268,6 +3268,46 @@
     }
   }
 
+  async function shareBackupNow(){
+    const { json, filename } = await getBackupFileData();
+    const blob = new Blob([json], { type: "text/plain;charset=utf-8" });
+    const file = new File([blob], filename, { type: blob.type });
+    const can = canShareFiles([file]);
+
+    diagLog("sendBackup: about to share", {
+      filename,
+      mime: file.type,
+      size: file.size,
+      canShare: can
+    });
+
+    if(can){
+      try{
+        await navigator.share({
+          title: "Backup Kalomai",
+          text: "Adjunto backup.",
+          files: [file]
+        });
+        markBackupShared();
+        updateBackupNudges();
+        toast("Selecciona WhatsApp y el contacto para enviar.");
+        return "share";
+      }catch(err){
+        if(err?.name === "AbortError"){
+          toast("Envío cancelado.");
+          return "abort";
+        }
+        diagLog("sendBackup: share failed", { name: err?.name, message: err?.message });
+      }
+    }
+
+    downloadBlob(blob, filename);
+    markBackupShared();
+    updateBackupNudges();
+    toast("Backup descargado. Adjúntalo desde WhatsApp.");
+    return "download";
+  }
+
   async function importFromFilePicker(){
     const input = document.createElement("input");
     input.type = "file";
@@ -3300,63 +3340,16 @@
     });
   }
 
-  $("sendBackupBtn").addEventListener("click", ()=>{
+  $("sendBackupBtn").addEventListener("click", async (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
     diagLog("sendBackup: click");
-    if(!cachedBackupJson){
-      toast("Preparando backup… toca ‘Enviar backup’ otra vez.");
-      void prepareBackupCache();
-      return;
+    try{
+      await shareBackupNow();
+    }catch(err){
+      diagLogError("sendBackup", err);
+      toast("No se pudo generar/enviar el backup.");
     }
-
-    const json = cachedBackupJson;
-    const filename = cachedBackupFilename || `kalomai_backup_${new Date().toISOString().slice(0,10)}.json`;
-    const file = new File([json], filename, { type: "application/json" });
-    diagLog("file created ok", { filename, type: file.type, size: file.size });
-
-    if(file.size > BACKUP_SHARE_MAX_BYTES){
-      diagLog("sendBackup: too large for share", { size: file.size, limit: BACKUP_SHARE_MAX_BYTES });
-      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-      downloadBlob(blob, filename);
-      markBackupShared();
-      updateBackupNudges();
-      toast("Backup muy grande para compartir; descargado.");
-      diagLog("sendBackup: fallback download triggered");
-      return;
-    }
-
-    const shareFile = canShareFiles([file]) ? file : new File([json], filename, { type: "text/plain" });
-    if(!canShareFiles([shareFile])){
-      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-      downloadBlob(blob, filename);
-      diagLog("sendBackup: fallback download triggered");
-      markBackupShared();
-      updateBackupNudges();
-      toast("Backup descargado. Adjúntalo desde WhatsApp.");
-      return;
-    }
-
-    diagLog("calling navigator.share");
-    navigator.share({
-      title: "Backup Kalomai",
-      text: "Adjunto backup en JSON.",
-      files: [shareFile]
-    }).then(()=>{
-      markBackupShared();
-      updateBackupNudges();
-      toast("Selecciona WhatsApp y el contacto para enviar.");
-    }).catch(err=>{
-      if(err?.name === "AbortError"){
-        toast("Envío cancelado.");
-        return;
-      }
-      diagLog("share error", { name: err?.name, message: err?.message });
-      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-      downloadBlob(blob, filename);
-      diagLog("sendBackup: fallback download triggered");
-      markBackupShared();
-      updateBackupNudges();
-      toast("Backup descargado. Adjúntalo desde WhatsApp.");
-    });
   });
 
   $("importBackupBtn").addEventListener("click", ()=>{
