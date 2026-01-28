@@ -3224,31 +3224,40 @@
     return payload;
   }
 
-  const BACKUP_TXT_HEADER = "KALOMAI_BACKUP_V1";
-
-  function encodeBackupJson(json){
-    return btoa(unescape(encodeURIComponent(json)));
-  }
-
-  function decodeBackupJson(encoded){
-    return decodeURIComponent(escape(atob(encoded)));
-  }
+  const BACKUP_TXT_HEADER = "# KALOMAI_BACKUP_V1";
 
   function buildBackupTxtFromPayload(payload){
-    const json = JSON.stringify(payload);
+    const json = JSON.stringify(payload, null, 2);
     if(!json) throw new Error("Backup vacío");
-    const encoded = encodeBackupJson(json);
-    return `${BACKUP_TXT_HEADER}\n${encoded}`;
+    const headerLines = [
+      BACKUP_TXT_HEADER,
+      `# Generated: ${new Date().toISOString()}`,
+      "# --------------------------------"
+    ];
+    const commentedLines = json.split("\n").map((line)=>`# ${line}`);
+    return [...headerLines, ...commentedLines].join("\n");
   }
 
   function parseBackupText(text){
-    const trimmed = text.trim();
+    const trimmed = text.trimStart();
     if(trimmed.startsWith(BACKUP_TXT_HEADER)){
       const lines = trimmed.split(/\r?\n/);
-      const encoded = lines[1]?.trim();
-      if(!encoded) throw new Error("Backup inválido (sin datos).");
-      const json = decodeBackupJson(encoded);
-      return JSON.parse(json);
+      const jsonLines = [];
+      for(const line of lines){
+        if(!line.startsWith("#")) continue;
+        const stripped = line.startsWith("# ") ? line.slice(2) : line.slice(1).trimStart();
+        if(
+          stripped === "KALOMAI_BACKUP_V1" ||
+          stripped.startsWith("Generated:") ||
+          stripped.startsWith("--------------------------------")
+        ){
+          continue;
+        }
+        jsonLines.push(stripped);
+      }
+      const reconstructedJson = jsonLines.join("\n").trim();
+      if(!reconstructedJson) throw new Error("Backup inválido (sin datos).");
+      return JSON.parse(reconstructedJson);
     }
     return JSON.parse(text);
   }
@@ -3275,9 +3284,9 @@
     const exportSize = serializeDiagData(payload?.data || payload || {});
     diagLog("sendBackup: getBackupPayload ok", { dataChars: exportSize.length });
     const text = buildBackupTxtFromPayload(payload);
-    diagLog("stringify ok", { txtChars: text.length });
     const dateStamp = payload.exportedAt.slice(0, 10);
     const filename = `kalomai_backup_${dateStamp}.txt`;
+    diagLog("sendBackupTxt: generated", { filename, txtChars: text.length });
     return { text, filename };
   }
 
@@ -3317,6 +3326,7 @@
           text: "Adjunto backup.",
           files: [file]
         });
+        diagLog("sendBackupTxt: shared", { filename });
         markBackupShared();
         updateBackupNudges();
         toast("Selecciona WhatsApp y el contacto para enviar.");
@@ -3331,6 +3341,7 @@
     }
 
     downloadBlob(blob, filename);
+    diagLog("sendBackupTxt: downloaded", { filename });
     markBackupShared();
     updateBackupNudges();
     toast("Backup descargado. Adjúntalo desde WhatsApp.");
