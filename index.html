@@ -742,7 +742,7 @@
         <!-- Fecha a listar: selector pequeño + Hoy -->
         <div style="margin-top:0;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
           <div style="min-width:160px;max-width:190px;flex:0 0 auto;">
-            <label>Fecha a listar</label>
+            <label>Fecha</label>
             <input id="listDate" type="date" style="padding:10px 10px;min-height:40px;" />
           </div>
           <div style="flex:0 0 auto; display:flex; gap:10px; flex-wrap:wrap;">
@@ -750,23 +750,19 @@
           </div>
         </div>
 
-        <div class="tripCards" id="tripCards"></div>
-        <div class="note" id="storageHint"></div>
-        <div class="note" id="backupNudgeDaily" style="display:none;"></div>
-
         <div class="ticket" style="margin-top:12px;">
           <div class="ticketHd">
             <div class="title">Resumen del día</div>
             <button class="ok" id="exportDayPdfBtn">Enviar resumen</button>
           </div>
           <div class="ticketBd">
-            <div class="note" style="margin-top:0">
-              Fecha: <strong id="daySummaryDateInline">—</strong>
-            </div>
             <div class="dayGrid" id="daySummaryInlineGrid" style="margin-top:12px;"></div>
             <div class="note" id="daySummaryInlineEmpty" style="display:none;">No hay recorridos para esta fecha.</div>
           </div>
         </div>
+
+        <div class="tripCards" id="tripCards"></div>
+        <div class="note" id="backupNudgeDaily" style="display:none;"></div>
       </div>
     </div>
   </section>
@@ -2217,7 +2213,6 @@
     const grid = $("daySummaryInlineGrid");
     const empty = $("daySummaryInlineEmpty");
 
-    $("daySummaryDateInline").textContent = iso ? formatDateDDMMYY(iso) : "—";
     grid.innerHTML = "";
 
     if(!iso){
@@ -2281,7 +2276,6 @@
 
     if(!iso){
       host.innerHTML = `<div class="note">Selecciona una fecha.</div>`;
-      $("storageHint").textContent = `Registros guardados: ${Object.keys(store.days).length}.`;
       renderDaySummaryInline();
       return;
     }
@@ -2301,7 +2295,6 @@
 
     if(trips.length === 0){
       host.innerHTML = `<div class="note">No hay recorridos para este día.</div>`;
-      $("storageHint").textContent = `Registros guardados (días): ${Object.keys(store.days).length}.`;
       renderDaySummaryInline();
       return;
     }
@@ -2357,7 +2350,6 @@
       });
     });
 
-    $("storageHint").textContent = `Día ${iso}: ${trips.length} recorridos. Registros guardados (días): ${Object.keys(store.days).length}.`;
     renderDaySummaryInline();
   }
 
