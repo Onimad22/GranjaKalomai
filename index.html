@@ -212,6 +212,15 @@
     .ticketHd .title{font-weight:900;color:#dbeafe;font-size:13px;}
     .ticketBd{padding:12px;}
 
+    .diag-log{
+      width:100%;
+      min-height:160px;
+      resize:vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      line-height:1.4;
+    }
+
     .pill{
       display:inline-flex;align-items:center;gap:8px;
       padding:6px 10px;border-radius:999px;
@@ -859,6 +868,20 @@
           </table>
         </div>
 
+        <div class="ticket" style="margin-top:14px;">
+          <div class="ticketHd">
+            <div class="title">Log de diagnóstico</div>
+            <div class="btns" style="margin:0;">
+              <button id="diagLogCopyBtn">Copiar log</button>
+              <button id="diagLogDownloadBtn">Descargar log</button>
+              <button class="danger" id="diagLogClearBtn">Limpiar log</button>
+            </div>
+          </div>
+          <div class="ticketBd">
+            <textarea id="diagLogOutput" class="diag-log" readonly placeholder="Sin eventos por ahora."></textarea>
+          </div>
+        </div>
+
         <div class="note" id="monthInfo"></div>
       </div>
     </div>
@@ -1051,6 +1074,80 @@
 
   const $ = (id) => document.getElementById(id);
 
+  const DIAG_LOG_KEY = "DIAG_LOG";
+  const DIAG_LOG_MAX_LINES = 200;
+  let diagLogBuffer = [];
+
+  function loadDiagLogBuffer(){
+    const raw = localStorage.getItem(DIAG_LOG_KEY);
+    if(!raw) return [];
+    try{
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)) return parsed.filter(line => typeof line === "string");
+    }catch{
+      // ignore parse errors
+    }
+    return raw.split("\n").filter(Boolean);
+  }
+
+  function persistDiagLogBuffer(){
+    localStorage.setItem(DIAG_LOG_KEY, JSON.stringify(diagLogBuffer));
+  }
+
+  function serializeDiagData(data){
+    if(data === undefined) return "";
+    const seen = new WeakSet();
+    try{
+      return JSON.stringify(data, (key, val)=>{
+        if(typeof val === "bigint") return val.toString();
+        if(typeof val === "function") return "[Function]";
+        if(typeof val === "object" && val !== null){
+          if(seen.has(val)) return "[Circular]";
+          seen.add(val);
+        }
+        return val;
+      });
+    }catch{
+      return "[Unserializable]";
+    }
+  }
+
+  function updateDiagLogView(){
+    const output = $("diagLogOutput");
+    if(!output) return;
+    output.value = diagLogBuffer.join("\n");
+  }
+
+  function diagLog(msg, data){
+    const stamp = new Date().toISOString();
+    const extra = data !== undefined ? ` ${serializeDiagData(data)}` : "";
+    diagLogBuffer.push(`[${stamp}] ${msg}${extra}`);
+    if(diagLogBuffer.length > DIAG_LOG_MAX_LINES){
+      diagLogBuffer.splice(0, diagLogBuffer.length - DIAG_LOG_MAX_LINES);
+    }
+    persistDiagLogBuffer();
+    updateDiagLogView();
+  }
+
+  function diagLogError(stage, err){
+    diagLog("error", {
+      stage,
+      name: err?.name,
+      message: err?.message,
+      stack: err?.stack
+    });
+  }
+
+  diagLogBuffer = loadDiagLogBuffer();
+
+  window.addEventListener("error", (event)=>{
+    diagLogError("window.error", event?.error || event);
+  });
+
+  window.addEventListener("unhandledrejection", (event)=>{
+    diagLogError("window.unhandledrejection", event?.reason);
+  });
+
   function pad2(n){ return String(n).padStart(2,"0"); }
   function toISODate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
   function toMonthKeyFromISODate(iso){ return iso.slice(0,7); }
@@ -1100,6 +1197,7 @@
   const BACKUP_APP_ID = "kalomai";
   const LAST_BACKUP_SHARED_KEY = "LAST_BACKUP_SHARED_AT";
   const BACKUP_NUDGE_DAYS = 7;
+  const BACKUP_SHARE_MAX_BYTES = 4 * 1024 * 1024;
 
   function getLastBackupSharedAt(){
     return localStorage.getItem(LAST_BACKUP_SHARED_KEY);
@@ -2635,6 +2733,7 @@
       $("monthExtrasTbody").innerHTML = "";
       $("monthTbody").innerHTML = `<tr><td colspan="4" class="muted">Selecciona un mes.</td></tr>`;
       $("monthInfo").innerHTML = "";
+      updateDiagLogView();
       return;
     }
 
@@ -2647,6 +2746,7 @@
       <strong>${summary.daysCount}</strong> días con registros · <strong>${summary.tripsCount}</strong> recorridos ·
       <strong>${summary.visitorsQty}</strong> visitantes · <strong>${fmtMoney(summary.totalRevenue)}</strong> ingresos.
     `;
+    updateDiagLogView();
   }
 
   // ===== Report / Export / Import =====
@@ -2671,6 +2771,49 @@
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  }
+
+  async function copyDiagLog(){
+    const text = diagLogBuffer.join("\n");
+    if(!text){
+      toast("El log está vacío.");
+      return;
+    }
+    try{
+      if(navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(text);
+      }else{
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        temp.style.position = "fixed";
+        temp.style.opacity = "0";
+        document.body.appendChild(temp);
+        temp.focus();
+        temp.select();
+        document.execCommand("copy");
+        temp.remove();
+      }
+      diagLog("diagLog: copied");
+      toast("Log copiado.");
+    }catch(err){
+      diagLogError("diagLog.copy", err);
+      toast("No se pudo copiar el log.");
+    }
+  }
+
+  function downloadDiagLog(){
+    const text = diagLogBuffer.join("\n");
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    downloadBlob(blob, "log.txt");
+    diagLog("diagLog: downloaded", { size: blob.size });
+    toast("Log descargado.");
+  }
+
+  function clearDiagLog(){
+    diagLogBuffer = [];
+    persistDiagLogBuffer();
+    updateDiagLogView();
+    toast("Log limpiado.");
   }
 
   function safeJsonStringify(value){
@@ -3069,11 +3212,13 @@
   }
 
   async function getBackupFileData(){
+    diagLog("sendBackup: calling exportAll()");
     const payload = await buildBackupPayload();
-    console.log("sendBackup: exportAll ok");
+    const exportSize = serializeDiagData(payload?.data || payload || {});
+    diagLog("sendBackup: exportAll ok", { dataChars: exportSize.length });
     const json = safeJsonStringify(payload);
-    console.log("sendBackup: stringify ok");
     if(!json) throw new Error("Backup vacío");
+    diagLog("sendBackup: JSON.stringify ok", { jsonChars: json.length });
     const dateStamp = payload.exportedAt.slice(0, 10);
     const filename = `kalomai_backup_${dateStamp}.json`;
     return { json, filename };
@@ -3088,6 +3233,7 @@
       updateBackupNudges();
       toast("Backup guardado.");
     }catch(err){
+      diagLogError("sendBackup.doSaveBackupAndMark", err);
       console.error("sendBackup failed:", err);
       toast("No se pudo generar el backup.");
     }
@@ -3095,30 +3241,45 @@
 
   async function shareBackupFile(){
     try{
+      diagLog("sendBackup: click");
       const { json, filename } = await getBackupFileData();
       const file = new File([json], filename, { type: "application/json" });
-      console.log("sendBackup: file created ok");
+      diagLog("sendBackup: File created", { filename, type: file.type, size: file.size });
       let shareFile = file;
+      const canShareExists = typeof navigator?.canShare === "function";
+      diagLog("sendBackup: canShare exists?", { exists: canShareExists });
       let canShareResult = canShareFiles([file]);
       if(!canShareResult){
         const textFile = new File([json], filename, { type: "text/plain" });
         const canShareText = canShareFiles([textFile]);
-        console.log("sendBackup: canShare result", { json: canShareResult, text: canShareText });
+        diagLog("sendBackup: canShare result", { json: canShareResult, text: canShareText });
         if(canShareText){
           shareFile = textFile;
           canShareResult = true;
+          diagLog("sendBackup: fallback MIME text/plain applied");
         }
       }else{
-        console.log("sendBackup: canShare result", { json: canShareResult, text: null });
+        diagLog("sendBackup: canShare result", { json: canShareResult, text: null });
+      }
+      if(file.size > BACKUP_SHARE_MAX_BYTES){
+        diagLog("sendBackup: too large for share", { size: file.size, limit: BACKUP_SHARE_MAX_BYTES });
+        const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+        downloadBlob(blob, filename);
+        markBackupShared();
+        updateBackupNudges();
+        toast("Backup muy grande para compartir; descargado.");
+        diagLog("sendBackup: fallback download triggered");
+        return;
       }
       if(canShareResult){
         try{
-          console.log("sendBackup: share attempted");
+          diagLog("sendBackup: calling navigator.share");
           await navigator.share({
             title: "Backup Kalomai",
             text: "Adjunto backup en JSON.",
             files: [shareFile]
           });
+          diagLog("sendBackup: share success");
           markBackupShared();
           updateBackupNudges();
           toast("Selecciona WhatsApp y el contacto para enviar.");
@@ -3126,18 +3287,22 @@
         }catch(err){
           if(err?.name === "AbortError"){
             toast("Envío cancelado.");
+            diagLog("sendBackup: user canceled");
             return;
           }
+          diagLogError("sendBackup.share", err);
           console.error("sendBackup share failed:", err);
           // fallback below
         }
       }
       const blob = new Blob([json], { type: "application/json;charset=utf-8" });
       downloadBlob(blob, filename);
+      diagLog("sendBackup: fallback download triggered");
       markBackupShared();
       updateBackupNudges();
       toast("Backup descargado. Adjúntalo desde WhatsApp.");
     }catch(err){
+      diagLogError("sendBackup", err);
       console.error("sendBackup failed:", err);
       toast("No se pudo generar el backup.");
     }
@@ -3182,6 +3347,27 @@
   $("importBackupBtn").addEventListener("click", ()=>{
     void importFromFilePicker();
   });
+
+  const diagCopyBtn = $("diagLogCopyBtn");
+  if(diagCopyBtn){
+    diagCopyBtn.addEventListener("click", ()=>{
+      void copyDiagLog();
+    });
+  }
+
+  const diagDownloadBtn = $("diagLogDownloadBtn");
+  if(diagDownloadBtn){
+    diagDownloadBtn.addEventListener("click", ()=>{
+      downloadDiagLog();
+    });
+  }
+
+  const diagClearBtn = $("diagLogClearBtn");
+  if(diagClearBtn){
+    diagClearBtn.addEventListener("click", ()=>{
+      clearDiagLog();
+    });
+  }
 
   const reportBtn = $("reportBtn");
   if(reportBtn){
