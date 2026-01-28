@@ -783,13 +783,11 @@
       </div>
 
       <div class="bd">
-        <div class="note" id="persistenceStatusNote" style="margin-top:0"></div>
-        <div class="note" id="backupNudgeMonthly" style="display:none;">
+        <div class="note" id="persistenceStatusNote" style="margin-top:0;display:none;">
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
-            <span id="backupNudgeMonthlyText"></span>
+            <span id="persistenceStatusText"></span>
             <div class="btns" style="margin:0;">
-              <button class="ok" id="sendBackupBtn">Guardar backup</button>
-              <button id="importBackupBtn">Abrir backup</button>
+              <button class="ok" id="persistenceActivateBtn">Activar persistencia</button>
             </div>
           </div>
         </div>
@@ -868,21 +866,16 @@
           </table>
         </div>
 
-        <div class="ticket" style="margin-top:14px;">
-          <div class="ticketHd">
-            <div class="title">Log de diagnóstico</div>
+        <div class="note" id="monthInfo"></div>
+        <div class="note" id="backupNudgeMonthly" style="display:none;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+            <span id="backupNudgeMonthlyText"></span>
             <div class="btns" style="margin:0;">
-              <button id="diagLogCopyBtn">Copiar log</button>
-              <button id="diagLogDownloadBtn">Descargar log</button>
-              <button class="danger" id="diagLogClearBtn">Limpiar log</button>
+              <button class="ok" id="sendBackupBtn">Guardar backup</button>
+              <button id="importBackupBtn">Abrir backup</button>
             </div>
           </div>
-          <div class="ticketBd">
-            <textarea id="diagLogOutput" class="diag-log" readonly placeholder="Sin eventos por ahora."></textarea>
-          </div>
         </div>
-
-        <div class="note" id="monthInfo"></div>
       </div>
     </div>
   </section>
@@ -1383,13 +1376,15 @@
 
   async function updatePersistenceHint(){
     const el = $("persistenceStatusNote");
-    if(!el) return;
+    const textEl = $("persistenceStatusText");
+    if(!el || !textEl) return;
     const status = await getPersistenceStatus();
-    if(!status.supported){
-      el.textContent = "Persistencia: No disponible en este navegador.";
+    if(!status.supported || status.persisted){
+      el.style.display = "none";
       return;
     }
-    el.textContent = `Persistencia: ${status.persisted ? "Activa" : "No activa"}.`;
+    textEl.textContent = "Persistencia: No activa. Actívala para proteger los datos.";
+    el.style.display = "";
   }
 
   // ===== Store =====
@@ -3359,6 +3354,15 @@
   $("importBackupBtn").addEventListener("click", ()=>{
     void importFromFilePicker();
   });
+
+  const persistenceActivateBtn = $("persistenceActivateBtn");
+  if(persistenceActivateBtn){
+    persistenceActivateBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      openPersistenceModal();
+    });
+  }
 
   const diagCopyBtn = $("diagLogCopyBtn");
   if(diagCopyBtn){
