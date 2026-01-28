@@ -3079,21 +3079,6 @@
     const summary = buildSummaryFromTrips(trips);
     const dateLabel = formatDateDDMMYY(dateIso);
 
-    const pushSummaryBox = () => {
-      lines.push({
-        type: "box",
-        padding: 10,
-        fill: [0.94, 0.94, 0.94],
-        stroke: [0.82, 0.82, 0.82],
-        lines: [
-          { text: "RESUMEN DEL DIA", bold: true, size: 12 },
-          { text: `Total $: ${fmtMoney(summary.total)}`, size: 12 },
-          { text: `Recorridos: ${trips.length}`, size: 12 },
-          { text: `Total visitantes: ${summary.qtyVisitors}`, size: 12 }
-        ]
-      });
-    };
-
     const buildShiftBox = (title, shiftTrips, options = {}) => {
       const shiftSummary = buildSummaryFromTrips(shiftTrips);
       const rows = shiftSummary.rows.map(row => [
@@ -3148,16 +3133,10 @@
     pushLine(`Fecha ${dateLabel}`, { bold: true, size: 12 });
     pushLine(`Generado: ${stamp}`, { size: 10 });
     pushSpacer(10);
-    pushSummaryBox();
-    pushSpacer(10);
 
     const morningTrips = trips.filter(t => t.shift === "manana");
     const afternoonTrips = trips.filter(t => t.shift === "tarde");
 
-    lines.push(buildShiftBox("Turno: Mañana", morningTrips));
-    pushSpacer(10);
-    lines.push(buildShiftBox("Turno: Tarde", afternoonTrips));
-    pushSpacer(10);
     lines.push(buildShiftBox("Total del día", trips, {
       totalLabel: "TOTAL DEL DÍA",
       visitorsLabel: "VISITANTES DEL DÍA",
@@ -3166,6 +3145,10 @@
       stroke: [0.6, 0.6, 0.6],
       lineWidth: 2
     }));
+    pushSpacer(10);
+    lines.push(buildShiftBox("Turno: Mañana", morningTrips));
+    pushSpacer(10);
+    lines.push(buildShiftBox("Turno: Tarde", afternoonTrips));
 
     return lines;
   }
