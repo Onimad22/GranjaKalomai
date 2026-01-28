@@ -3186,8 +3186,8 @@
     return "download";
   }
 
-  async function buildBackupPayload(){
-    const data = await exportAll();
+  async function getBackupPayload(){
+    const data = await getBackupData();
     return {
       app: BACKUP_APP_ID,
       schemaVersion: BACKUP_SCHEMA_VERSION,
@@ -3212,10 +3212,10 @@
   }
 
   async function getBackupFileData(){
-    diagLog("sendBackup: calling exportAll()");
-    const payload = await buildBackupPayload();
+    diagLog("sendBackup: calling getBackupPayload()");
+    const payload = await getBackupPayload();
     const exportSize = serializeDiagData(payload?.data || payload || {});
-    diagLog("sendBackup: exportAll ok", { dataChars: exportSize.length });
+    diagLog("sendBackup: getBackupPayload ok", { dataChars: exportSize.length });
     const json = safeJsonStringify(payload);
     if(!json) throw new Error("Backup vacío");
     diagLog("sendBackup: JSON.stringify ok", { jsonChars: json.length });
