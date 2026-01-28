@@ -3356,32 +3356,37 @@
   $("testBackupPdfBtn").addEventListener("click", async (e)=>{
     e.preventDefault();
     e.stopPropagation();
-    diagLog("testBackupPdf: click");
+    diagLog("testBackupTxt: click");
     try{
       const payload = await getBackupPayload();
-      const jsonString = JSON.stringify(payload, null, 2);
-      const lines = [
-        "Backup Kalomai (Prueba)",
-        `Generado: ${new Date().toLocaleString()}`,
-        `Tamaño JSON: ${jsonString.length} chars`,
-        "",
-        ...jsonString.split("\n")
-      ];
-      const blob = buildPdfBlobFromLines(lines);
-      const filename = `test_backup_kalomai_${new Date().toISOString().slice(0,10)}.pdf`;
-      diagLog("testBackupPdf: generated", { size: blob.size, jsonChars: jsonString.length, filename });
-      const mode = await sharePdf({ blob, filename });
-      if(mode === "share"){
-        diagLog("testBackupPdf: shared", { filename });
-        toast("Selecciona WhatsApp y el contacto para enviar.");
-      }else{
-        diagLog("testBackupPdf: downloaded", { filename });
-        toast("PDF descargado. Adjúntalo desde WhatsApp.");
+      const jsonText = JSON.stringify(payload, null, 2);
+      const blob = new Blob([jsonText], { type: "text/plain;charset=utf-8" });
+      const dateStamp = new Date().toISOString().slice(0,10);
+      const filename = `kalomai_backup_test_${dateStamp}.txt`;
+      const file = new File([blob], filename, { type: blob.type });
+      const can = canShareFiles([file]);
+      diagLog("testBackupTxt: generated", { size: blob.size, jsonChars: jsonText.length, filename, canShare: can });
+      if(can){
+        try{
+          await navigator.share({
+            title: "Backup Kalomai (prueba)",
+            text: "Adjunto backup en TXT.",
+            files: [file]
+          });
+          diagLog("testBackupTxt: shared", { filename });
+          toast("Selecciona WhatsApp y el contacto para enviar.");
+          return;
+        }catch(err){
+          diagLog("testBackupTxt: share failed", { name: err?.name, message: err?.message });
+        }
       }
+      downloadBlob(blob, filename);
+      diagLog("testBackupTxt: downloaded", { filename });
+      toast("TXT descargado. Adjúntalo desde WhatsApp.");
     }catch(err){
-      diagLog("testBackupPdf: error", { name: err?.name, message: err?.message });
-      diagLogError("testBackupPdf", err);
-      toast("No se pudo generar/enviar el PDF.");
+      diagLog("testBackupTxt: error", { name: err?.name, message: err?.message });
+      diagLogError("testBackupTxt", err);
+      toast("No se pudo generar/enviar el TXT.");
     }
   });
 
