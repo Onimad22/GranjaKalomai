@@ -2672,6 +2672,18 @@
     URL.revokeObjectURL(url);
   }
 
+  function safeJsonStringify(value){
+    const seen = new WeakSet();
+    return JSON.stringify(value, (key, val)=>{
+      if(typeof val === "bigint") return val.toString();
+      if(typeof val === "object" && val !== null){
+        if(seen.has(val)) return "[Circular]";
+        seen.add(val);
+      }
+      return val;
+    }, 2);
+  }
+
   function buildReportRows(store, monthKey){
     const days = listDaysForMonth(store, monthKey);
     return days.map(date=>{
@@ -3049,7 +3061,7 @@
   async function doShareBackupAndMark(){
     try{
       const payload = await buildBackupPayload();
-      const json = JSON.stringify(payload, null, 2);
+      const json = safeJsonStringify(payload);
       const dateStamp = payload.exportedAt.slice(0, 10);
       const filename = `kalomai_backup_${dateStamp}.json`;
       const blob = new Blob([json], { type: "application/json" });
@@ -3079,7 +3091,7 @@
   async function shareBackupJson(){
     try{
       const payload = await buildBackupPayload();
-      const json = JSON.stringify(payload, null, 2);
+      const json = safeJsonStringify(payload);
       const dateStamp = payload.exportedAt.slice(0, 10);
       const filename = `kalomai_backup_${dateStamp}.json`;
       const blob = new Blob([json], { type: "application/json" });
