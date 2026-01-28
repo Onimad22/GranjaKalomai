@@ -3070,50 +3070,75 @@
 
   async function getBackupFileData(){
     const payload = await buildBackupPayload();
+    console.log("sendBackup: exportAll ok");
     const json = safeJsonStringify(payload);
+    console.log("sendBackup: stringify ok");
     if(!json) throw new Error("Backup vacío");
     const dateStamp = payload.exportedAt.slice(0, 10);
     const filename = `kalomai_backup_${dateStamp}.json`;
-    const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-    return { blob, filename };
+    return { json, filename };
   }
 
   async function doSaveBackupAndMark(){
     try{
-      const { blob, filename } = await getBackupFileData();
+      const { json, filename } = await getBackupFileData();
+      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
       downloadBlob(blob, filename);
       markBackupShared();
       updateBackupNudges();
       toast("Backup guardado.");
-    }catch{
+    }catch(err){
+      console.error("sendBackup failed:", err);
       toast("No se pudo generar el backup.");
     }
   }
 
   async function shareBackupFile(){
     try{
-      const { blob, filename } = await getBackupFileData();
-      const file = new File([blob], filename, { type: "application/json" });
-      if(canShareFiles([file])){
+      const { json, filename } = await getBackupFileData();
+      const file = new File([json], filename, { type: "application/json" });
+      console.log("sendBackup: file created ok");
+      let shareFile = file;
+      let canShareResult = canShareFiles([file]);
+      if(!canShareResult){
+        const textFile = new File([json], filename, { type: "text/plain" });
+        const canShareText = canShareFiles([textFile]);
+        console.log("sendBackup: canShare result", { json: canShareResult, text: canShareText });
+        if(canShareText){
+          shareFile = textFile;
+          canShareResult = true;
+        }
+      }else{
+        console.log("sendBackup: canShare result", { json: canShareResult, text: null });
+      }
+      if(canShareResult){
         try{
+          console.log("sendBackup: share attempted");
           await navigator.share({
             title: "Backup Kalomai",
             text: "Adjunto backup en JSON.",
-            files: [file]
+            files: [shareFile]
           });
           markBackupShared();
           updateBackupNudges();
           toast("Selecciona WhatsApp y el contacto para enviar.");
           return;
-        }catch{
+        }catch(err){
+          if(err?.name === "AbortError"){
+            toast("Envío cancelado.");
+            return;
+          }
+          console.error("sendBackup share failed:", err);
           // fallback below
         }
       }
+      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
       downloadBlob(blob, filename);
       markBackupShared();
       updateBackupNudges();
       toast("Backup descargado. Adjúntalo desde WhatsApp.");
-    }catch{
+    }catch(err){
+      console.error("sendBackup failed:", err);
       toast("No se pudo generar el backup.");
     }
   }
