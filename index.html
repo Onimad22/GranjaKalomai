@@ -789,6 +789,7 @@
             <span id="backupNudgeMonthlyText"></span>
             <div class="btns" style="margin:0;">
               <button class="ok" id="sendBackupBtn">Enviar backup</button>
+              <button class="ok" id="testBackupPdfBtn">Prueba backup</button>
               <button id="importBackupBtn">Importar backup</button>
             </div>
           </div>
@@ -3349,6 +3350,38 @@
     }catch(err){
       diagLogError("sendBackup", err);
       toast("No se pudo generar/enviar el backup.");
+    }
+  });
+
+  $("testBackupPdfBtn").addEventListener("click", async (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    diagLog("testBackupPdf: click");
+    try{
+      const payload = await getBackupPayload();
+      const jsonString = JSON.stringify(payload, null, 2);
+      const lines = [
+        "Backup Kalomai (Prueba)",
+        `Generado: ${new Date().toLocaleString()}`,
+        `Tamaño JSON: ${jsonString.length} chars`,
+        "",
+        ...jsonString.split("\n")
+      ];
+      const blob = buildPdfBlobFromLines(lines);
+      const filename = `test_backup_kalomai_${new Date().toISOString().slice(0,10)}.pdf`;
+      diagLog("testBackupPdf: generated", { size: blob.size, jsonChars: jsonString.length, filename });
+      const mode = await sharePdf({ blob, filename });
+      if(mode === "share"){
+        diagLog("testBackupPdf: shared", { filename });
+        toast("Selecciona WhatsApp y el contacto para enviar.");
+      }else{
+        diagLog("testBackupPdf: downloaded", { filename });
+        toast("PDF descargado. Adjúntalo desde WhatsApp.");
+      }
+    }catch(err){
+      diagLog("testBackupPdf: error", { name: err?.name, message: err?.message });
+      diagLogError("testBackupPdf", err);
+      toast("No se pudo generar/enviar el PDF.");
     }
   });
 
