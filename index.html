@@ -2980,11 +2980,38 @@
 </html>`;
   }
 
+  const WIN_ANSI_MAP = new Map([
+    [0x20AC, 0x80], [0x201A, 0x82], [0x0192, 0x83], [0x201E, 0x84],
+    [0x2026, 0x85], [0x2020, 0x86], [0x2021, 0x87], [0x02C6, 0x88],
+    [0x2030, 0x89], [0x0160, 0x8A], [0x2039, 0x8B], [0x0152, 0x8C],
+    [0x017D, 0x8E], [0x2018, 0x91], [0x2019, 0x92], [0x201C, 0x93],
+    [0x201D, 0x94], [0x2022, 0x95], [0x2013, 0x96], [0x2014, 0x97],
+    [0x02DC, 0x98], [0x2122, 0x99], [0x0161, 0x9A], [0x203A, 0x9B],
+    [0x0153, 0x9C], [0x017E, 0x9E], [0x0178, 0x9F]
+  ]);
+
+  function toWinAnsiByte(codePoint){
+    if(codePoint >= 0x00 && codePoint <= 0x7F) return codePoint;
+    if(codePoint >= 0xA0 && codePoint <= 0xFF) return codePoint;
+    if(WIN_ANSI_MAP.has(codePoint)) return WIN_ANSI_MAP.get(codePoint);
+    return 0x3F;
+  }
+
   function escapePdfText(text){
-    return String(text)
-      .replace(/\\/g, "\\\\")
-      .replace(/\(/g, "\\(")
-      .replace(/\)/g, "\\)");
+    let out = "";
+    for(const char of String(text)){
+      const codePoint = char.codePointAt(0);
+      const byte = toWinAnsiByte(codePoint);
+      if(byte === 0x28) out += "\\(";
+      else if(byte === 0x29) out += "\\)";
+      else if(byte === 0x5C) out += "\\\\";
+      else if(byte < 0x20 || byte > 0x7E){
+        out += `\\${byte.toString(8).padStart(3, "0")}`;
+      }else{
+        out += String.fromCharCode(byte);
+      }
+    }
+    return out;
   }
 
   function wrapText(text, width){
@@ -3011,23 +3038,31 @@
 
   function buildReportLines(summary, rows, monthKey, stamp){
     const lines = [];
-    lines.push("Reporte mensual — Granja");
-    lines.push(`Mes ${monthKey}`);
-    lines.push(`Generado: ${stamp}`);
-    lines.push("");
-    lines.push("Resumen");
-    lines.push(`Total $ del mes: ${fmtMoney(summary.totalRevenue)}`);
-    lines.push(`Días con registros: ${summary.daysCount} · Recorridos: ${summary.tripsCount}`);
-    lines.push(`Total visitantes del mes: ${summary.visitorsQty}`);
-    lines.push("");
+    const pushLine = (text, options = {}) => {
+      lines.push({
+        text,
+        bold: Boolean(options.bold),
+        size: options.size ?? 11
+      });
+    };
+
+    pushLine("REPORTE MENSUAL — GRANJA KALOMAI", { bold: true, size: 14 });
+    pushLine(`Mes ${monthKey}`, { bold: true });
+    pushLine(`Generado: ${stamp}`);
+    pushLine("────────────────────────────────────────────");
+    pushLine("Resumen", { bold: true });
+    pushLine(`Total $ del mes: ${fmtMoney(summary.totalRevenue)}`);
+    pushLine(`Recorridos: ${summary.tripsCount}`);
+    pushLine(`Total visitantes del mes: ${summary.visitorsQty}`);
+    pushLine("");
 
     const buildTableLines = (title, headers, data, widths) => {
-      lines.push(title);
-      lines.push(headers.map((h, i) => padText(h, widths[i])).join(" | "));
-      lines.push(widths.map(w => "-".repeat(w)).join("-+-"));
+      pushLine(title, { bold: true });
+      pushLine(headers.map((h, i) => padText(h, widths[i])).join(" | "), { bold: true, size: 10 });
+      pushLine(widths.map(w => "-".repeat(w)).join("-+-"), { size: 10 });
       if(!data.length){
-        lines.push("Sin datos.");
-        lines.push("");
+        pushLine("Sin datos.");
+        pushLine("");
         return;
       }
       data.forEach(row => {
@@ -3035,10 +3070,10 @@
         const maxLines = Math.max(...wrapped.map(x => x.length));
         for(let i=0; i<maxLines; i++){
           const lineParts = wrapped.map((cellLines, idx) => padText(cellLines[i] || "", widths[idx]));
-          lines.push(lineParts.join(" | "));
+          pushLine(lineParts.join(" | "), { size: 10 });
         }
       });
-      lines.push("");
+      pushLine("");
     };
 
     const visitorRows = summary.visitorTypes.map(row => [
@@ -3065,12 +3100,17 @@
       [28, 10, 14]
     );
 
-    lines.push("Detalle por día");
-    lines.push(["Fecha", "Visitantes", "Total día (Bs)", "Recorridos"].map((h, i) => padText(h, [12, 11, 16, 10][i])).join(" | "));
-    lines.push([12, 11, 16, 10].map(w => "-".repeat(w)).join("-+-"));
+    pushLine("Detalle por día", { bold: true });
+    pushLine(
+      ["Fecha", "Visitantes", "Total día (Bs)", "Recorridos"]
+        .map((h, i) => padText(h, [12, 11, 16, 10][i]))
+        .join(" | "),
+      { bold: true, size: 10 }
+    );
+    pushLine([12, 11, 16, 10].map(w => "-".repeat(w)).join("-+-"), { size: 10 });
 
     if(rows.length === 0){
-      lines.push("Sin registros para este mes.");
+      pushLine("Sin registros para este mes.");
     } else {
       rows.forEach(row => {
         const values = [
@@ -3083,7 +3123,7 @@
         const maxLines = Math.max(...wrapped.map(x => x.length));
         for(let i=0; i<maxLines; i++){
           const lineParts = wrapped.map((cellLines, idx) => padText(cellLines[i] || "", [12, 11, 16, 10][idx]));
-          lines.push(lineParts.join(" | "));
+          pushLine(lineParts.join(" | "), { size: 10 });
         }
       });
     }
@@ -3095,11 +3135,22 @@
     const pageWidth = 595;
     const pageHeight = 842;
     const margin = 40;
-    const lineHeight = 14;
-    const maxLinesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
+    const maxHeight = pageHeight - margin * 2;
     const pages = [];
-    for(let i=0; i<lines.length; i+=maxLinesPerPage){
-      pages.push(lines.slice(i, i + maxLinesPerPage));
+    let currentPage = [];
+    let usedHeight = 0;
+    lines.forEach(line => {
+      const lineHeight = (line.size ?? 11) + 4;
+      if(currentPage.length && usedHeight + lineHeight > maxHeight){
+        pages.push(currentPage);
+        currentPage = [];
+        usedHeight = 0;
+      }
+      currentPage.push(line);
+      usedHeight += lineHeight;
+    });
+    if(currentPage.length){
+      pages.push(currentPage);
     }
 
     const objects = [];
@@ -3110,18 +3161,28 @@
       return objects.length;
     };
 
-    const fontObjNum = addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>");
+    const fontObjNum = addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>");
+    const fontBoldObjNum = addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>");
 
     pages.forEach(pageLines => {
       let y = pageHeight - margin;
-      let stream = "BT\n/F1 11 Tf\n";
+      let stream = "BT\n";
+      let currentFont = null;
+      let currentSize = null;
       pageLines.forEach(line => {
-        stream += `1 0 0 1 ${margin} ${y} Tm (${escapePdfText(line)}) Tj\n`;
-        y -= lineHeight;
+        const fontName = line.bold ? "F2" : "F1";
+        const fontSize = line.size ?? 11;
+        if(currentFont !== fontName || currentSize !== fontSize){
+          stream += `/${fontName} ${fontSize} Tf\n`;
+          currentFont = fontName;
+          currentSize = fontSize;
+        }
+        stream += `1 0 0 1 ${margin} ${y} Tm (${escapePdfText(line.text ?? "")}) Tj\n`;
+        y -= (fontSize + 4);
       });
       stream += "ET";
       const contentObjNum = addObj(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
-      const pageObjNum = addObj(`<< /Type /Page /Parent PAGES_OBJ 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${contentObjNum} 0 R /Resources << /Font << /F1 ${fontObjNum} 0 R >> >> >>`);
+      const pageObjNum = addObj(`<< /Type /Page /Parent PAGES_OBJ 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${contentObjNum} 0 R /Resources << /Font << /F1 ${fontObjNum} 0 R /F2 ${fontBoldObjNum} 0 R >> >> >>`);
       pageObjectIndexes.push(pageObjNum);
     });
 
