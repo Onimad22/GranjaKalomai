@@ -3187,13 +3187,17 @@
   }
 
   async function getBackupPayload(){
-    const data = await getBackupData();
-    return {
+    diagLog("getBackupPayload start");
+    const appState = await loadAppState();
+    const data = { appState: appState ?? null };
+    const payload = {
       app: BACKUP_APP_ID,
       schemaVersion: BACKUP_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
       data
     };
+    diagLog("getBackupPayload ok");
+    return payload;
   }
 
   async function reloadFromDb(){
@@ -3218,7 +3222,7 @@
     diagLog("sendBackup: getBackupPayload ok", { dataChars: exportSize.length });
     const json = safeJsonStringify(payload);
     if(!json) throw new Error("Backup vacío");
-    diagLog("sendBackup: JSON.stringify ok", { jsonChars: json.length });
+    diagLog("stringify ok", { jsonChars: json.length });
     const dateStamp = payload.exportedAt.slice(0, 10);
     const filename = `kalomai_backup_${dateStamp}.json`;
     return { json, filename };
@@ -3233,6 +3237,7 @@
       updateBackupNudges();
       toast("Backup guardado.");
     }catch(err){
+      diagLog("sendBackup error", { name: err?.name, message: err?.message, stack: err?.stack });
       diagLogError("sendBackup.doSaveBackupAndMark", err);
       console.error("sendBackup failed:", err);
       toast("No se pudo generar el backup.");
@@ -3244,7 +3249,7 @@
       diagLog("sendBackup: click");
       const { json, filename } = await getBackupFileData();
       const file = new File([json], filename, { type: "application/json" });
-      diagLog("sendBackup: File created", { filename, type: file.type, size: file.size });
+      diagLog("file created ok", { filename, type: file.type, size: file.size });
       let shareFile = file;
       const canShareExists = typeof navigator?.canShare === "function";
       diagLog("sendBackup: canShare exists?", { exists: canShareExists });
@@ -3302,6 +3307,7 @@
       updateBackupNudges();
       toast("Backup descargado. Adjúntalo desde WhatsApp.");
     }catch(err){
+      diagLog("sendBackup error", { name: err?.name, message: err?.message, stack: err?.stack });
       diagLogError("sendBackup", err);
       console.error("sendBackup failed:", err);
       toast("No se pudo generar el backup.");
