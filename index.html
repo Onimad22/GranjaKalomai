@@ -3197,11 +3197,11 @@
     diagLog("prepareBackupCache start");
     try{
       const payload = await getBackupPayload();
-      const json = JSON.stringify(payload, null, 2);
-      cachedBackupJson = json;
-      cachedBackupFilename = `kalomai_backup_${new Date().toISOString().slice(0,10)}.json`;
+      const text = buildBackupTxtFromPayload(payload);
+      cachedBackupJson = text;
+      cachedBackupFilename = `kalomai_backup_${new Date().toISOString().slice(0,10)}.txt`;
       backupCacheUpdatedAt = new Date().toISOString();
-      diagLog("prepareBackupCache ok", { jsonChars: json.length });
+      diagLog("prepareBackupCache ok", { txtChars: text.length });
     }catch(err){
       cachedBackupJson = null;
       cachedBackupFilename = null;
@@ -3222,6 +3222,35 @@
     };
     diagLog("getBackupPayload ok");
     return payload;
+  }
+
+  const BACKUP_TXT_HEADER = "KALOMAI_BACKUP_V1";
+
+  function encodeBackupJson(json){
+    return btoa(unescape(encodeURIComponent(json)));
+  }
+
+  function decodeBackupJson(encoded){
+    return decodeURIComponent(escape(atob(encoded)));
+  }
+
+  function buildBackupTxtFromPayload(payload){
+    const json = JSON.stringify(payload);
+    if(!json) throw new Error("Backup vacío");
+    const encoded = encodeBackupJson(json);
+    return `${BACKUP_TXT_HEADER}\n${encoded}`;
+  }
+
+  function parseBackupText(text){
+    const trimmed = text.trim();
+    if(trimmed.startsWith(BACKUP_TXT_HEADER)){
+      const lines = trimmed.split(/\r?\n/);
+      const encoded = lines[1]?.trim();
+      if(!encoded) throw new Error("Backup inválido (sin datos).");
+      const json = decodeBackupJson(encoded);
+      return JSON.parse(json);
+    }
+    return JSON.parse(text);
   }
 
   async function reloadFromDb(){
@@ -3245,18 +3274,17 @@
     const payload = await getBackupPayload();
     const exportSize = serializeDiagData(payload?.data || payload || {});
     diagLog("sendBackup: getBackupPayload ok", { dataChars: exportSize.length });
-    const json = safeJsonStringify(payload);
-    if(!json) throw new Error("Backup vacío");
-    diagLog("stringify ok", { jsonChars: json.length });
+    const text = buildBackupTxtFromPayload(payload);
+    diagLog("stringify ok", { txtChars: text.length });
     const dateStamp = payload.exportedAt.slice(0, 10);
-    const filename = `kalomai_backup_${dateStamp}.json`;
-    return { json, filename };
+    const filename = `kalomai_backup_${dateStamp}.txt`;
+    return { text, filename };
   }
 
   async function doSaveBackupAndMark(){
     try{
-      const { json, filename } = await getBackupFileData();
-      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+      const { text, filename } = await getBackupFileData();
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
       downloadBlob(blob, filename);
       markBackupShared();
       updateBackupNudges();
@@ -3270,8 +3298,8 @@
   }
 
   async function shareBackupNow(){
-    const { json, filename } = await getBackupFileData();
-    const blob = new Blob([json], { type: "text/plain;charset=utf-8" });
+    const { text, filename } = await getBackupFileData();
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const file = new File([blob], filename, { type: blob.type });
     const can = canShareFiles([file]);
 
@@ -3312,13 +3340,13 @@
   async function importFromFilePicker(){
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "application/json";
+    input.accept = "application/json,text/plain,.json,.txt";
     input.addEventListener("change", async ()=>{
       const file = input.files?.[0];
       if(!file) return;
       try{
         const text = await file.text();
-        const obj = JSON.parse(text);
+        const obj = parseBackupText(text);
         if(!obj || obj.app !== BACKUP_APP_ID || !SUPPORTED_BACKUP_SCHEMA_VERSIONS.has(obj.schemaVersion)){
           toast("Backup inválido (formato).");
           return;
