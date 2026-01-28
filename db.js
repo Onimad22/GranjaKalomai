@@ -22,7 +22,22 @@
   async function exportAll(){
     const record = await db.kv.get("appState");
     const appState = record ? record.value : null;
-    return { appState };
+    const toPlain = (value, seen = new WeakMap()) => {
+      if(value === null || typeof value !== "object") return value;
+      if(seen.has(value)) return "[Circular]";
+      seen.set(value, true);
+      if(Array.isArray(value)){
+        return value.map(item => toPlain(item, seen));
+      }
+      const obj = {};
+      for(const [key, val] of Object.entries(value)){
+        if(typeof val === "function") continue;
+        obj[key] = toPlain(val, seen);
+      }
+      return obj;
+    };
+    const plainState = appState ? toPlain(appState) : null;
+    return { appState: plainState };
   }
 
   async function importAll(data){
