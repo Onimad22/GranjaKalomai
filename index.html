@@ -768,9 +768,7 @@
       <div class="hd">
         <h2>Resumen mensual (Gerencia)</h2>
         <div class="btns" style="margin:0;">
-          <button class="ok" id="reportBtn">Reporte (PDF/Imprimir)</button>
           <button class="ok" id="shareReportBtn">Enviar reporte</button>
-          <button class="ok" id="backupShareBtn">Backup (Compartir)</button>
           <button class="ok" id="sendBackupBtn">Enviar backup</button>
           <button id="importBackupBtn">Importar backup</button>
           <button id="openTariffBtn">Tarifa</button>
@@ -1140,10 +1138,11 @@
         return;
       }
       el.style.display = "block";
+      const actionLabel = context === "monthly" ? "Enviar backup" : "Hacer backup ahora";
       el.innerHTML = `
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
           <span>${message}</span>
-          <button class="ok" data-act="backupNow" data-context="${context}">Hacer backup ahora</button>
+          <button class="ok" data-act="backupNow" data-context="${context}">${actionLabel}</button>
         </div>
       `;
     });
@@ -3127,9 +3126,12 @@
     input.click();
   }
 
-  $("backupShareBtn").addEventListener("click", ()=>{
-    void doShareBackupAndMark();
-  });
+  const backupShareBtn = $("backupShareBtn");
+  if(backupShareBtn){
+    backupShareBtn.addEventListener("click", ()=>{
+      void doShareBackupAndMark();
+    });
+  }
 
   $("sendBackupBtn").addEventListener("click", ()=>{
     void shareBackupJson();
@@ -3139,18 +3141,21 @@
     void importFromFilePicker();
   });
 
-  $("reportBtn").addEventListener("click", ()=>{
-    const store = loadStore();
-    const monthKey = String($("month").value || "").trim();
-    if(!monthKey){
-      toast("Selecciona un mes.");
-      return;
-    }
-    const html = buildReportHTML(store, monthKey);
-    const w = window.open("", "_blank");
-    if(!w){ toast("No se pudo abrir el reporte (bloqueo de popups)."); return; }
-    w.document.open(); w.document.write(html); w.document.close();
-  });
+  const reportBtn = $("reportBtn");
+  if(reportBtn){
+    reportBtn.addEventListener("click", ()=>{
+      const store = loadStore();
+      const monthKey = String($("month").value || "").trim();
+      if(!monthKey){
+        toast("Selecciona un mes.");
+        return;
+      }
+      const html = buildReportHTML(store, monthKey);
+      const w = window.open("", "_blank");
+      if(!w){ toast("No se pudo abrir el reporte (bloqueo de popups)."); return; }
+      w.document.open(); w.document.write(html); w.document.close();
+    });
+  }
 
   $("shareReportBtn").addEventListener("click", async ()=>{
     const result = await getReportPdfBlob();
