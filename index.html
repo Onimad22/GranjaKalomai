@@ -3094,58 +3094,78 @@
       });
     };
 
-    const buildShiftLines = (title, shiftTrips) => {
+    const buildShiftBox = (title, shiftTrips, options = {}) => {
       const shiftSummary = buildSummaryFromTrips(shiftTrips);
       const rows = shiftSummary.rows.map(row => [
         `${row.label} (${catLabel(row.category)})`,
         String(row.qty),
         fmtMoney(row.subtotal)
       ]);
-      pushLine(title, { bold: true, size: 12 });
-      pushLine(
-        `Recorridos: ${shiftTrips.length} | Visitantes: ${shiftSummary.qtyVisitors} | Total: ${fmtMoney(shiftSummary.total)}`,
-        { size: 10 }
-      );
-      pushLine(
-        ["Ítem", "Cantidad", "Subtotal (Bs)"]
-          .map((h, i) => padText(h, [28, 10, 14][i]))
-          .join(" | "),
-        { bold: true, size: 10 }
-      );
-      pushLine([28, 10, 14].map(w => "-".repeat(w)).join("-+-"), { size: 10 });
+      const lines = [];
+      lines.push({ text: title.toUpperCase(), bold: true, size: 12 });
+      lines.push({
+        text: `Recorridos: ${shiftTrips.length} | Visitantes: ${shiftSummary.qtyVisitors} | Total: ${fmtMoney(shiftSummary.total)}`,
+        size: 10,
+        bold: true
+      });
       if(!rows.length){
-        pushLine("Sin ítems registrados.");
+        lines.push({ text: "Sin ítems registrados.", size: 10 });
       } else {
+        lines.push({
+          text: ["Ítem", "Cantidad", "Subtotal (Bs)"]
+            .map((h, i) => padText(h, [28, 10, 14][i]))
+            .join("  "),
+          bold: true,
+          size: 10
+        });
         rows.forEach(row => {
           const wrapped = row.map((cell, i) => wrapText(cell, [28, 10, 14][i]));
           const maxLines = Math.max(...wrapped.map(x => x.length));
           for(let i=0; i<maxLines; i++){
             const lineParts = wrapped.map((cellLines, idx) => padText(cellLines[i] || "", [28, 10, 14][idx]));
-            pushLine(lineParts.join(" | "), { size: 10 });
+            lines.push({ text: lineParts.join("  "), size: 10 });
           }
         });
       }
-      pushLine(
-        `Total turno: ${fmtMoney(shiftSummary.total)} | Visitantes turno: ${shiftSummary.qtyVisitors}`,
-        { size: 10 }
-      );
-      pushSpacer(8);
+      lines.push({ text: "", size: 8 });
+      lines.push({
+        text: `${options.totalLabel || "TOTAL TURNO"}: ${fmtMoney(shiftSummary.total)} | ${options.visitorsLabel || "VISITANTES TURNO"}: ${shiftSummary.qtyVisitors}`,
+        bold: true,
+        size: options.totalSize ?? 11
+      });
+
+      return {
+        type: "box",
+        padding: 10,
+        fill: options.fill ?? [0.96, 0.96, 0.96],
+        stroke: options.stroke ?? [0.82, 0.82, 0.82],
+        lineWidth: options.lineWidth ?? 1,
+        lines
+      };
     };
 
     pushLine("RESUMEN DEL DIA - GRANJA KALOMAI", { bold: true, size: 16 });
     pushLine(`Fecha ${dateLabel}`, { bold: true, size: 12 });
     pushLine(`Generado: ${stamp}`, { size: 10 });
-    pushLine("==============================================", { size: 10 });
-    pushSpacer(6);
+    pushSpacer(10);
     pushSummaryBox();
     pushSpacer(10);
 
     const morningTrips = trips.filter(t => t.shift === "manana");
     const afternoonTrips = trips.filter(t => t.shift === "tarde");
 
-    buildShiftLines("Turno: Mañana", morningTrips);
-    buildShiftLines("Turno: Tarde", afternoonTrips);
-    buildShiftLines("Total del día", trips);
+    lines.push(buildShiftBox("Turno: Mañana", morningTrips));
+    pushSpacer(10);
+    lines.push(buildShiftBox("Turno: Tarde", afternoonTrips));
+    pushSpacer(10);
+    lines.push(buildShiftBox("Total del día", trips, {
+      totalLabel: "TOTAL DEL DÍA",
+      visitorsLabel: "VISITANTES DEL DÍA",
+      totalSize: 12,
+      fill: [0.92, 0.92, 0.92],
+      stroke: [0.6, 0.6, 0.6],
+      lineWidth: 2
+    }));
 
     return lines;
   }
@@ -3233,11 +3253,12 @@
           const boxY = boxTop - boxHeight;
           const fill = item.fill ?? [0.94, 0.94, 0.94];
           const stroke = item.stroke ?? [0.82, 0.82, 0.82];
+          const lineWidth = item.lineWidth ?? 1;
           closeText();
           stream += "q\n";
           stream += `${fill[0]} ${fill[1]} ${fill[2]} rg\n`;
           stream += `${stroke[0]} ${stroke[1]} ${stroke[2]} RG\n`;
-          stream += "1 w\n";
+          stream += `${lineWidth} w\n`;
           stream += `${margin} ${boxY} ${pageWidth - margin * 2} ${boxHeight} re\nB\n`;
           stream += "Q\n";
 
