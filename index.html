@@ -788,9 +788,8 @@
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
             <span id="backupNudgeMonthlyText"></span>
             <div class="btns" style="margin:0;">
-              <button class="ok" id="sendBackupBtn">Enviar backup</button>
-              <button class="ok" id="testBackupPdfBtn">Prueba backup</button>
-              <button id="importBackupBtn">Importar backup</button>
+              <button class="ok" id="sendBackupBtn">Guardar backup</button>
+              <button id="importBackupBtn">Abrir backup</button>
             </div>
           </div>
         </div>
@@ -3197,11 +3196,11 @@
     diagLog("prepareBackupCache start");
     try{
       const payload = await getBackupPayload();
-      const text = buildBackupTxtFromPayload(payload);
-      cachedBackupJson = text;
-      cachedBackupFilename = `kalomai_backup_${new Date().toISOString().slice(0,10)}.txt`;
+      const json = buildBackupJsonFromPayload(payload);
+      cachedBackupJson = json;
+      cachedBackupFilename = `kalomai_backup_${new Date().toISOString().slice(0,10)}.json`;
       backupCacheUpdatedAt = new Date().toISOString();
-      diagLog("prepareBackupCache ok", { txtChars: text.length });
+      diagLog("prepareBackupCache ok", { jsonChars: json.length });
     }catch(err){
       cachedBackupJson = null;
       cachedBackupFilename = null;
@@ -3226,16 +3225,10 @@
 
   const BACKUP_TXT_HEADER = "# KALOMAI_BACKUP_V1";
 
-  function buildBackupTxtFromPayload(payload){
+  function buildBackupJsonFromPayload(payload){
     const json = JSON.stringify(payload, null, 2);
     if(!json) throw new Error("Backup vacío");
-    const headerLines = [
-      BACKUP_TXT_HEADER,
-      `# Generated: ${new Date().toISOString()}`,
-      "# --------------------------------"
-    ];
-    const commentedLines = json.split("\n").map((line)=>`# ${line}`);
-    return [...headerLines, ...commentedLines].join("\n");
+    return json;
   }
 
   function parseBackupText(text){
@@ -3279,73 +3272,31 @@
   }
 
   async function getBackupFileData(){
-    diagLog("sendBackup: calling getBackupPayload()");
+    diagLog("backup: calling getBackupPayload()");
     const payload = await getBackupPayload();
     const exportSize = serializeDiagData(payload?.data || payload || {});
-    diagLog("sendBackup: getBackupPayload ok", { dataChars: exportSize.length });
-    const text = buildBackupTxtFromPayload(payload);
+    diagLog("backup: getBackupPayload ok", { dataChars: exportSize.length });
+    const json = buildBackupJsonFromPayload(payload);
     const dateStamp = payload.exportedAt.slice(0, 10);
-    const filename = `kalomai_backup_${dateStamp}.txt`;
-    diagLog("sendBackupTxt: generated", { filename, txtChars: text.length });
-    return { text, filename };
+    const filename = `kalomai_backup_${dateStamp}.json`;
+    diagLog("backup: generated", { filename, jsonChars: json.length });
+    return { json, filename };
   }
 
   async function doSaveBackupAndMark(){
     try{
-      const { text, filename } = await getBackupFileData();
-      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const { json, filename } = await getBackupFileData();
+      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
       downloadBlob(blob, filename);
       markBackupShared();
       updateBackupNudges();
       toast("Backup guardado.");
     }catch(err){
-      diagLog("sendBackup error", { name: err?.name, message: err?.message, stack: err?.stack });
-      diagLogError("sendBackup.doSaveBackupAndMark", err);
-      console.error("sendBackup failed:", err);
+      diagLog("backup error", { name: err?.name, message: err?.message, stack: err?.stack });
+      diagLogError("backup.doSaveBackupAndMark", err);
+      console.error("backup failed:", err);
       toast("No se pudo generar el backup.");
     }
-  }
-
-  async function shareBackupNow(){
-    const { text, filename } = await getBackupFileData();
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const file = new File([blob], filename, { type: blob.type });
-    const can = canShareFiles([file]);
-
-    diagLog("sendBackup: about to share", {
-      filename,
-      mime: file.type,
-      size: file.size,
-      canShare: can
-    });
-
-    if(can){
-      try{
-        await navigator.share({
-          title: "Backup Kalomai",
-          text: "Adjunto backup.",
-          files: [file]
-        });
-        diagLog("sendBackupTxt: shared", { filename });
-        markBackupShared();
-        updateBackupNudges();
-        toast("Selecciona WhatsApp y el contacto para enviar.");
-        return "share";
-      }catch(err){
-        if(err?.name === "AbortError"){
-          toast("Envío cancelado.");
-          return "abort";
-        }
-        diagLog("sendBackup: share failed", { name: err?.name, message: err?.message });
-      }
-    }
-
-    downloadBlob(blob, filename);
-    diagLog("sendBackupTxt: downloaded", { filename });
-    markBackupShared();
-    updateBackupNudges();
-    toast("Backup descargado. Adjúntalo desde WhatsApp.");
-    return "download";
   }
 
   async function importFromFilePicker(){
@@ -3396,79 +3347,12 @@
   $("sendBackupBtn").addEventListener("click", async (e)=>{
     e.preventDefault();
     e.stopPropagation();
-    diagLog("sendBackup: click");
+    diagLog("backup: click");
     try{
-      await shareBackupNow();
+      await doSaveBackupAndMark();
     }catch(err){
-      diagLogError("sendBackup", err);
-      toast("No se pudo generar/enviar el backup.");
-    }
-  });
-
-  $("testBackupPdfBtn").addEventListener("click", async (e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    diagLog("testBackupTxt: click");
-    try{
-      if(typeof CompressionStream !== "function"){
-        const textContent = "esto es una prueba";
-        const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
-        const filename = "prueba_backup.txt";
-        const file = new File([blob], filename, { type: "text/plain" });
-        const can = canShareFiles([file]);
-        diagLog("testBackupTxt: generated", { size: blob.size, filename, canShare: can });
-        if(can){
-          try{
-            await navigator.share({
-              title: "Backup Kalomai (prueba)",
-              text: "Adjunto backup en TXT.",
-              files: [file]
-            });
-            diagLog("testBackupTxt: shared", { filename });
-            toast("Selecciona WhatsApp y el contacto para enviar.");
-            return;
-          }catch(err){
-            diagLog("testBackupTxt: share failed", { name: err?.name, message: err?.message, stack: err?.stack });
-          }
-        }
-        downloadBlob(blob, filename);
-        diagLog("testBackupTxt: downloaded", { filename });
-        toast("TXT descargado. Adjúntalo desde WhatsApp.");
-        return;
-      }
-
-      const payload = await getBackupPayload();
-      const json = JSON.stringify(payload);
-      const bytes = new TextEncoder().encode(json);
-      const compressedStream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
-      const compressedBuffer = await new Response(compressedStream).arrayBuffer();
-      const blob = new Blob([compressedBuffer], { type: "application/octet-stream" });
-      const dateStamp = payload.exportedAt.slice(0, 10);
-      const filename = `kalomai_backup_${dateStamp}.kalbak`;
-      const file = new File([blob], filename, { type: blob.type });
-      const can = canShareFiles([file]);
-      diagLog("testBackupTxt: generated", { size: blob.size, filename, canShare: can });
-      if(can){
-        try{
-          await navigator.share({
-            title: "Backup Kalomai (prueba)",
-            text: "Adjunto backup.",
-            files: [file]
-          });
-          diagLog("testBackupTxt: shared", { filename });
-          toast("Selecciona WhatsApp y el contacto para enviar.");
-          return;
-        }catch(err){
-          diagLog("testBackupTxt: share failed", { name: err?.name, message: err?.message, stack: err?.stack });
-        }
-      }
-      downloadBlob(blob, filename);
-      diagLog("testBackupTxt: downloaded", { filename });
-      toast("Backup descargado. Adjúntalo desde WhatsApp.");
-    }catch(err){
-      diagLog("testBackupTxt: error", { name: err?.name, message: err?.message, stack: err?.stack });
-      diagLogError("testBackupTxt", err);
-      toast("No se pudo generar/enviar el TXT.");
+      diagLogError("backup", err);
+      toast("No se pudo generar el backup.");
     }
   });
 
