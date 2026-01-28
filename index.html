@@ -769,15 +769,21 @@
         <h2>Resumen mensual (Gerencia)</h2>
         <div class="btns" style="margin:0;">
           <button class="ok" id="shareReportBtn">Enviar reporte</button>
-          <button class="ok" id="sendBackupBtn">Enviar backup</button>
-          <button id="importBackupBtn">Importar backup</button>
           <button id="openTariffBtn">Tarifa</button>
         </div>
       </div>
 
       <div class="bd">
         <div class="note" id="persistenceStatusNote" style="margin-top:0"></div>
-        <div class="note" id="backupNudgeMonthly" style="display:none;"></div>
+        <div class="note" id="backupNudgeMonthly" style="display:none;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+            <span id="backupNudgeMonthlyText"></span>
+            <div class="btns" style="margin:0;">
+              <button class="ok" id="sendBackupBtn">Enviar backup</button>
+              <button id="importBackupBtn">Importar backup</button>
+            </div>
+          </div>
+        </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;justify-content:space-between;">
           <div style="min-width:190px">
             <label>Mes activo</label>
@@ -1125,27 +1131,30 @@
     const shouldNudge = shouldNudgeBackup();
     const lastBackup = getLastBackupSharedAt();
     const message = `Recomendación: realiza un backup. Último backup: ${formatBackupDate(lastBackup)}.`;
-    const targets = [
-      { el: $("backupNudgeDaily"), context: "daily" },
-      { el: $("backupNudgeMonthly"), context: "monthly" }
-    ];
-
-    targets.forEach(({ el, context }) => {
-      if(!el) return;
+    const dailyEl = $("backupNudgeDaily");
+    if(dailyEl){
       if(!shouldNudge){
-        el.style.display = "none";
-        el.innerHTML = "";
-        return;
+        dailyEl.style.display = "none";
+        dailyEl.innerHTML = "";
+      } else {
+        dailyEl.style.display = "block";
+        dailyEl.innerHTML = `
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+            <span>${message}</span>
+            <button class="ok" data-act="backupNow" data-context="daily">Hacer backup ahora</button>
+          </div>
+        `;
       }
-      el.style.display = "block";
-      const actionLabel = context === "monthly" ? "Enviar backup" : "Hacer backup ahora";
-      el.innerHTML = `
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
-          <span>${message}</span>
-          <button class="ok" data-act="backupNow" data-context="${context}">${actionLabel}</button>
-        </div>
-      `;
-    });
+    }
+
+    const monthlyEl = $("backupNudgeMonthly");
+    const monthlyText = $("backupNudgeMonthlyText");
+    if(monthlyEl){
+      monthlyEl.style.display = "block";
+      if(monthlyText){
+        monthlyText.textContent = message;
+      }
+    }
 
     document.querySelectorAll("button[data-act='backupNow']").forEach(btn=>{
       btn.addEventListener("click", ()=>{
