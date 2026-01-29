@@ -101,7 +101,7 @@
     }
     .dot{width:8px;height:8px;border-radius:999px;background: var(--accent);}
 
-    .panel{margin-top:12px;display:none;}
+    .panel{margin-top:6px;display:none;}
     .panel.active{display:block;}
 
     .card{
@@ -209,7 +209,7 @@
     .tripSummaryHeader,
     .tripSummaryRow{
       display:grid;
-      grid-template-columns: 1.4fr .6fr .8fr;
+      grid-template-columns: 1.4fr .6fr .8fr 56px;
       gap:10px;
       padding:10px 12px;
       align-items:center;
@@ -226,6 +226,16 @@
       color:var(--text);
     }
     .tripSummaryRow:last-child{border-bottom:none;}
+    .tripSummaryAction{
+      display:flex;
+      justify-content:flex-end;
+    }
+    .tripSummaryAction button{
+      min-height:32px;
+      padding:6px 10px;
+      border-radius:10px;
+      font-size:12px;
+    }
     .tripSummaryEmpty{
       padding:10px 12px;
     }
@@ -267,57 +277,11 @@
       margin-right:8px;
     }
 
-    /* Items del recorrido: tabla simple (solo quitar) */
-    .itemsWrap{
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:16px;
-      overflow:hidden;
-      background: rgba(15,23,42,.22);
-    }
-    .itemsHeader, .itemsRow{
-      display:grid;
-      grid-template-columns: 1fr 140px 180px 160px;
-      gap:10px;
-      padding:10px 12px;
+    .modalActions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
       align-items:center;
-    }
-    .itemsHeader{
-      position:sticky;
-      top:0;
-      background: rgba(11,18,32,.92);
-      border-bottom:1px solid rgba(255,255,255,.06);
-      color:#dbeafe;
-      font-weight:900;
-      font-size:12.5px;
-    }
-    .itemsRow{
-      border-bottom:1px solid rgba(255,255,255,.06);
-      font-size:12.5px;
-    }
-    .itemsRow:last-child{border-bottom:none;}
-    .itemsRow .right{text-align:right;}
-    .itemsRow button{
-      min-height:36px;
-      padding:8px 10px;
-      border-radius:12px;
-      font-size:12px;
-      width:100%;
-    }
-    @media (max-width: 920px){
-      .itemsHeader{display:none;}
-      .itemsRow{
-        grid-template-columns: 1fr;
-        gap:8px;
-      }
-      .itemsRow .right{text-align:left;}
-      .itemsRow .cellLabel{
-        display:flex;justify-content:space-between;gap:10px;
-        padding:10px;
-        border:1px solid rgba(255,255,255,.08);
-        border-radius:14px;
-        background: rgba(255,255,255,.03);
-      }
-      .itemsRow .cellLabel strong{font-weight:900;}
     }
 
     /* Recorridos del día: mini tarjetas */
@@ -679,10 +643,6 @@
   <!-- PANEL: NUEVO -->
   <section class="panel active" id="panelNew" role="tabpanel" aria-labelledby="tabNew">
     <div class="card">
-      <div class="hd">
-        <div></div>
-      </div>
-
       <div class="bd">
         <div class="btns" id="newTripTopArea" style="margin-top:0">
           <button class="primary full" id="openNewTripModalBtn">Habilitar nuevo recorrido</button>
@@ -704,42 +664,25 @@
               <button class="ok" id="sendTripSummaryBtn">Enviar recorrido</button>
               <button class="ghost" id="closeActiveTripBtn" title="Cerrar el recorrido en edición (no borra nada)">Cerrar edición</button>
             </div>
+            <div class="btns" style="margin-top:8px;">
+              <button class="ok full" id="openAddItemModalBtn">Agregar item</button>
+            </div>
             <div class="tripSummaryTable" aria-live="polite">
               <div class="tripSummaryHeader">
                 <div>Ítem</div>
                 <div class="right">Cantidad</div>
                 <div class="right">Subtotal (Bs)</div>
+                <div class="right">Acción</div>
               </div>
               <div id="activeTripSummaryRows"></div>
               <div class="tripSummaryEmpty muted" id="activeTripSummaryEmpty">No hay ítems en este recorrido.</div>
             </div>
           </div>
 
-          <div class="btns" style="margin-top:12px;">
-            <button class="ok full" id="openAddItemModalBtn">Agregar item</button>
-          </div>
-
           <div class="ticket" style="margin-top:12px;">
             <div class="ticketBd">
               <label>Observaciones</label>
               <textarea id="tripNotes" placeholder="Ej: Grupo escolar, lluvia, se retrasó el turno, etc."></textarea>
-            </div>
-          </div>
-
-          <div class="ticket">
-            <div class="ticketHd">
-              <div class="title">Ítems del recorrido</div>
-            </div>
-            <div class="ticketBd">
-              <div class="itemsWrap">
-                <div class="itemsHeader">
-                  <div>Ítem</div>
-                  <div class="right">Cantidad</div>
-                  <div class="right">Total (Bs)</div>
-                  <div class="right">Acción</div>
-                </div>
-                <div id="activeTripItems"></div>
-              </div>
             </div>
           </div>
         </div>
@@ -1069,7 +1012,11 @@
   <div class="modalCard">
     <div class="modalHd">
       <div class="t">Cantidad del ítem</div>
-      <button class="ghost" id="closeAddItemQtyBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+      <div class="modalActions">
+        <button class="ghost" id="backAddItemQtyBtn" style="min-height:40px;border-radius:12px" title="Volver">&lt;</button>
+        <button class="ok" id="acceptAddItemQtyBtn" style="min-height:40px;border-radius:12px">Ok</button>
+        <button class="ghost" id="closeAddItemQtyBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+      </div>
     </div>
     <div class="modalBd">
       <div class="note" id="addItemQtyHint" style="margin-top:0">Ítem seleccionado: —</div>
@@ -1077,11 +1024,6 @@
         <label>Cantidad</label>
         <input id="addItemQtyInput" type="number" min="1" step="1" value="1" />
       </div>
-    </div>
-    <div class="modalFt">
-      <button class="ghost" id="backAddItemQtyBtn">Volver</button>
-      <button class="ghost" id="cancelAddItemQtyBtn">Cancelar</button>
-      <button class="ok" id="acceptAddItemQtyBtn">Ok</button>
     </div>
   </div>
 </div>
@@ -1091,7 +1033,11 @@
   <div class="modalCard">
     <div class="modalHd">
       <div class="t">Precio del ítem</div>
-      <button class="ghost" id="closeAddItemPriceBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+      <div class="modalActions">
+        <button class="ghost" id="backAddItemPriceBtn" style="min-height:40px;border-radius:12px" title="Volver">&lt;</button>
+        <button class="ok" id="acceptAddItemPriceBtn" style="min-height:40px;border-radius:12px">Ok</button>
+        <button class="ghost" id="closeAddItemPriceBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+      </div>
     </div>
     <div class="modalBd">
       <div class="note" id="addItemPriceHint" style="margin-top:0">Ítem: — · Cantidad: —</div>
@@ -1099,11 +1045,6 @@
         <label>Precio unitario (Bs)</label>
         <input id="addItemPriceInput" type="number" min="0" step="0.01" value="0" />
       </div>
-    </div>
-    <div class="modalFt">
-      <button class="ghost" id="backAddItemPriceBtn">Volver</button>
-      <button class="ghost" id="cancelAddItemPriceBtn">Cancelar</button>
-      <button class="ok" id="acceptAddItemPriceBtn">Ok</button>
     </div>
   </div>
 </div>
@@ -1273,6 +1214,14 @@
   }
   function esc(s){
     return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+  }
+  function escAttr(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll("\"","&quot;")
+      .replaceAll("'","&#39;");
   }
   function toast(msg){
     const host = $("toast");
@@ -1962,9 +1911,7 @@
   $("closeAddItemSelectBtn").addEventListener("click", closeAllModals);
   $("cancelAddItemSelectBtn").addEventListener("click", closeAllModals);
   $("closeAddItemQtyBtn").addEventListener("click", closeAllModals);
-  $("cancelAddItemQtyBtn").addEventListener("click", closeAllModals);
   $("closeAddItemPriceBtn").addEventListener("click", closeAllModals);
-  $("cancelAddItemPriceBtn").addEventListener("click", closeAllModals);
   overlay.addEventListener("click", closeAllModals);
 
   $("acceptNewTripDateBtn").addEventListener("click", ()=>{
@@ -2150,56 +2097,6 @@
     openAddItemQtyModal();
   });
 
-  // ===== Items del recorrido: NO editable (solo quitar) =====
-  function renderActiveTripItems(trip){
-    const host = $("activeTripItems");
-    if(!trip){ host.innerHTML = ""; return; }
-
-    const items = Array.isArray(trip.items) ? trip.items : [];
-    if(items.length === 0){
-      host.innerHTML = `<div class="itemsRow"><div class="muted">Este recorrido está vacío.</div></div>`;
-      return;
-    }
-
-    host.innerHTML = items.map((it, idx) => {
-      const qty = safeInt(it.qty);
-      const up = safeMoney(it.unitPrice);
-      const sub = qty * up;
-
-      return `
-        <div class="itemsRow">
-          <div class="cellLabel">
-            <span><strong>${esc(it.label || "Ítem")}</strong></span>
-            <span class="muted">${esc(catLabel(it.category || "extra"))}</span>
-          </div>
-
-          <div class="right cellLabel">
-            <span class="muted">Cantidad</span>
-            <strong>${qty}</strong>
-          </div>
-
-          <div class="right cellLabel">
-            <span class="muted">Total</span>
-            <strong>${fmtMoney(sub)}</strong>
-          </div>
-
-          <div class="right">
-            <button class="danger" data-act="remove" data-idx="${idx}">Quitar</button>
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    host.querySelectorAll("button[data-act='remove']").forEach(btn => {
-      btn.addEventListener("click", async ()=>{
-        const idx = Number(btn.getAttribute("data-idx"));
-        if(!Number.isFinite(idx)) return;
-        if(!confirmDanger("¿Quitar este ítem del recorrido?")) return;
-        await removeActiveItem(idx);
-      });
-    });
-  }
-
   function renderActiveTripSummary(trip){
     const host = $("activeTripSummaryRows");
     const empty = $("activeTripSummaryEmpty");
@@ -2227,23 +2124,35 @@
           </div>
           <div class="right"><strong>${r.qty}</strong></div>
           <div class="right"><strong>${fmtMoney(r.subtotal)}</strong></div>
+          <div class="tripSummaryAction">
+            <button class="danger" data-act="remove-type" data-type="${escAttr(r.typeId)}" title="Quitar ítem">✕</button>
+          </div>
         </div>
       `).join("");
+
+      host.querySelectorAll("button[data-act='remove-type']").forEach(btn => {
+        btn.addEventListener("click", async ()=>{
+          const typeId = btn.getAttribute("data-type");
+          if(!typeId) return;
+          if(!confirmDanger("¿Quitar este ítem del recorrido?")) return;
+          await removeActiveItemsByType(typeId);
+        });
+      });
     }
 
     if(sendBtn) sendBtn.disabled = false;
   }
 
-  async function removeActiveItem(idx){
+  async function removeActiveItemsByType(typeId){
     const store = loadStore();
     const trip = findTrip(store, activeTripDate, activeTripId);
     if(!trip){ toast("No se encontró el recorrido activo."); return; }
 
     const items = Array.isArray(trip.items) ? trip.items : [];
-    if(idx < 0 || idx >= items.length) return;
+    const nextItems = items.filter(it => String(it.typeId || "") !== String(typeId));
+    if(nextItems.length === items.length) return;
 
-    items.splice(idx, 1);
-    trip.items = items;
+    trip.items = nextItems;
     trip.updatedAt = new Date().toISOString();
     upsertTrip(store, activeTripDate, trip);
     await saveStore(store);
@@ -2631,13 +2540,11 @@
       $("activeTripVisitors").textContent = String(c.qtyVisitors);
       $("activeTripTotal").textContent = fmtMoney(c.incomeTotal);
       $("tripNotes").value = String(trip.notes || "");
-      renderActiveTripItems(trip);
       renderActiveTripSummary(trip);
     } else {
       $("activeTripVisitors").textContent = "0";
       $("activeTripTotal").textContent = "Bs 0";
       $("tripNotes").value = "";
-      $("activeTripItems").innerHTML = "";
       renderActiveTripSummary(null);
     }
 
