@@ -968,35 +968,65 @@
 <!-- Modales -->
 <div class="overlay" id="modalOverlay"></div>
 
-<!-- Modal: nuevo recorrido -->
-<div class="modal" id="newTripModal" aria-hidden="true">
+<!-- Modal: nuevo recorrido (paso 1: fecha) -->
+<div class="modal" id="newTripDateModal" aria-hidden="true">
   <div class="modalCard">
     <div class="modalHd">
       <div class="t">Habilitar nuevo recorrido</div>
-      <button class="ghost" id="closeModalBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+      <button class="ghost" id="closeNewTripDateBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
     </div>
     <div class="modalBd">
-      <div class="grid3" style="grid-template-columns: 1fr 1fr 1fr;">
-        <div>
-          <label>Fecha</label>
-          <input id="newTripDate" type="date" />
-        </div>
-        <div>
-          <label>Turno</label>
-          <select id="newTripShift">
-            <option value="manana">Mañana</option>
-            <option value="tarde">Tarde</option>
-          </select>
-        </div>
-        <div>
-          <label>Hora</label>
-          <input id="newTripHour" type="time" />
-        </div>
+      <div>
+        <label>Fecha</label>
+        <input id="newTripDate" type="date" />
       </div>
     </div>
     <div class="modalFt">
-      <button class="ghost" id="cancelModalBtn">Cancelar</button>
-      <button class="ok" id="acceptNewTripBtn">Aceptar</button>
+      <button class="ghost" id="cancelNewTripDateBtn">Cancelar</button>
+      <button class="ok" id="acceptNewTripDateBtn">Ok</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: nuevo recorrido (paso 2: turno) -->
+<div class="modal" id="newTripShiftModal" aria-hidden="true">
+  <div class="modalCard">
+    <div class="modalHd">
+      <div class="t">Habilitar nuevo recorrido</div>
+      <button class="ghost" id="closeNewTripShiftBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+    </div>
+    <div class="modalBd">
+      <div>
+        <label>Turno</label>
+        <select id="newTripShift">
+          <option value="manana">Mañana</option>
+          <option value="tarde">Tarde</option>
+        </select>
+      </div>
+    </div>
+    <div class="modalFt">
+      <button class="ghost" id="cancelNewTripShiftBtn">Cancelar</button>
+      <button class="ok" id="acceptNewTripShiftBtn">Ok</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: nuevo recorrido (paso 3: hora) -->
+<div class="modal" id="newTripHourModal" aria-hidden="true">
+  <div class="modalCard">
+    <div class="modalHd">
+      <div class="t">Habilitar nuevo recorrido</div>
+      <button class="ghost" id="closeNewTripHourBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+    </div>
+    <div class="modalBd">
+      <div>
+        <label>Hora</label>
+        <input id="newTripHour" type="time" />
+      </div>
+    </div>
+    <div class="modalFt">
+      <button class="ghost" id="cancelNewTripHourBtn">Cancelar</button>
+      <button class="ok" id="acceptNewTripHourBtn">Ok</button>
     </div>
   </div>
 </div>
@@ -1360,7 +1390,7 @@
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
     }
-    if(!newTripModal.classList.contains("open")){
+    if(!document.querySelector("#newTripDateModal.open, #newTripShiftModal.open, #newTripHourModal.open")){
       overlay.classList.remove("open");
     }
   }
@@ -1770,24 +1800,51 @@
 
   // ===== Modales =====
   const overlay = $("modalOverlay");
-  const newTripModal = $("newTripModal");
+  const newTripDateModal = $("newTripDateModal");
+  const newTripShiftModal = $("newTripShiftModal");
+  const newTripHourModal = $("newTripHourModal");
+  const newTripModals = [newTripDateModal, newTripShiftModal, newTripHourModal];
+  let pendingNewTripDate = "";
+  let pendingNewTripShift = "";
 
-  function openNewTripModal(){
+  function openModal(modal){
     overlay.classList.add("open");
-    newTripModal.classList.add("open");
-    newTripModal.setAttribute("aria-hidden","false");
+    newTripModals.forEach((item) => {
+      const isOpen = item === modal;
+      item.classList.toggle("open", isOpen);
+      item.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    });
+  }
 
+  function openNewTripDateModal(){
     const today = toISODate(new Date());
     $("newTripDate").value = $("listDate").value || today;
     $("newTripShift").value = "manana";
     $("newTripHour").value = "";
+    pendingNewTripDate = "";
+    pendingNewTripShift = "";
+    openModal(newTripDateModal);
+    $("newTripDate").focus();
+  }
+
+  function openNewTripShiftModal(){
+    $("newTripShift").value = "manana";
+    openModal(newTripShiftModal);
+    $("newTripShift").focus();
+  }
+
+  function openNewTripHourModal(){
+    $("newTripHour").value = "";
+    openModal(newTripHourModal);
     $("newTripHour").focus();
   }
 
   function closeAllModals(){
     overlay.classList.remove("open");
-    newTripModal.classList.remove("open");
-    newTripModal.setAttribute("aria-hidden","true");
+    newTripModals.forEach((modal) => {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden","true");
+    });
     const persistModal = document.getElementById("persistModal");
     if(persistModal){
       persistModal.classList.remove("open");
@@ -1795,20 +1852,38 @@
     }
   }
 
-  $("openNewTripModalBtn").addEventListener("click", openNewTripModal);
-  $("openNewTripModalBtn2").addEventListener("click", openNewTripModal);
-  $("closeModalBtn").addEventListener("click", closeAllModals);
-  $("cancelModalBtn").addEventListener("click", closeAllModals);
+  $("openNewTripModalBtn").addEventListener("click", openNewTripDateModal);
+  $("openNewTripModalBtn2").addEventListener("click", openNewTripDateModal);
+  $("closeNewTripDateBtn").addEventListener("click", closeAllModals);
+  $("cancelNewTripDateBtn").addEventListener("click", closeAllModals);
+  $("closeNewTripShiftBtn").addEventListener("click", closeAllModals);
+  $("cancelNewTripShiftBtn").addEventListener("click", closeAllModals);
+  $("closeNewTripHourBtn").addEventListener("click", closeAllModals);
+  $("cancelNewTripHourBtn").addEventListener("click", closeAllModals);
   overlay.addEventListener("click", closeAllModals);
 
-  $("acceptNewTripBtn").addEventListener("click", async ()=>{
+  $("acceptNewTripDateBtn").addEventListener("click", ()=>{
     const date = String($("newTripDate").value || "").trim();
-    const shift = String($("newTripShift").value || "").trim();
-    const hour = String($("newTripHour").value || "").trim();
+    if(!date){ toast("Selecciona una fecha."); $("newTripDate").focus(); return; }
+    pendingNewTripDate = date;
+    openNewTripShiftModal();
+  });
 
-    if(!date){ toast("Selecciona una fecha."); return; }
-    if(!hour){ toast("La hora es obligatoria."); $("newTripHour").focus(); return; }
+  $("acceptNewTripShiftBtn").addEventListener("click", ()=>{
+    const shift = String($("newTripShift").value || "").trim();
     if(shift !== "manana" && shift !== "tarde"){ toast("Turno inválido."); return; }
+    pendingNewTripShift = shift;
+    openNewTripHourModal();
+  });
+
+  $("acceptNewTripHourBtn").addEventListener("click", async ()=>{
+    const hour = String($("newTripHour").value || "").trim();
+    const date = pendingNewTripDate;
+    const shift = pendingNewTripShift;
+
+    if(!date){ toast("Selecciona una fecha."); openNewTripDateModal(); return; }
+    if(shift !== "manana" && shift !== "tarde"){ toast("Turno inválido."); openNewTripShiftModal(); return; }
+    if(!hour){ toast("La hora es obligatoria."); $("newTripHour").focus(); return; }
 
     const store = loadStore();
     const trip = {
