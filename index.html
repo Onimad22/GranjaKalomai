@@ -192,6 +192,43 @@
       font-size:12.5px;
       line-height:1.45;
     }
+    .tripSummaryActions{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .tripSummaryTable{
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(15,23,42,.25);
+    }
+    .tripSummaryHeader,
+    .tripSummaryRow{
+      display:grid;
+      grid-template-columns: 1.4fr .6fr .8fr;
+      gap:10px;
+      padding:10px 12px;
+      align-items:center;
+    }
+    .tripSummaryHeader{
+      font-weight:900;
+      font-size:12px;
+      color:#dbeafe;
+      background: rgba(255,255,255,.04);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .tripSummaryRow{
+      border-bottom:1px solid rgba(255,255,255,.05);
+      color:var(--text);
+    }
+    .tripSummaryRow:last-child{border-bottom:none;}
+    .tripSummaryEmpty{
+      padding:10px 12px;
+    }
 
     .ticket{
       margin-top:12px;
@@ -613,7 +650,7 @@
         <div id="activeTripHeader" style="display:none; margin-top:12px;">
           <div class="note" style="margin-top:0">
             <span id="activeTripInfo"></span>
-            <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <div class="tripSummaryActions">
               <span class="badge" title="Suma de cantidades de ítems con categoría 'Visitante'">
                 <span class="dot" style="background: var(--ok)"></span>
                 <span>Visitantes: <strong id="activeTripVisitors">0</strong></span>
@@ -623,7 +660,17 @@
                 <span class="dot" style="background: var(--accent)"></span>
                 <span>Total: <strong id="activeTripTotal">Bs 0</strong></span>
               </span>
+              <button class="ok" id="sendTripSummaryBtn">Enviar recorrido</button>
               <button class="ghost" id="closeActiveTripBtn" title="Cerrar el recorrido en edición (no borra nada)">Cerrar edición</button>
+            </div>
+            <div class="tripSummaryTable" aria-live="polite">
+              <div class="tripSummaryHeader">
+                <div>Ítem</div>
+                <div class="right">Cantidad</div>
+                <div class="right">Subtotal (Bs)</div>
+              </div>
+              <div id="activeTripSummaryRows"></div>
+              <div class="tripSummaryEmpty muted" id="activeTripSummaryEmpty">No hay ítems en este recorrido.</div>
             </div>
           </div>
 
@@ -682,51 +729,6 @@
           </div>
         </div>
 
-        <div class="ticket" style="margin-top:12px;">
-          <div class="ticketHd">
-            <div class="title">Resumen del recorrido</div>
-            <button class="ok" id="exportTripPdfBtn">Exportar recorrido</button>
-          </div>
-          <div class="ticketBd">
-            <div class="printLike" id="summaryPrintLike">
-              <div class="pHd">
-                <h1>Resumen de recorrido</h1>
-              </div>
-
-              <div class="pMeta">
-                <div><strong>Fecha:</strong> <span id="summaryDate">—</span></div>
-                <div><strong>Turno:</strong> <span id="summaryShift">—</span></div>
-                <div><strong>Hora:</strong> <span id="summaryHour">—</span></div>
-                <div><strong>Visitantes:</strong> <span id="summaryVisitors">0</span></div>
-                <div><strong>Total:</strong> <span id="summaryTotalTop">Bs 0</span></div>
-              </div>
-
-              <div class="pTableWrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Ítem</th>
-                      <th class="right" style="width:110px;">Cantidad</th>
-                      <th class="right" style="width:150px;">Subtotal (Bs)</th>
-                    </tr>
-                  </thead>
-                  <tbody id="summaryTbody"></tbody>
-                  <tfoot>
-                    <tr>
-                      <td colspan="2" class="right"><strong>Total</strong></td>
-                      <td class="right"><strong id="summaryTotalFoot">Bs 0</strong></td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-
-              <div class="pObs">
-                <div class="pObsTitle">Observaciones</div>
-                <div class="pObsBody" id="summaryNotes">—</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </section>
@@ -1850,7 +1852,7 @@
       current.updatedAt = new Date().toISOString();
       upsertTrip(store, activeTripDate, current);
       void saveStore(store);
-      renderTripSummaryInline(current);
+      renderActiveTripSummary(current);
     }, 300);
   }
   $("tripNotes").addEventListener("input", saveActiveNotesDebounced);
@@ -1946,6 +1948,40 @@
     });
   }
 
+  function renderActiveTripSummary(trip){
+    const host = $("activeTripSummaryRows");
+    const empty = $("activeTripSummaryEmpty");
+    const sendBtn = $("sendTripSummaryBtn");
+
+    if(!trip){
+      host.innerHTML = "";
+      empty.style.display = "block";
+      if(sendBtn) sendBtn.disabled = true;
+      return;
+    }
+
+    const summary = buildTripSummary(trip);
+    if(summary.rows.length === 0){
+      host.innerHTML = "";
+      empty.textContent = "No hay ítems en este recorrido.";
+      empty.style.display = "block";
+    } else {
+      empty.style.display = "none";
+      host.innerHTML = summary.rows.map(r => `
+        <div class="tripSummaryRow">
+          <div>
+            <strong>${esc(r.label)}</strong>
+            <div class="muted">${esc(catLabel(r.category))}</div>
+          </div>
+          <div class="right"><strong>${r.qty}</strong></div>
+          <div class="right"><strong>${fmtMoney(r.subtotal)}</strong></div>
+        </div>
+      `).join("");
+    }
+
+    if(sendBtn) sendBtn.disabled = false;
+  }
+
   async function removeActiveItem(idx){
     const store = loadStore();
     const trip = findTrip(store, activeTripDate, activeTripId);
@@ -1992,136 +2028,113 @@
     return { rows, total };
   }
 
-  function buildTripPrintHTML(dateIso, trip){
+  function buildTripSummaryLines(dateIso, trip, stamp){
+    const lines = [];
+    const pushLine = (text, options = {}) => {
+      lines.push({
+        type: "text",
+        text,
+        bold: Boolean(options.bold),
+        size: options.size ?? 11
+      });
+    };
+    const pushSpacer = (height = 8) => {
+      lines.push({
+        type: "spacer",
+        height
+      });
+    };
     const shiftText = (trip.shift === "manana" ? "Mañana" : "Tarde");
     const c = calcTrip(trip);
     const summary = buildTripSummary(trip);
-
-    const rowsHtml = summary.rows.map(r => `
-      <tr>
-        <td style="padding:8px;border:1px solid #ddd;">
-          <strong>${esc(r.label)}</strong>
-          <div style="font-size:11px;color:#444;margin-top:2px;">${esc(catLabel(r.category))}</div>
-        </td>
-        <td style="padding:8px;border:1px solid #ddd;text-align:right;"><strong>${r.qty}</strong></td>
-        <td style="padding:8px;border:1px solid #ddd;text-align:right;"><strong>${fmtMoney(r.subtotal)}</strong></td>
-      </tr>
-    `).join("");
-
+    const rows = summary.rows.map(row => [
+      `${row.label} (${catLabel(row.category)})`,
+      String(row.qty),
+      fmtMoney(row.subtotal)
+    ]);
     const notes = String(trip.notes || "").trim();
 
-    return `
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Recorrido ${esc(formatDateDDMMYY(dateIso))} ${esc(shiftText)} ${esc(trip.tripHour||"")}</title>
-<style>
-  body{font-family: Arial, Helvetica, sans-serif; margin:24px; color:#111;}
-  h1{margin:0 0 8px; font-size:18px;}
-  .meta{font-size:12px; color:#444; margin-bottom:14px; line-height:1.45;}
-  table{width:100%; border-collapse:collapse; font-size:12px;}
-  th{background:#f4f6f8; text-align:left;}
-  th, td{border:1px solid #ddd; padding:8px; vertical-align:top;}
-  .right{text-align:right;}
-  .box{margin-top:14px; border:1px solid #ddd; border-radius:10px; padding:10px;}
-  .label{font-size:11px; color:#444; margin-bottom:6px;}
-  tr{page-break-inside:avoid;}
-  @media print{ body{margin:14mm;} }
-</style>
-</head>
-<body>
-  <h1>Resumen de recorrido</h1>
-  <div class="meta">
-    <div><strong>Fecha:</strong> ${esc(formatDateDDMMYY(dateIso))}</div>
-    <div><strong>Turno:</strong> ${esc(shiftText)}</div>
-    <div><strong>Hora:</strong> ${esc(trip.tripHour || "—")}</div>
-    <div><strong>Visitantes:</strong> ${c.qtyVisitors}</div>
-    <div><strong>Total:</strong> ${fmtMoney(summary.total)}</div>
-  </div>
+    pushLine("RESUMEN DE RECORRIDO - GRANJA KALOMAI", { bold: true, size: 16 });
+    pushLine(`Fecha ${formatDateDDMMYY(dateIso)} | Turno ${shiftText} | Hora ${trip.tripHour || "—"}`, { bold: true, size: 11 });
+    pushLine(`Visitantes: ${c.qtyVisitors} | Total: ${fmtMoney(summary.total)}`, { bold: true, size: 11 });
+    pushLine(`Generado: ${stamp}`, { size: 10 });
+    pushSpacer(10);
 
-  <table>
-    <thead>
-      <tr>
-        <th>Ítem</th>
-        <th class="right" style="width:120px;">Cantidad</th>
-        <th class="right" style="width:160px;">Subtotal (Bs)</th>
-      </tr>
-    </thead>
-    <tbody>${rowsHtml || ""}</tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2" class="right"><strong>Total</strong></td>
-        <td class="right"><strong>${fmtMoney(summary.total)}</strong></td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <div class="box">
-    <div class="label"><strong>Observaciones</strong></div>
-    <div style="white-space:pre-wrap;">${notes ? esc(notes) : "—"}</div>
-  </div>
-
-  <script>
-    window.addEventListener("load", () => { try { window.focus(); } catch(e) {} window.print(); });
-  </scr` + `ipt>
-</body>
-</html>`;
-  }
-
-  function printTrip(dateIso, trip){
-    const html = buildTripPrintHTML(dateIso, trip);
-    const w = window.open("", "_blank");
-    if(!w){ toast("No se pudo abrir la impresión (bloqueo de popups)."); return; }
-    w.document.open(); w.document.write(html); w.document.close();
-  }
-
-  function renderTripSummaryInline(trip){
-    if(!trip){
-      $("summaryDate").textContent = "—";
-      $("summaryShift").textContent = "—";
-      $("summaryHour").textContent = "—";
-      $("summaryVisitors").textContent = "0";
-      $("summaryTotalTop").textContent = "Bs 0";
-      $("summaryTotalFoot").textContent = "Bs 0";
-      $("summaryNotes").textContent = "—";
-      $("summaryTbody").innerHTML = `<tr><td colspan="3" style="color:#444;">No hay recorrido activo.</td></tr>`;
-      $("exportTripPdfBtn").disabled = true;
-      return;
+    if(!rows.length){
+      pushLine("Sin ítems registrados.", { size: 10 });
+    } else {
+      pushLine(
+        ["Ítem", "Cantidad", "Subtotal (Bs)"]
+          .map((h, i) => padText(h, [28, 10, 14][i]))
+          .join("  "),
+        { bold: true, size: 10 }
+      );
+      rows.forEach(row => {
+        const wrapped = row.map((cell, i) => wrapText(cell, [28, 10, 14][i]));
+        const maxLines = Math.max(...wrapped.map(x => x.length));
+        for(let i=0; i<maxLines; i++){
+          const lineParts = wrapped.map((cellLines, idx) => padText(cellLines[i] || "", [28, 10, 14][idx]));
+          pushLine(lineParts.join("  "), { size: 10 });
+        }
+      });
     }
 
-    const shiftText = (trip.shift === "manana" ? "Mañana" : "Tarde");
-    const c = calcTrip(trip);
-    const summary = buildTripSummary(trip);
+    pushSpacer(8);
+    pushLine("Observaciones:", { bold: true, size: 11 });
+    pushLine(notes || "—", { size: 10 });
 
-    $("summaryDate").textContent = formatDateDDMMYY(activeTripDate);
-    $("summaryShift").textContent = shiftText;
-    $("summaryHour").textContent = trip.tripHour || "—";
-    $("summaryVisitors").textContent = String(c.qtyVisitors);
-    $("summaryTotalTop").textContent = fmtMoney(summary.total);
-    $("summaryTotalFoot").textContent = fmtMoney(summary.total);
-    $("summaryNotes").textContent = String(trip.notes || "").trim() || "—";
-
-    $("summaryTbody").innerHTML = summary.rows.length
-      ? summary.rows.map(r => `
-          <tr>
-            <td>
-              <strong>${esc(r.label)}</strong>
-              <div class="muted2">${esc(catLabel(r.category))}</div>
-            </td>
-            <td class="right"><strong>${r.qty}</strong></td>
-            <td class="right"><strong>${fmtMoney(r.subtotal)}</strong></td>
-          </tr>
-        `).join("")
-      : `<tr><td colspan="3" style="color:#444;">No hay ítems en este recorrido.</td></tr>`;
-    $("exportTripPdfBtn").disabled = false;
+    return lines;
   }
 
-  $("exportTripPdfBtn").addEventListener("click", ()=>{
+  async function getTripSummaryPdfBlob(){
     const trip = getActiveTrip();
-    if(!trip){ toast("No hay un recorrido activo."); return; }
-    printTrip(activeTripDate, trip);
+    if(!trip){
+      toast("No hay un recorrido activo.");
+      return null;
+    }
+    const dateIso = String(activeTripDate || "").trim();
+    if(!dateIso){
+      toast("No se encontró la fecha del recorrido.");
+      return null;
+    }
+    const stamp = new Date().toLocaleString();
+    const lines = buildTripSummaryLines(dateIso, trip, stamp);
+    const blob = buildPdfBlobFromLines(lines);
+    const shiftText = trip.shift === "manana" ? "manana" : "tarde";
+    const filename = `resumen_recorrido_${dateIso}_${shiftText}.pdf`;
+    return { blob, filename };
+  }
+
+  async function shareTripSummaryPdf(){
+    const result = await getTripSummaryPdfBlob();
+    if(!result) return null;
+    const file = new File([result.blob], result.filename, { type: "application/pdf" });
+    if(canShareFiles([file])){
+      try{
+        await navigator.share({
+          title: "Resumen de recorrido",
+          text: "Adjunto resumen del recorrido en PDF.",
+          files: [file]
+        });
+        return "share";
+      }catch{
+        // fallback below
+      }
+    }
+    downloadBlob(result.blob, result.filename);
+    return "download";
+  }
+
+  $("sendTripSummaryBtn").addEventListener("click", ()=>{
+    void (async ()=>{
+      const mode = await shareTripSummaryPdf();
+      if(!mode) return;
+      if(mode === "share"){
+        toast("Selecciona WhatsApp y el contacto para enviar.");
+      } else {
+        toast("PDF descargado. Adjúntalo desde WhatsApp.");
+      }
+    })();
   });
 
   // ===== Resumen del día (inline, diferenciado por turno) =====
@@ -2367,13 +2380,13 @@
       $("activeTripTotal").textContent = fmtMoney(c.incomeTotal);
       $("tripNotes").value = String(trip.notes || "");
       renderActiveTripItems(trip);
-      renderTripSummaryInline(trip);
+      renderActiveTripSummary(trip);
     } else {
       $("activeTripVisitors").textContent = "0";
       $("activeTripTotal").textContent = "Bs 0";
       $("tripNotes").value = "";
       $("activeTripItems").innerHTML = "";
-      renderTripSummaryInline(null);
+      renderActiveTripSummary(null);
     }
 
     renderDailyList();
