@@ -405,6 +405,47 @@
     }
     .modalFt button{flex:1 1 220px}
 
+    .itemSelectGrid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap:10px;
+    }
+    .itemSelectCard{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:12px;
+      text-align:left;
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-height:96px;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    .itemSelectCard .title{
+      font-weight:900;
+      color:#dbeafe;
+      font-size:13px;
+    }
+    .itemSelectCard .meta{
+      color:var(--muted);
+      font-size:12px;
+    }
+    .itemSelectCard.selected{
+      border-color: rgba(103,232,249,.50);
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      transform: translateY(-1px);
+    }
+    .itemSelectEmpty{
+      padding:12px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:12.5px;
+    }
+
     .toast{
       position:fixed;
       right:14px;
@@ -674,36 +715,14 @@
             </div>
           </div>
 
+          <div class="btns" style="margin-top:12px;">
+            <button class="ok full" id="openAddItemModalBtn">Agregar item</button>
+          </div>
+
           <div class="ticket" style="margin-top:12px;">
             <div class="ticketBd">
               <label>Observaciones</label>
               <textarea id="tripNotes" placeholder="Ej: Grupo escolar, lluvia, se retrasó el turno, etc."></textarea>
-            </div>
-          </div>
-
-          <div class="ticket" style="margin-top:12px;">
-            <div class="ticketHd">
-              <div class="title">Agregar ítem</div>
-            </div>
-
-            <div class="ticketBd">
-              <div class="grid3">
-                <div>
-                  <label>Ítem</label>
-                  <select id="itemType"></select>
-                </div>
-                <div>
-                  <label>Cantidad</label>
-                  <input id="itemQty" type="number" min="0" step="1" value="0" />
-                </div>
-                <div>
-                  <label>Precio unitario (Bs)</label>
-                  <input id="itemPrice" type="number" min="0" step="0.01" value="0" />
-                </div>
-                <div>
-                  <button class="ok" id="addItemBtn">Agregar</button>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -722,10 +741,6 @@
                 <div id="activeTripItems"></div>
               </div>
             </div>
-          </div>
-
-          <div class="btns">
-            <button class="primary full" id="openNewTripModalBtn2">Habilitar nuevo recorrido</button>
           </div>
         </div>
 
@@ -1027,6 +1042,64 @@
     <div class="modalFt">
       <button class="ghost" id="cancelNewTripHourBtn">Cancelar</button>
       <button class="ok" id="acceptNewTripHourBtn">Ok</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: agregar ítem (paso 1: seleccionar) -->
+<div class="modal" id="addItemSelectModal" aria-hidden="true">
+  <div class="modalCard">
+    <div class="modalHd">
+      <div class="t">Agregar item</div>
+      <button class="ghost" id="closeAddItemSelectBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+    </div>
+    <div class="modalBd">
+      <div class="itemSelectGrid" id="addItemCardGrid"></div>
+      <div class="itemSelectEmpty" id="addItemEmpty" style="display:none;">No hay ítems habilitados para seleccionar.</div>
+    </div>
+    <div class="modalFt">
+      <button class="ghost" id="cancelAddItemSelectBtn">Cancelar</button>
+      <button class="ok" id="acceptAddItemSelectBtn">Ok</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: agregar ítem (paso 2: cantidad) -->
+<div class="modal" id="addItemQtyModal" aria-hidden="true">
+  <div class="modalCard">
+    <div class="modalHd">
+      <div class="t">Cantidad del ítem</div>
+      <button class="ghost" id="closeAddItemQtyBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+    </div>
+    <div class="modalBd">
+      <div>
+        <label>Cantidad</label>
+        <input id="addItemQtyInput" type="number" min="1" step="1" value="1" />
+      </div>
+    </div>
+    <div class="modalFt">
+      <button class="ghost" id="cancelAddItemQtyBtn">Cancelar</button>
+      <button class="ok" id="acceptAddItemQtyBtn">Ok</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: agregar ítem (paso 3: precio) -->
+<div class="modal" id="addItemPriceModal" aria-hidden="true">
+  <div class="modalCard">
+    <div class="modalHd">
+      <div class="t">Precio del ítem</div>
+      <button class="ghost" id="closeAddItemPriceBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
+    </div>
+    <div class="modalBd">
+      <div>
+        <label>Precio unitario (Bs)</label>
+        <input id="addItemPriceInput" type="number" min="0" step="0.01" value="0" />
+      </div>
+    </div>
+    <div class="modalFt">
+      <button class="ghost" id="cancelAddItemPriceBtn">Cancelar</button>
+      <button class="ok" id="acceptAddItemPriceBtn">Ok</button>
     </div>
   </div>
 </div>
@@ -1524,7 +1597,7 @@
     await saveAppState(buildAppState());
     void prepareBackupCache();
     refreshCatalogCache();
-    rebuildItemTypeSelect();
+    rebuildAddItemCardGrid();
     rebuildChartMetricOptions();
     renderTariff();
     renderDailyList();
@@ -1753,63 +1826,69 @@
       `Fecha <strong>${esc(formatDateDDMMYY(activeTripDate))}</strong> · Turno <strong>${esc(shiftText)}</strong> · Hora <strong>${esc(trip.tripHour || "—")}</strong>`;
   }
 
-  // ===== Daily: combo with placeholder =====
-  function resetAddLine(){
-    const sel = $("itemType");
-    sel.value = "";
-    $("itemQty").value = "0";
-    $("itemPrice").value = "0";
-  }
+  // ===== Daily: agregar ítems (modales) =====
+  let pendingItemId = "";
+  let pendingItemQty = 1;
+  let pendingItemPrice = 0;
 
-  function rebuildItemTypeSelect(){
-    const sel = $("itemType");
-    const enabled = enabledCatalog();
+  function rebuildAddItemCardGrid(){
+    const grid = $("addItemCardGrid");
+    const empty = $("addItemEmpty");
+    const okBtn = $("acceptAddItemSelectBtn");
+    const enabled = enabledCatalog().slice().sort((a,b)=>a.label.localeCompare(b.label));
 
     if(enabled.length === 0){
-      sel.innerHTML = `<option value="">(No hay ítems habilitados)</option>`;
-      sel.disabled = true;
-      $("addItemBtn").disabled = true;
-      resetAddLine();
+      grid.innerHTML = "";
+      empty.style.display = "block";
+      pendingItemId = "";
+      okBtn.disabled = true;
       return;
     }
 
-    sel.disabled = false;
-    $("addItemBtn").disabled = false;
+    empty.style.display = "none";
+    okBtn.disabled = !pendingItemId;
 
-    sel.innerHTML =
-      `<option value="">Seleccionar ítem</option>` +
-      enabled
-        .slice()
-        .sort((a,b)=>a.label.localeCompare(b.label))
-        .map(x => `<option value="${esc(x.id)}">${esc(x.label)}</option>`)
-        .join("");
+    grid.innerHTML = enabled.map(item => {
+      const isSelected = item.id === pendingItemId;
+      return `
+        <button class="itemSelectCard ${isSelected ? "selected" : ""}" data-id="${esc(item.id)}" type="button">
+          <div class="title">${esc(item.label)}</div>
+          <div class="meta">Categoría: ${esc(catLabel(item.category))}</div>
+          <div class="meta">Precio base: ${fmtMoney(safeMoney(item.defaultPrice))}</div>
+        </button>
+      `;
+    }).join("");
 
-    resetAddLine();
+    grid.querySelectorAll(".itemSelectCard").forEach(btn => {
+      btn.addEventListener("click", ()=>{
+        pendingItemId = btn.getAttribute("data-id") || "";
+        rebuildAddItemCardGrid();
+      });
+    });
   }
-
-  $("itemType").addEventListener("change", ()=>{
-    const id = $("itemType").value;
-    if(!id){
-      resetAddLine();
-      return;
-    }
-    const def = CAT_BY_ID[id];
-    $("itemQty").value = "1";
-    $("itemPrice").value = String(safeMoney(def?.defaultPrice ?? 0));
-  });
 
   // ===== Modales =====
   const overlay = $("modalOverlay");
   const newTripDateModal = $("newTripDateModal");
   const newTripShiftModal = $("newTripShiftModal");
   const newTripHourModal = $("newTripHourModal");
-  const newTripModals = [newTripDateModal, newTripShiftModal, newTripHourModal];
+  const addItemSelectModal = $("addItemSelectModal");
+  const addItemQtyModal = $("addItemQtyModal");
+  const addItemPriceModal = $("addItemPriceModal");
+  const allModals = [
+    newTripDateModal,
+    newTripShiftModal,
+    newTripHourModal,
+    addItemSelectModal,
+    addItemQtyModal,
+    addItemPriceModal
+  ];
   let pendingNewTripDate = "";
   let pendingNewTripShift = "";
 
   function openModal(modal){
     overlay.classList.add("open");
-    newTripModals.forEach((item) => {
+    allModals.forEach((item) => {
       const isOpen = item === modal;
       item.classList.toggle("open", isOpen);
       item.setAttribute("aria-hidden", isOpen ? "false" : "true");
@@ -1841,7 +1920,7 @@
 
   function closeAllModals(){
     overlay.classList.remove("open");
-    newTripModals.forEach((modal) => {
+    allModals.forEach((modal) => {
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden","true");
     });
@@ -1853,13 +1932,18 @@
   }
 
   $("openNewTripModalBtn").addEventListener("click", openNewTripDateModal);
-  $("openNewTripModalBtn2").addEventListener("click", openNewTripDateModal);
   $("closeNewTripDateBtn").addEventListener("click", closeAllModals);
   $("cancelNewTripDateBtn").addEventListener("click", closeAllModals);
   $("closeNewTripShiftBtn").addEventListener("click", closeAllModals);
   $("cancelNewTripShiftBtn").addEventListener("click", closeAllModals);
   $("closeNewTripHourBtn").addEventListener("click", closeAllModals);
   $("cancelNewTripHourBtn").addEventListener("click", closeAllModals);
+  $("closeAddItemSelectBtn").addEventListener("click", closeAllModals);
+  $("cancelAddItemSelectBtn").addEventListener("click", closeAllModals);
+  $("closeAddItemQtyBtn").addEventListener("click", closeAllModals);
+  $("cancelAddItemQtyBtn").addEventListener("click", closeAllModals);
+  $("closeAddItemPriceBtn").addEventListener("click", closeAllModals);
+  $("cancelAddItemPriceBtn").addEventListener("click", closeAllModals);
   overlay.addEventListener("click", closeAllModals);
 
   $("acceptNewTripDateBtn").addEventListener("click", ()=>{
@@ -1933,15 +2017,43 @@
   $("tripNotes").addEventListener("input", saveActiveNotesDebounced);
 
   // ===== Agregar ítem (guardado automático) =====
-  $("addItemBtn").addEventListener("click", async ()=>{
+  function openAddItemSelectModal(){
     const trip = getActiveTrip();
     if(!trip){
       toast("Primero habilita o carga un recorrido.");
       return;
     }
-    const typeId = $("itemType").value;
-    const qty = safeInt($("itemQty").value);
-    const price = safeMoney($("itemPrice").value);
+    pendingItemId = "";
+    pendingItemQty = 1;
+    pendingItemPrice = 0;
+    rebuildAddItemCardGrid();
+    openModal(addItemSelectModal);
+  }
+
+  function openAddItemQtyModal(){
+    $("addItemQtyInput").value = String(pendingItemQty || 1);
+    openModal(addItemQtyModal);
+    $("addItemQtyInput").focus();
+  }
+
+  function openAddItemPriceModal(){
+    const def = CAT_BY_ID[pendingItemId];
+    pendingItemPrice = safeMoney(def?.defaultPrice ?? pendingItemPrice ?? 0);
+    $("addItemPriceInput").value = String(pendingItemPrice);
+    openModal(addItemPriceModal);
+    $("addItemPriceInput").focus();
+  }
+
+  async function addItemToActiveTrip(){
+    const trip = getActiveTrip();
+    if(!trip){
+      toast("Primero habilita o carga un recorrido.");
+      return;
+    }
+
+    const typeId = pendingItemId;
+    const qty = safeInt(pendingItemQty);
+    const price = safeMoney(pendingItemPrice);
 
     if(!typeId){
       toast("Selecciona un ítem.");
@@ -1968,9 +2080,41 @@
     upsertTrip(store, activeTripDate, current);
     await saveStore(store);
 
-    resetAddLine();
+    closeAllModals();
     toast("Ítem agregado y guardado.");
     renderDaily();
+  }
+
+  $("openAddItemModalBtn").addEventListener("click", openAddItemSelectModal);
+
+  $("acceptAddItemSelectBtn").addEventListener("click", ()=>{
+    if(!pendingItemId){
+      toast("Selecciona un ítem.");
+      return;
+    }
+    openAddItemQtyModal();
+  });
+
+  $("acceptAddItemQtyBtn").addEventListener("click", ()=>{
+    const qty = safeInt($("addItemQtyInput").value);
+    if(qty <= 0){
+      toast("La cantidad debe ser mayor a 0.");
+      $("addItemQtyInput").focus();
+      return;
+    }
+    pendingItemQty = qty;
+    openAddItemPriceModal();
+  });
+
+  $("acceptAddItemPriceBtn").addEventListener("click", async ()=>{
+    const price = safeMoney($("addItemPriceInput").value);
+    if(price < 0){
+      toast("El precio debe ser mayor o igual a 0.");
+      $("addItemPriceInput").focus();
+      return;
+    }
+    pendingItemPrice = price;
+    await addItemToActiveTrip();
   });
 
   // ===== Items del recorrido: NO editable (solo quitar) =====
@@ -2444,7 +2588,7 @@
   // ===== Daily render principal =====
   function renderDaily(){
     refreshCatalogCache();
-    rebuildItemTypeSelect();
+    rebuildAddItemCardGrid();
 
     const trip = getActiveTrip();
     showActiveTripUI(trip);
@@ -3529,7 +3673,7 @@
     const state = await loadAppState();
     applyAppState(state);
     refreshCatalogCache();
-    rebuildItemTypeSelect();
+    rebuildAddItemCardGrid();
     rebuildChartMetricOptions();
     resetTariffForm();
     await loadActiveTripFromStorage();
@@ -3777,7 +3921,7 @@
     await saveAppState(buildAppState());
     void prepareBackupCache();
     refreshCatalogCache();
-    rebuildItemTypeSelect();
+    rebuildAddItemCardGrid();
     rebuildChartMetricOptions();
     renderTariff();
     renderDaily();
@@ -3886,7 +4030,7 @@
       await saveAppState(buildAppState());
     }
     refreshCatalogCache();
-    rebuildItemTypeSelect();
+    rebuildAddItemCardGrid();
     rebuildChartMetricOptions();
     resetTariffForm();
 
