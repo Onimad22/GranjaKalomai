@@ -1072,12 +1072,14 @@
       <button class="ghost" id="closeAddItemQtyBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
     </div>
     <div class="modalBd">
+      <div class="note" id="addItemQtyHint" style="margin-top:0">Ítem seleccionado: —</div>
       <div>
         <label>Cantidad</label>
         <input id="addItemQtyInput" type="number" min="1" step="1" value="1" />
       </div>
     </div>
     <div class="modalFt">
+      <button class="ghost" id="backAddItemQtyBtn">Volver</button>
       <button class="ghost" id="cancelAddItemQtyBtn">Cancelar</button>
       <button class="ok" id="acceptAddItemQtyBtn">Ok</button>
     </div>
@@ -1092,12 +1094,14 @@
       <button class="ghost" id="closeAddItemPriceBtn" style="min-height:40px;border-radius:12px">Cerrar</button>
     </div>
     <div class="modalBd">
+      <div class="note" id="addItemPriceHint" style="margin-top:0">Ítem: — · Cantidad: —</div>
       <div>
         <label>Precio unitario (Bs)</label>
         <input id="addItemPriceInput" type="number" min="0" step="0.01" value="0" />
       </div>
     </div>
     <div class="modalFt">
+      <button class="ghost" id="backAddItemPriceBtn">Volver</button>
       <button class="ghost" id="cancelAddItemPriceBtn">Cancelar</button>
       <button class="ok" id="acceptAddItemPriceBtn">Ok</button>
     </div>
@@ -1831,6 +1835,19 @@
   let pendingItemQty = 1;
   let pendingItemPrice = 0;
 
+  function updateAddItemQtyHint(){
+    const item = CAT_BY_ID[pendingItemId];
+    const label = item?.label || "—";
+    $("addItemQtyHint").textContent = `Ítem seleccionado: ${label}`;
+  }
+
+  function updateAddItemPriceHint(){
+    const item = CAT_BY_ID[pendingItemId];
+    const label = item?.label || "—";
+    const qty = safeInt(pendingItemQty) || 0;
+    $("addItemPriceHint").textContent = `Ítem: ${label} · Cantidad: ${qty}`;
+  }
+
   function rebuildAddItemCardGrid(){
     const grid = $("addItemCardGrid");
     const empty = $("addItemEmpty");
@@ -1862,7 +1879,11 @@
     grid.querySelectorAll(".itemSelectCard").forEach(btn => {
       btn.addEventListener("click", ()=>{
         pendingItemId = btn.getAttribute("data-id") || "";
+        pendingItemQty = 1;
         rebuildAddItemCardGrid();
+        if(pendingItemId){
+          openAddItemQtyModal();
+        }
       });
     });
   }
@@ -2017,21 +2038,24 @@
   $("tripNotes").addEventListener("input", saveActiveNotesDebounced);
 
   // ===== Agregar ítem (guardado automático) =====
-  function openAddItemSelectModal(){
+  function openAddItemSelectModal({ resetState = true } = {}){
     const trip = getActiveTrip();
     if(!trip){
       toast("Primero habilita o carga un recorrido.");
       return;
     }
-    pendingItemId = "";
-    pendingItemQty = 1;
-    pendingItemPrice = 0;
+    if(resetState){
+      pendingItemId = "";
+      pendingItemQty = 1;
+      pendingItemPrice = 0;
+    }
     rebuildAddItemCardGrid();
     openModal(addItemSelectModal);
   }
 
   function openAddItemQtyModal(){
     $("addItemQtyInput").value = String(pendingItemQty || 1);
+    updateAddItemQtyHint();
     openModal(addItemQtyModal);
     $("addItemQtyInput").focus();
   }
@@ -2040,6 +2064,7 @@
     const def = CAT_BY_ID[pendingItemId];
     pendingItemPrice = safeMoney(def?.defaultPrice ?? pendingItemPrice ?? 0);
     $("addItemPriceInput").value = String(pendingItemPrice);
+    updateAddItemPriceHint();
     openModal(addItemPriceModal);
     $("addItemPriceInput").focus();
   }
@@ -2115,6 +2140,14 @@
     }
     pendingItemPrice = price;
     await addItemToActiveTrip();
+  });
+
+  $("backAddItemQtyBtn").addEventListener("click", ()=>{
+    openAddItemSelectModal({ resetState: false });
+  });
+
+  $("backAddItemPriceBtn").addEventListener("click", ()=>{
+    openAddItemQtyModal();
   });
 
   // ===== Items del recorrido: NO editable (solo quitar) =====
