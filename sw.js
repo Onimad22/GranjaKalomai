@@ -1,12 +1,13 @@
 /* sw.js - Kalomai PWA */
 "use strict";
 
-const CACHE_NAME = "kalomai-pwa-v4";
+const CACHE_NAME = "kalomai-pwa-v5";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icon.svg"
+  "./icon.svg",
+  "./dexie.min.js"
 ];
 
 self.addEventListener("install", (event) => {
