@@ -5,6 +5,7 @@ const CACHE_NAME = "kalomai-pwa-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./db.js",
   "./manifest.json",
   "./icon.svg"
 ];
