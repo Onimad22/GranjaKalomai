@@ -1,44 +1,22 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "kalomai_appState";
-  const hasDexie = typeof Dexie !== "undefined";
-  const db = hasDexie ? new Dexie("granja_pwa_db") : null;
-
-  if(hasDexie){
-    db.version(1).stores({
-      kv: "&key"
-    });
-  }
+  const db = new Dexie("granja_pwa_db");
+  db.version(1).stores({
+    kv: "&key"
+  });
 
   async function loadAppState(){
-    if(hasDexie){
-      const record = await db.kv.get("appState");
-      return record ? record.value : null;
-    }
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return null;
-    try{
-      return JSON.parse(raw);
-    }catch{
-      return null;
-    }
+    const record = await db.kv.get("appState");
+    return record ? record.value : null;
   }
 
   async function saveAppState(state){
-    if(hasDexie){
-      await db.kv.put({ key: "appState", value: state });
-      return;
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state ?? null));
+    await db.kv.put({ key: "appState", value: state });
   }
 
   async function clearAppState(){
-    if(hasDexie){
-      await db.kv.delete("appState");
-      return;
-    }
-    localStorage.removeItem(STORAGE_KEY);
+    await db.kv.delete("appState");
   }
 
   function toPlain(value, seen = new WeakMap()){
@@ -57,7 +35,8 @@
   }
 
   async function getBackupData(){
-    const appState = await loadAppState();
+    const record = await db.kv.get("appState");
+    const appState = record ? record.value : null;
     const plainState = appState ? toPlain(appState) : null;
     return { appState: plainState };
   }
@@ -65,21 +44,19 @@
   async function importAll(data){
     if(!data || typeof data !== "object") throw new Error("Invalid backup data");
     if(Object.prototype.hasOwnProperty.call(data, "appState")){
-      await saveAppState(data.appState);
-      return;
-    }
-    const kv = Array.isArray(data.kv) ? data.kv : [];
-    if(hasDexie){
       await db.transaction("rw", db.kv, async ()=>{
         await db.kv.clear();
-        if(kv.length){
-          await db.kv.bulkPut(kv);
-        }
+        await db.kv.put({ key: "appState", value: data.appState });
       });
       return;
     }
-    const appStateEntry = kv.find((entry) => entry && entry.key === "appState");
-    await saveAppState(appStateEntry ? appStateEntry.value : null);
+    const kv = Array.isArray(data.kv) ? data.kv : [];
+    await db.transaction("rw", db.kv, async ()=>{
+      await db.kv.clear();
+      if(kv.length){
+        await db.kv.bulkPut(kv);
+      }
+    });
   }
 
   window.loadAppState = loadAppState;
